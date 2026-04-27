@@ -1,0 +1,33 @@
+{
+  "$schema": "https://pectus.ai/schemas/brand.schema.json",
+  "name": "Your Brand",
+  "tagline": "",
+  "website_url": "",
+  "sitemap_url": "",
+  "logo": "./logo.svg",
+  "colors": {
+    "accent": "#2563eb",
+    "surface": "#ffffff",
+    "text": "#0a0a0a",
+    "muted": "#6b7280",
+    "border": "#e5e7eb"
+  },
+  "fonts": {
+    "heading": {
+      "source": "system",
+      "family": "system-ui",
+      "google_url": null,
+      "files": null
+    },
+    "body": {
+      "source": "system",
+      "family": "system-ui",
+      "google_url": null,
+      "files": null
+    }
+  },
+  "voice": "",
+  "tonality": "",
+  "guidelines": "./guidelines.md",
+  "image_model": "imagen-4"
+}

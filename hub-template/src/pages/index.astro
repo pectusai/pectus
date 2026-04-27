@@ -1,0 +1,33 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import Hero from "../components/Hero.astro";
+import ArticleGrid from "../components/ArticleGrid.astro";
+import { ARTICLES } from "../lib/articles";
+import { itemListLd } from "../lib/schema";
+import { config } from "../../pectus.config";
+
+const site = Astro.site ?? new URL(config.site.url);
+const ld = [itemListLd(site, ARTICLES, `${config.site.name} — all articles`)];
+---
+<BaseLayout
+  title={config.site.name}
+  description={config.site.description}
+  ogType="website"
+  ldJson={ld}
+>
+  <Nav slot="header" />
+  <Hero
+    title={config.hero.title}
+    intro={config.hero.intro}
+    cta={config.hero.cta}
+  />
+  <section id="articles" class="max-w-6xl mx-auto px-6 py-16">
+    <ArticleGrid
+      articles={ARTICLES}
+      emptyMessage="No articles synced yet. Run npm run sync-articles from this folder once your CMS has content."
+    />
+  </section>
+  <Footer slot="footer" />
+</BaseLayout>

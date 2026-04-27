@@ -1,0 +1,14 @@
+---
+import type { Article } from "../lib/articles";
+import ArticleCard from "./ArticleCard.astro";
+
+interface Props { articles: Article[]; emptyMessage?: string; }
+const { articles, emptyMessage = "No articles yet." } = Astro.props;
+---
+{articles.length === 0 ? (
+  <div class="py-16 text-center text-[var(--color-muted)]">{emptyMessage}</div>
+) : (
+  <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    {articles.map((article) => <ArticleCard article={article} />)}
+  </div>
+)}

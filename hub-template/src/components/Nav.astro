@@ -1,0 +1,22 @@
+---
+import { config } from "../../pectus.config";
+const { nav, org, site } = config;
+---
+<header class="sticky top-0 z-40 backdrop-blur bg-white/80 border-b border-[var(--color-border)]">
+  <nav class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+    <a href="/" class="font-semibold tracking-tight" aria-label={site.name}>
+      <span class="font-[var(--font-heading)] text-base">{site.name}</span>
+    </a>
+    <ul class="hidden md:flex items-center gap-8 text-sm">
+      {nav.links.map((link) => (
+        <li>
+          <a href={link.href} class="text-[var(--color-text)] hover:text-[var(--color-accent)]">{link.label}</a>
+        </li>
+      ))}
+    </ul>
+    <a
+      href={nav.cta.href}
+      class="px-4 py-2 rounded-md text-sm font-medium bg-[var(--color-accent)] text-white hover:opacity-90"
+    >{nav.cta.label}</a>
+  </nav>
+</header>

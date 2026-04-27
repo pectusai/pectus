@@ -1,0 +1,26 @@
+{
+  "name": "@pectus/cli",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pectus command-line tool: install, connect services, run skills, update",
+  "bin": {
+    "pectus": "./bin/pectus.js"
+  },
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "@clack/prompts": "^0.7.0",
+    "@supabase/supabase-js": "^2.45.0",
+    "commander": "^12.0.0",
+    "kleur": "^4.1.5"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "tsx": "^4.0.0",
+    "@types/node": "^22.0.0"
+  }
+}

@@ -1,0 +1,18 @@
+---
+import type { Block } from "../lib/articles";
+interface Props { blocks: Block[]; }
+const { blocks } = Astro.props;
+---
+<div class="prose">
+  {blocks.map((block) => {
+    if (block.type === "p") return <p>{block.text}</p>;
+    if (block.type === "h2") return <h2>{block.text}</h2>;
+    if (block.type === "h3") return <h3>{block.text}</h3>;
+    if (block.type === "h4") return <h4>{block.text}</h4>;
+    if (block.type === "ul") return <ul>{block.items.map((item) => <li>{item}</li>)}</ul>;
+    if (block.type === "ol") return <ol>{block.items.map((item) => <li>{item}</li>)}</ol>;
+    if (block.type === "quote") return <blockquote>{block.text}</blockquote>;
+    if (block.type === "image") return <figure><img src={block.src} alt={block.alt ?? ""} loading="lazy" /></figure>;
+    return null;
+  })}
+</div>

@@ -1,0 +1,6 @@
+{
+  "name": "@pectus/google",
+  "version": "0.1.0",
+  "private": true,
+  "main": "oauth.ts"
+}

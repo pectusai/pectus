@@ -1,0 +1,9 @@
+{
+  "name": "@pectus/anthropic",
+  "version": "0.1.0",
+  "private": true,
+  "main": "client.ts",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0"
+  }
+}

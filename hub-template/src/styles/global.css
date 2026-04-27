@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+@theme {
+  --color-surface: #ffffff;
+  --color-surface-soft: #fafafa;
+  --color-text: #0a0a0a;
+  --color-muted: #6b7280;
+  --color-border: #e5e7eb;
+  --color-accent: #2563eb;
+  --color-accent-soft: #dbeafe;
+
+  --font-heading: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+html {
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.01em;
+}
+
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+.prose p { margin: 0 0 1rem; line-height: 1.7; }
+.prose h2 { margin: 2.5rem 0 1rem; font-size: 1.75rem; font-weight: 700; }
+.prose h3 { margin: 2rem 0 0.75rem; font-size: 1.375rem; font-weight: 600; }
+.prose h4 { margin: 1.5rem 0 0.5rem; font-size: 1.125rem; font-weight: 600; }
+.prose ul, .prose ol { margin: 0 0 1rem 1.5rem; }
+.prose li { margin-bottom: 0.5rem; line-height: 1.7; }
+.prose blockquote {
+  margin: 1.5rem 0;
+  padding-left: 1.25rem;
+  border-left: 3px solid var(--color-border);
+  color: var(--color-muted);
+  font-style: italic;
+}
+.prose figure { margin: 1.5rem 0; }
+.prose figure img { width: 100%; height: auto; border-radius: 0.5rem; }
+.prose a { color: var(--color-accent); }

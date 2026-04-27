@@ -1,0 +1,6 @@
+{
+  "name": "@pectus/vercel",
+  "version": "0.1.0",
+  "private": true,
+  "main": "deploy.ts"
+}
