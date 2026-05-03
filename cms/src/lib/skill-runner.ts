@@ -630,10 +630,20 @@ export async function runSkill<T = unknown>(
       inputDigest[g.label.toLowerCase().replace(/\s+/g, "_")] = g.count;
     }
 
-    const userMessage =
-      gathered
+    /* Split inputs into a cacheable layer (stable across runs) and a volatile
+     * layer. The cacheable half gets cache_control: ephemeral so successive
+     * runs in the same week reuse the input tokens. SkillFrontmatter exposes
+     * `cache_inputs` for per-skill overrides; not yet wired up. */
+    const cacheableLabels = new Set(["BRAND", "ICP", "KNOWLEDGE INSIGHTS"]);
+    const stable = gathered.filter((g) => cacheableLabels.has(g.label));
+    const volatile = gathered.filter((g) => !cacheableLabels.has(g.label));
+    const stableText = stable
+      .map((g) => `## ${g.label}\n\n${g.text}`)
+      .join("\n\n");
+    const volatileText =
+      volatile
         .map((g) => `## ${g.label}\n\n${g.text}`)
-        .join("\n\n") || "(no inputs declared)";
+        .join("\n\n") || "(no volatile inputs)";
 
     /* Pre-insert a "running" row for correlation. */
     const model = options.model ?? meta.model ?? DEFAULT_MODEL;
@@ -667,11 +677,33 @@ export async function runSkill<T = unknown>(
       /* zod-to-json-schema may wrap in { definitions, $ref }; flatten if so. */
       const flattened = flattenJsonSchema(jsonSchema);
 
-      const response = await claude.messages.create({
+      const response = await claude.beta.promptCaching.messages.create({
         model,
         max_tokens: meta.max_tokens ?? 16000,
-        system: expandedBody.trim(),
-        messages: [{ role: "user", content: userMessage }],
+        system: [
+          {
+            type: "text",
+            text: expandedBody.trim(),
+            cache_control: { type: "ephemeral" },
+          },
+        ],
+        messages: [
+          {
+            role: "user",
+            content: [
+              ...(stableText
+                ? [
+                    {
+                      type: "text" as const,
+                      text: stableText,
+                      cache_control: { type: "ephemeral" as const },
+                    },
+                  ]
+                : []),
+              { type: "text" as const, text: volatileText },
+            ],
+          },
+        ],
         tools: [
           {
             name: "produce_output",
@@ -731,11 +763,33 @@ export async function runSkill<T = unknown>(
     }
 
     /* Text mode — original behavior. */
-    const response = await claude.messages.create({
+    const response = await claude.beta.promptCaching.messages.create({
       model,
       max_tokens: meta.max_tokens ?? 16000,
-      system: expandedBody.trim(),
-      messages: [{ role: "user", content: userMessage }],
+      system: [
+        {
+          type: "text",
+          text: expandedBody.trim(),
+          cache_control: { type: "ephemeral" },
+        },
+      ],
+      messages: [
+        {
+          role: "user",
+          content: [
+            ...(stableText
+              ? [
+                  {
+                    type: "text" as const,
+                    text: stableText,
+                    cache_control: { type: "ephemeral" as const },
+                  },
+                ]
+              : []),
+            { type: "text" as const, text: volatileText },
+          ],
+        },
+      ],
     });
 
     rawOutput = response.content
