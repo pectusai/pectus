@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createServerClient } from "@pectus/supabase";
+import { requireUser } from "@/lib/auth";
 import {
   activateApp,
   deactivateApp,
@@ -42,6 +43,7 @@ function normalizeMountSlug(siteShape: string, raw: string): string {
 }
 
 export async function saveContentHubConfig(formData: FormData) {
+  await requireUser();
   const workspaceId = String(formData.get("workspace_id") ?? "").trim();
   const siteShape = String(formData.get("site_shape") ?? "greenfield");
   const mountSlugRaw = String(formData.get("mount_slug") ?? "/");
@@ -81,12 +83,15 @@ export async function saveContentHubConfig(formData: FormData) {
     .from("workspaces")
     .select("code")
     .eq("id", workspaceId)
-    .single();
+    .maybeSingle();
 
   revalidatePath("/apps");
   revalidatePath(`/apps/content-hub`);
-  revalidatePath(`/workspaces/${ws?.code}/dashboard`);
-  redirect(`/workspaces/${ws?.code}/dashboard`);
+  if (ws?.code) {
+    revalidatePath(`/workspaces/${ws.code}/dashboard`);
+    redirect(`/workspaces/${ws.code}/dashboard`);
+  }
+  redirect(`/apps/content-hub`);
 }
 
 // ---------------------------------------------------------------------------
@@ -111,6 +116,7 @@ export async function saveGoogleServiceAccount(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  await requireUser();
   const file = formData.get("service_account_file");
   const pasted = String(formData.get("service_account_json") ?? "");
   let raw = pasted;
@@ -146,6 +152,7 @@ export async function saveGoogleServiceAccount(
 }
 
 export async function clearGoogleServiceAccount() {
+  await requireUser();
   const supabase = await createServerClient();
   await supabase
     .from("integrations")
@@ -174,6 +181,7 @@ export async function saveGa4(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  await requireUser();
   const propertyId = String(formData.get("ga4_property_id") ?? "").trim();
   if (!/^\d+$/u.test(propertyId)) {
     return {
@@ -214,6 +222,7 @@ export async function saveGa4(
 }
 
 export async function testGa4Action(formData: FormData) {
+  await requireUser();
   const propertyId = String(formData.get("ga4_property_id") ?? "").trim();
   if (!/^\d+$/u.test(propertyId)) {
     throw new Error("Enter a numeric GA4 property ID first.");
@@ -253,6 +262,7 @@ export async function saveGsc(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  await requireUser();
   let siteUrl: string;
   try {
     siteUrl = validateGscSite(String(formData.get("gsc_site_url") ?? ""));
@@ -298,6 +308,7 @@ export async function saveGsc(
 }
 
 export async function testGscAction(formData: FormData) {
+  await requireUser();
   const siteUrl = validateGscSite(String(formData.get("gsc_site_url") ?? ""));
   const integration = await loadIntegration();
   if (!integration?.service_account_json) {
@@ -337,6 +348,7 @@ function humanizeGoogleError(
 // ---------------------------------------------------------------------------
 
 export async function deactivateAppAction(formData: FormData) {
+  await requireUser();
   const name = String(formData.get("app_name") ?? "");
   if (!name) return;
   await deactivateApp(name);
