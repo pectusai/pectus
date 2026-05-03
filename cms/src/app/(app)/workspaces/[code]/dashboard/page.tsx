@@ -1,5 +1,6 @@
 import { createServerClient } from "@pectus/supabase";
 import { getWorkspaceByCode } from "@/lib/workspace";
+import { isAppActive } from "@/lib/apps";
 import { RunAnalysisButton } from "./RunAnalysisButton";
 import { RefreshInsightsButton } from "./RefreshInsightsButton";
 import { SetupChecklist, type ChecklistItem } from "./SetupChecklist";
@@ -96,6 +97,7 @@ export default async function DashboardPage({
   const keywordsDone = (keywordCount ?? 0) > 0;
   const analysisDone = (analysisCount ?? 0) > 0;
   const brandDone = !!(brand?.name && (brand.name as string).trim().length > 0);
+  const contentHubActive = await isAppActive("content-hub");
 
   const checklist: ChecklistItem[] = [
     {
@@ -108,15 +110,28 @@ export default async function DashboardPage({
       cta: "Open Brand page",
     },
     {
-      id: "articles",
-      title: "Import your existing content from your sitemap",
-      description: websiteUrl
-        ? `Pulls your existing pages into Pectus so it knows what you've already written. Find your sitemap link in ${robotsTxtUrl} (look for the line starting with "Sitemap:").`
-        : "Pulls your existing pages into Pectus so it knows what you've already written. Find your sitemap link in your-site.com/robots.txt (look for the line starting with \"Sitemap:\"). Set your website URL on the Brand page first if it's blank.",
-      done: articlesDone,
-      href: `/workspaces/${code}/articles`,
-      cta: "Open Articles page",
+      id: "content-hub",
+      title: "Activate Content Hub",
+      description:
+        "Content Hub is the bundled app that turns your articles and pages into a static public site. Activating it turns on the Pages and Articles tabs for this workspace and unlocks the Publish flow.",
+      done: contentHubActive,
+      href: "/apps/content-hub/activate",
+      cta: contentHubActive ? "Re-configure for this workspace" : "Open the activation wizard",
     },
+    ...(contentHubActive
+      ? [
+          {
+            id: "articles",
+            title: "Import your existing content from your sitemap",
+            description: websiteUrl
+              ? `Pulls your existing pages into Pectus so it knows what you've already written. Find your sitemap link in ${robotsTxtUrl} (look for the line starting with "Sitemap:").`
+              : "Pulls your existing pages into Pectus so it knows what you've already written. Find your sitemap link in your-site.com/robots.txt (look for the line starting with \"Sitemap:\"). Set your website URL on the Brand page first if it's blank.",
+            done: articlesDone,
+            href: `/workspaces/${code}/articles`,
+            cta: "Open Articles page",
+          } satisfies ChecklistItem,
+        ]
+      : []),
     {
       id: "keywords",
       title: "Add or refresh seed keywords",
