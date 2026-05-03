@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.7 — Audit follow-up (auth, prompt caching, sidebar polish)
+
+- Server actions in `cms/src/app/(app)/apps/[name]/actions.ts` now call `requireUser()` before mutating state. Previously RLS was the only line of defence; the middleware only refreshes Supabase cookies.
+- `saveContentHubConfig` switched from `.single()` to `.maybeSingle()` with a fallback redirect to `/apps/content-hub` so a missing workspace row no longer lands on `/workspaces/undefined/dashboard`.
+- Skill runner uses Anthropic prompt caching for stable input layers (BRAND, ICP, KNOWLEDGE INSIGHTS) and the system prompt. Successive runs in a 5-minute window read cached input tokens for the static layers instead of re-paying. Applies to both the structured (tool_use) and text-mode call paths.
+- Sidebar groups no longer flash open on first paint when the user previously closed them. The wrapper hides itself until the localStorage read finishes, then renders in its final state.
+- Tooltips added to sidebar group labels (Content Hub, Settings), the workspace header `code · locale` line, the Content Hub activate radios (Brand new site / Existing site), and the Mount slug + GitHub repo fields.
+- New shared `cms/src/app/components/InfoDot.tsx` lifted from `BrandForm.tsx`. All "?" affordances now reach for the same component.
+- Two new install FAQ entries on pectus.ai: `ga4-service-account-not-recognized.md` (propagation delay workaround via the GA4 Admin API + Search Console domain property) and `google-service-account-key-download.md` (where to find the JSON key in Cloud Console, what fields to expect).
+
 ## v0.3.5 — pectus.ai polish, identifier scrub
 
 - pectus.md install step 11 wording matches the actual `/apps/content-hub` UI ("Click the content-hub card → fill the settings form → Save and activate Content Hub").
