@@ -1,5 +1,32 @@
 # Changelog
 
+## v0.3.5 — pectus.ai polish, identifier scrub
+
+- pectus.md install step 11 wording matches the actual `/apps/content-hub` UI ("Click the content-hub card → fill the settings form → Save and activate Content Hub").
+- Scrubbed maintainer-specific identifiers (`jesperastrom` → `acme-corp` / `your-brand`) from all user-facing examples.
+- Brand save no longer fails on partial unique index.
+- pectus.ai docs reorg: three top-level setup walkthroughs (`/docs/setup-anthropic-account`, `/docs/setup-supabase-account`, `/docs/setup-service-account`); install.md first in "Start here" followed by the three setups; Concepts moved to "Using Pectus".
+
+## v0.3.4 — Workspace sidebar nav
+
+- New left sidebar in workspace routes lists Dashboard + per-active-app groups (Content Hub when activated, with Pages / Articles / Site URL / Redirects) + Settings.
+- Bare `/workspaces/<code>` redirects to `/dashboard`.
+
+## v0.3.3 — Inline errors + Google API guidance
+
+- Skill / app run errors render inline with actionable next steps.
+- GA4 / GSC error paths surface Google-API-specific guidance instead of generic stack traces.
+
+## v0.3.2 — GA4/GSC visual polish, JSON upload
+
+- Per-app settings pages get visual polish.
+- JSON file upload for the Google service-account credential (the long path through env vars stays available).
+
+## v0.3.1 — Per-app settings UI
+
+- Real per-app settings UI under `/apps/<name>` (Test connection, config form, status badge).
+- Detect missing migration `0006_activated_apps.sql` and surface an inline SQL banner pointing the user at `connectors/supabase/migrations/0006_activated_apps.sql` to run by hand.
+
 ## v0.3.0 — Apps as plugins (Phase 1)
 
 The CMS becomes a shell. Apps register their own surfaces. Phase 1 ships
