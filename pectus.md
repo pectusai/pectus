@@ -116,7 +116,7 @@ Three services are required to boot Pectus. Two more are optional. Walk the user
 - **Google Cloud** — https://console.cloud.google.com. This unlocks Google Analytics and Google Search Console data. There are four sub-steps inside the Google Cloud console; walk the user through them one at a time:
   1. Create a new project (top bar dropdown → "New Project"). Any name is fine.
   2. Enable two APIs: search for "Search Console API" → click Enable, then "Google Analytics Data API" → click Enable.
-  3. Create an OAuth 2.0 client: APIs & Services → Credentials → "Create Credentials" → OAuth client ID → "Web application". Add `http://localhost:3000/auth/callback` as an authorized redirect URI.
+  3. Create an OAuth 2.0 client: APIs & Services → Credentials → "Create Credentials" → OAuth client ID → "Web application". Add `http://localhost:3000/auth/callback` as an authorized redirect URI. (Only `localhost` goes here. Don't add the user's public site domain. The OAuth handshake runs between Pectus on their laptop and Google. The public site is downstream and never participates in this flow.)
   4. Copy the client ID and client secret. Paste both here.
 
 **Optional (skippable)**
