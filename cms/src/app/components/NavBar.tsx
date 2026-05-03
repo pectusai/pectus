@@ -28,6 +28,7 @@ export async function NavBar() {
         <nav className="pectus-nav-links">
           <Link href="/workspaces">Workspaces</Link>
           <Link href="/brand">Brand</Link>
+          <Link href="/apps">Apps</Link>
           <Link href="/reviews">Reviews</Link>
           {isAdmin ? <Link href="/admin">Admin</Link> : null}
         </nav>
