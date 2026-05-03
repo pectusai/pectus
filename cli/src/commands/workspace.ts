@@ -116,12 +116,12 @@ export async function create(): Promise<void> {
 
   const repoString = await text({
     message:
-      "Content-hub GitHub repo (owner/name) — leave blank to set later in Workspace Settings",
-    placeholder: "your-org/site",
+      "GitHub repo where Pectus will commit its pages. Format: 'your-github-username/repo-name' (e.g. 'acme/acme-content'). Create a NEW empty repo on github.com for this — don't reuse your existing site's repo. Leave blank to set later in Workspace Settings.",
+    placeholder: "your-username/your-repo-name",
     validate(v) {
       if (!v || !v.trim()) return undefined;
       if (!/^[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+$/u.test(v.trim())) {
-        return "Use the form 'owner/name'.";
+        return "Use the form 'username/repo-name'. Example: jesperastrom/jesperastrom-pectus.";
       }
       return undefined;
     },

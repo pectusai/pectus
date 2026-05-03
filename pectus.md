@@ -276,7 +276,9 @@ A workspace is one market or audience segment. If the user only sells in one cou
     - **Greenfield**: Pectus runs the whole site. The hub mounts at `/`. Use this for new sites.
     - **Coexist**: Pectus pages live under a sub-path (default `/insights/`). Use this when the user already has a site and just wants to add a content section.
     The user can change this later in the CMS at Workspace Settings → Site URL.
-5. **Content-hub GitHub repo** — `owner/name` of the repo where Publish will commit pages (e.g. `acme/acme-blog`). Optional at this step; they can fill it in later via Workspace Settings.
+5. **Content-hub GitHub repo** — the repo where Pectus will commit the pages it generates. Format: `<github-username>/<repo-name>` (e.g. `acme/acme-content`). The user should create a new empty repo on github.com for this *before* answering this prompt; tell them to go to github.com → New repository → name it (something like `<their-brand>-pectus`) → don't add README/license/gitignore → click Create. They can leave this blank now and set it later in Workspace Settings.
+
+   **Important if the user already has a website on Vercel + GitHub.** If they want Pectus to replace their existing site (most common scenario), tell them: don't reuse the existing site's repo. Use a fresh empty repo. After install, they'll switch their Vercel project's git source to the new repo. Full details at https://pectus.ai/docs/faq/install/replace-or-add-to-existing-site. If they ask why not reuse: because Pectus commits its own Astro app structure into the repo, which would replace whatever's already there. A new repo keeps the cutover clean and the rollback simple.
 6. **Seed keywords** — 5 to 10 short phrases the workspace plans content around when there's no Search Console traffic yet (e.g. "best dtc skincare, retinol myths, sensitive skin routine"). Required for greenfield, optional for coexist. The dashboard's first analysis uses these as the starting topic spine.
 
 The command creates the workspace row, sets a default review policy, and saves the seed keywords. The dashboard opens at `http://localhost:3000/workspaces/<code>`.
