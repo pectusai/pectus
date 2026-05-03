@@ -11,13 +11,22 @@ type Props = {
   initialNotes: string;
 };
 
-const EMPTY_PERSONA: Persona = {
+type PersonaForm = {
+  name: string;
+  role: string;
+  industry: string;
+  company_size: string;
+  challengesRaw: string;
+  goalsRaw: string;
+};
+
+const EMPTY_PERSONA_FORM: PersonaForm = {
   name: "",
   role: "",
   industry: "",
   company_size: "",
-  challenges: [],
-  goals: [],
+  challengesRaw: "",
+  goalsRaw: "",
 };
 
 function csvToList(s: string): string[] {
@@ -27,14 +36,38 @@ function csvToList(s: string): string[] {
     .filter(Boolean);
 }
 
+function personaToForm(p: Persona): PersonaForm {
+  return {
+    name: p.name ?? "",
+    role: p.role ?? "",
+    industry: p.industry ?? "",
+    company_size: p.company_size ?? "",
+    challengesRaw: (p.challenges ?? []).join("\n"),
+    goalsRaw: (p.goals ?? []).join("\n"),
+  };
+}
+
+function formToPersona(p: PersonaForm): Persona {
+  return {
+    name: p.name,
+    role: p.role,
+    industry: p.industry,
+    company_size: p.company_size,
+    challenges: csvToList(p.challengesRaw),
+    goals: csvToList(p.goalsRaw),
+  };
+}
+
 export function IcpEditor({
   code,
   initialPersonas,
   initialPainpoints,
   initialNotes,
 }: Props) {
-  const [personas, setPersonas] = useState<Persona[]>(
-    initialPersonas.length > 0 ? initialPersonas : [EMPTY_PERSONA],
+  const [personas, setPersonas] = useState<PersonaForm[]>(
+    initialPersonas.length > 0
+      ? initialPersonas.map(personaToForm)
+      : [EMPTY_PERSONA_FORM],
   );
   const [painpoints, setPainpoints] = useState<Painpoint[]>(
     initialPainpoints.length > 0
@@ -45,8 +78,8 @@ export function IcpEditor({
 
   const updatePersona = (
     index: number,
-    field: keyof Persona,
-    value: string | string[],
+    field: keyof PersonaForm,
+    value: string,
   ) =>
     setPersonas((prev) =>
       prev.map((p, i) => (i === index ? { ...p, [field]: value } : p)),
@@ -68,9 +101,9 @@ export function IcpEditor({
         type="hidden"
         name="personas"
         value={JSON.stringify(
-          personas.filter(
-            (p) => p.name || p.role || p.industry || p.company_size,
-          ),
+          personas
+            .filter((p) => p.name || p.role || p.industry || p.company_size)
+            .map(formToPersona),
         )}
       />
       <input
@@ -87,7 +120,7 @@ export function IcpEditor({
           <h2 className="text-lg font-semibold">Personas</h2>
           <button
             type="button"
-            onClick={() => setPersonas((prev) => [...prev, EMPTY_PERSONA])}
+            onClick={() => setPersonas((prev) => [...prev, EMPTY_PERSONA_FORM])}
             className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium hover:bg-zinc-50"
           >
             + Add persona
@@ -155,9 +188,9 @@ export function IcpEditor({
               </div>
               <Field label="Challenges (comma or newline separated)">
                 <textarea
-                  value={p.challenges?.join("\n") ?? ""}
+                  value={p.challengesRaw}
                   onChange={(e) =>
-                    updatePersona(i, "challenges", csvToList(e.target.value))
+                    updatePersona(i, "challengesRaw", e.target.value)
                   }
                   rows={3}
                   placeholder="What goes wrong, what they get stuck on."
@@ -166,9 +199,9 @@ export function IcpEditor({
               </Field>
               <Field label="Goals (comma or newline separated)">
                 <textarea
-                  value={p.goals?.join("\n") ?? ""}
+                  value={p.goalsRaw}
                   onChange={(e) =>
-                    updatePersona(i, "goals", csvToList(e.target.value))
+                    updatePersona(i, "goalsRaw", e.target.value)
                   }
                   rows={3}
                   placeholder="What they're trying to make true this quarter."
