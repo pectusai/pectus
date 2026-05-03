@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Pectus command-line tool: install, connect services, run skills, update",
+  "type": "module",
   "bin": {
     "pectus": "./bin/pectus.js"
   },
