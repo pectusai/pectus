@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { listApps, type AppListing } from "@/lib/apps";
+import { MigrationNeededBanner } from "./MigrationNeededBanner";
 
 const APP_TOOLTIPS: Record<string, string> = {
   inbound:
@@ -14,7 +15,7 @@ const APP_TOOLTIPS: Record<string, string> = {
 };
 
 export default async function AppsPage() {
-  const apps = await listApps();
+  const { apps, schemaMissing } = await listApps();
   const sorted = [...apps].sort((a, b) => {
     if (a.activated !== b.activated) return a.activated ? -1 : 1;
     return a.name.localeCompare(b.name);
@@ -31,10 +32,18 @@ export default async function AppsPage() {
             activates it.
           </p>
         </div>
-        <span className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs text-zinc-600">
-          {sorted.filter((a) => a.activated).length} of {sorted.length} active
-        </span>
+        {!schemaMissing ? (
+          <span className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs text-zinc-600">
+            {sorted.filter((a) => a.activated).length} of {sorted.length} active
+          </span>
+        ) : null}
       </header>
+
+      {schemaMissing ? (
+        <div className="mb-6">
+          <MigrationNeededBanner />
+        </div>
+      ) : null}
 
       <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {sorted.map((app) => (

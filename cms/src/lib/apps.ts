@@ -68,12 +68,20 @@ export async function listAppManifests(): Promise<AppManifest[]> {
   return manifests.filter((m): m is AppManifest => m !== null);
 }
 
-export async function listApps(): Promise<AppListing[]> {
+export type ListAppsResult = {
+  apps: AppListing[];
+  schemaMissing: boolean;
+};
+
+export async function listApps(): Promise<ListAppsResult> {
   const supabase = await createServerClient();
-  const [manifests, { data: rows }] = await Promise.all([
+  const [manifests, { data: rows, error }] = await Promise.all([
     listAppManifests(),
     supabase.from("activated_apps").select("app_name, activated_at, status"),
   ]);
+
+  const schemaMissing = isMissingTableError(error);
+
   const byName = new Map(
     (rows ?? []).map((r) => [
       r.app_name as string,
@@ -83,7 +91,7 @@ export async function listApps(): Promise<AppListing[]> {
       },
     ]),
   );
-  return manifests.map((m) => {
+  const apps = manifests.map((m) => {
     const row = byName.get(m.name);
     return {
       ...m,
@@ -92,6 +100,20 @@ export async function listApps(): Promise<AppListing[]> {
       status: row?.status ?? null,
     };
   });
+
+  return { apps, schemaMissing };
+}
+
+function isMissingTableError(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const e = err as { code?: string; message?: string };
+  if (e.code === "42P01") return true;
+  if (e.code === "PGRST205") return true;
+  if (typeof e.message === "string") {
+    if (/relation .*activated_apps.* does not exist/i.test(e.message)) return true;
+    if (/Could not find the table.*activated_apps/i.test(e.message)) return true;
+  }
+  return false;
 }
 
 export async function isAppActive(appName: string): Promise<boolean> {

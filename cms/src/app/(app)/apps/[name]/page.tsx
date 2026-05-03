@@ -17,7 +17,7 @@ export default async function AppDetailPage({
   params: Promise<{ name: string }>;
 }) {
   const { name } = await params;
-  const apps = await listApps();
+  const { apps } = await listApps();
   const app = apps.find((a) => a.name === name);
   if (!app) notFound();
 
