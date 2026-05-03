@@ -178,9 +178,15 @@ Wait for confirmation. If they paste an error, diagnose it. Most failures are an
 
 Still in plain words:
 
-> "Still in the Supabase dashboard, go to **Authentication** in the left sidebar, then **Users**, then **Add user → Create new user**. Pick the email and password you'll use to sign in to Pectus from now on. Password 12+ characters. Save both in your password manager now. Then tell me the email."
+> "Still in the Supabase dashboard, go to **Authentication** in the left sidebar, then **Users**, then **Add user → Create new user**. Pick the email and password you'll use to sign in to Pectus from now on. Password 12+ characters."
 
-Once they give you the email, remember it for step 9 (when they sign in to the CMS). You don't need their password.
+Wait until they confirm they've created the user. Then **don't move on yet**. Ask them this verbatim:
+
+> "Before we continue, save both of these somewhere you can recover them later (password manager, secure notes, etc.). I'll wait. The password specifically: I won't have it stored anywhere, neither will Pectus. The only way to log in to your CMS in step 9 is the password you just set, and the only way to recover a lost password is to reset it from the Supabase dashboard. Tell me 'saved' once you've put both in your password manager, and tell me the email so I can remember it for step 9."
+
+Wait for the explicit "saved" signal before advancing. Don't accept "ok" or "got it"; require the word that confirms the action was actually taken. This is one of the most-forgotten install steps and locks users out of their own CMS later.
+
+Once they say saved and give you the email, remember it for step 9. You don't need their password.
 
 ### 6d. Done
 
