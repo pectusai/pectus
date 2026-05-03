@@ -198,27 +198,15 @@ This step pulls in Search Console and Google Analytics data. There are two outsi
 
 This is a known Google quirk, not a Pectus bug. Even when the project ID is correct, the relevant APIs are enabled (Admin, Data, Search Console), and the email is copied directly from the service account's Details page, GA4 and Search Console will sometimes reject the email with "this user doesn't exist" for 30 to 60 minutes (occasionally longer). Incognito mode, waiting, and re-pasting often don't help. There's no good public explanation for it; it's just Google's principal-lookup edge cache being slow.
 
-If this happens, **don't lose the credentials the user already has**. Ask them for two things in the chat and save them yourself:
+If this happens, **don't block the install**. Tell the user something like:
 
-1. The full service account email (e.g. `pectus-reader@jesperastromcom.iam.gserviceaccount.com`).
-2. The absolute path to the JSON key file they downloaded (e.g. `/Users/<name>/Downloads/jesperastromcom-abc123.json`).
+> "Google's being weird about recognizing your service account. This happens; not your fault. The credentials you already have (the JSON key file and the email) are fine; Google just hasn't finished propagating them yet. We'll skip this step for now. When GA4 and Search Console finally accept the email (usually within an hour or two), come back and run `npx pectus connect google`. It'll prompt you to paste the JSON, ask which GA4 property and Search Console site to track, test both connections, and save everything. Until then, Pectus runs fine without Google data; the dashboard just marks suggestions as 'no traffic data'."
 
-Once you have both, write them into `.env.local`:
-
-```
-GOOGLE_SERVICE_ACCOUNT_EMAIL=<the email>
-GOOGLE_APPLICATION_CREDENTIALS=<the absolute path to the JSON file>
-```
-
-Then tell the user something like:
-
-> "Saved. Pectus has your service account ready. Whenever Google decides to accept the email in GA4 and Search Console (often resolves on its own within an hour or two), Pectus will start pulling data automatically. No need to redo this step. If it's still rejecting after a couple of hours, come back to this with `npx pectus connect google` and the existing credentials will be reused."
-
-Then **move on to step 8**. Don't block the rest of the install on Google's mood.
+Make sure the user has the JSON key file saved somewhere safe (note the path in your chat to them so they can find it later) and **move on to step 8**. Don't write Google credentials to `.env.local`; Pectus stores the service-account JSON in the Supabase `integrations` table via `npx pectus connect google`, not in env vars.
 
 ### When it works first try
 
-If GA4 and Search Console accept the email straight away (most users): run `npx pectus connect google`. The command picks up the email and key path from `.env.local`, asks which GSC site and which GA4 property to track, and tests both connections. If either test fails after the user confirms they added the email in both consoles, surface the error and stop. The most common cause is the user adding the service account in GA4 but not Search Console (or vice versa); have them double-check both.
+If GA4 and Search Console accept the email straight away (most users): run `npx pectus connect google`. It's interactive: it asks the user to paste the full service-account JSON, asks for a GA4 property ID and a Search Console site URL, then tests both connections live. If either test fails, surface the error and stop. The most common cause is the user adding the service account in GA4 but not Search Console (or vice versa); have them double-check both. On success the command writes the JSON, property ID, and site URL into the `integrations` table in Supabase.
 
 ## 8. Link Vercel and GitHub (optional)
 
@@ -230,6 +218,22 @@ npx pectus connect github
 Both are optional and can be done later. Skip Vercel if the user isn't ready to deploy a public hub yet. Skip GitHub if they don't have a content-hub repo set up — they can run `npx pectus connect github` from `~/pectus` any time later. The publish flow needs GitHub configured before pages can be committed; the rest of Pectus works fine without it.
 
 ## 9. Start the CMS
+
+### 9a. Verify `.env.local` before starting the dev server
+
+Before running `npm run dev`, confirm that `.env.local` has the values the CMS needs. The Next.js dev server reads env at startup; if env is missing or named wrong, the CMS crashes at first request with `Your project's URL and Key are required to create a Supabase client!` (or similar).
+
+Read `.env.example` at the install root. It is the canonical list of variable names. Then read `.env.local` and confirm:
+
+- All three Supabase entries exist with non-empty values and the **exact** names from `.env.example`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
+- `ANTHROPIC_API_KEY` exists with a value starting with `sk-ant-`.
+- `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET` exist if the user completed step 5's Google sub-steps. (They can be empty strings if the user is deferring all Google setup.)
+
+If any required Supabase or Anthropic value is missing, fix it before starting the dev server. Don't paraphrase variable names from memory; use the names exactly as they appear in `.env.example`.
+
+If a `npm run dev` is already running from earlier, tell the user to stop it (Ctrl-C in that terminal) before starting again. Next.js does not hot-reload `.env.local` changes; a stale dev server will keep using the env it had at boot.
+
+### 9b. Start the dev server
 
 ```
 npm run dev
