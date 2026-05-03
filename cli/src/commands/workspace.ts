@@ -36,10 +36,13 @@ export async function create(): Promise<void> {
   if (isCancel(name)) bail();
 
   const code = await text({
-    message: 'Code (e.g. "uk") — kebab-case, must be unique',
+    message:
+      'Short identifier for this workspace (e.g. "uk", "dtc-us", or "main" if you only have one market). Lowercase letters, digits, and hyphens only. Used in URLs.',
+    placeholder: "main",
     validate(v) {
       if (!v || !v.trim()) return "Required.";
-      if (!KEBAB.test(v.trim())) return "Use lowercase letters, digits, and hyphens.";
+      if (!KEBAB.test(v.trim()))
+        return "Use lowercase letters, digits, and hyphens. No spaces, no uppercase, no special characters.";
       return undefined;
     },
   });
@@ -61,11 +64,13 @@ export async function create(): Promise<void> {
   }
 
   const locale = await text({
-    message: 'Locale (e.g. "en-GB")',
+    message:
+      'Language and country code (e.g. "en-US" for American English, "en-GB" for British English, "sv-SE" for Swedish, "de-DE" for German). Two lowercase letters for the language, a dash, two uppercase letters for the country.',
     initialValue: "en-US",
     validate(v) {
       if (!v) return "Required.";
-      if (!/^[a-z]{2}(-[A-Z]{2})?$/u.test(v.trim())) return "Use BCP-47 like en-GB.";
+      if (!/^[a-z]{2}(-[A-Z]{2})?$/u.test(v.trim()))
+        return 'Format: lowercase language + "-" + uppercase country, e.g. en-US, en-GB, sv-SE.';
       return undefined;
     },
   });

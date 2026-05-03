@@ -269,9 +269,9 @@ cd <install path> && npx pectus workspace create
 
 A workspace is one market or audience segment. If the user only sells in one country, one workspace is enough. If they have separate sites for the UK, US, and Sweden, that's three workspaces. The wizard asks six questions:
 
-1. **Market name** — a human label, e.g. "United Kingdom" or "DTC US".
-2. **Code** — short kebab-case identifier, e.g. `uk` or `dtc-us`. Must be unique. Used in URLs.
-3. **Locale** — the BCP-47 locale, e.g. `en-GB`, `en-US`, `sv-SE`.
+1. **Market name** — a human label, e.g. "United Kingdom" or "DTC US". For single-market users, anything descriptive like "Main", "Primary", or the brand name works.
+2. **Code** — a short identifier for this workspace, used in URLs and as the workspace's handle. Lowercase letters, digits, and dashes only. Pick `uk` for the United Kingdom market, `dtc-us` for direct-to-consumer US. **For a single-market install (most common), `main` is the standard pick. The brand name (e.g. `jesperastrom`) also works.**
+3. **Locale** — language and country, e.g. `en-GB` for British English, `en-US` for American English, `sv-SE` for Swedish.
 4. **Site shape** — pick one:
     - **Greenfield**: Pectus runs the whole site. The hub mounts at `/`. Use this for new sites.
     - **Coexist**: Pectus pages live under a sub-path (default `/insights/`). Use this when the user already has a site and just wants to add a content section.
