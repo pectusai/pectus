@@ -1,7 +1,5 @@
-import Link from "next/link";
 import { getWorkspaceByCode } from "@/lib/workspace";
-import { isAppActive } from "@/lib/apps";
-import { WorkspaceNav } from "./WorkspaceNav";
+import { WorkspaceShell } from "./WorkspaceShell";
 
 export default async function WorkspaceLayout({
   params,
@@ -12,27 +10,6 @@ export default async function WorkspaceLayout({
 }) {
   const { code } = await params;
   const workspace = await getWorkspaceByCode(code);
-  const contentHubActive = await isAppActive("content-hub");
 
-  return (
-    <div className="mx-auto max-w-5xl px-6 py-8">
-      <div className="mb-6">
-        <Link
-          href={`/workspaces/${workspace.code}/dashboard`}
-          className="group inline-block"
-        >
-          <h1 className="text-2xl font-semibold tracking-tight group-hover:underline">
-            {workspace.name}
-          </h1>
-          <p className="text-xs uppercase tracking-widest text-zinc-500">
-            {workspace.code} · {workspace.locale}
-          </p>
-        </Link>
-      </div>
-
-      <WorkspaceNav code={workspace.code} contentHubActive={contentHubActive} />
-
-      {children}
-    </div>
-  );
+  return <WorkspaceShell workspace={workspace}>{children}</WorkspaceShell>;
 }
