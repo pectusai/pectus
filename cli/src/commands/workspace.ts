@@ -178,12 +178,15 @@ export async function create(): Promise<void> {
   const s = spinner();
   s.start("Creating workspace");
 
+  const localeStr = (locale as string).trim();
   const { data: created, error: insErr } = await supabase
     .from("workspaces")
     .insert({
       name: (name as string).trim(),
       code: codeStr,
-      locale: (locale as string).trim(),
+      locale: localeStr,
+      default_locale: localeStr,
+      enabled_locales: [localeStr],
       mount_slug: mountSlug,
       content_hub_repo: contentHubRepo,
     })
