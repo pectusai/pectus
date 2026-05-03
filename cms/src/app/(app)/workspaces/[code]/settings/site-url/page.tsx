@@ -30,7 +30,7 @@ export default async function SiteUrlSettingsPage({
         <label className="block text-sm">
           <span
             className="mb-1 block text-xs font-medium text-zinc-600"
-            title="The URL path Pectus pages live under. Use '/' for greenfield. Use '/insights/' or similar for coexist with an existing site. Trailing slash required."
+            title="The URL path Pectus pages live under. Use '/' if Pectus runs the whole site (brand new site). Use '/insights/' or similar if Pectus only adds a section to an existing site. Trailing slash required."
           >
             Mount slug
           </span>

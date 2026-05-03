@@ -97,17 +97,17 @@ export async function create(): Promise<void> {
   if (isCancel(locale)) bail();
 
   const siteShape = await select({
-    message: "Where will Pectus content live on this site?",
+    message: "What kind of site is this?",
     options: [
       {
         value: "greenfield",
-        label: "Greenfield — brand new site, Pectus pages live at the root",
-        hint: "mount slug = /",
+        label: "Brand new site — Pectus runs the whole site from the root",
+        hint: "pages live at /",
       },
       {
         value: "coexist",
-        label: "Coexist — there's an existing site, Pectus pages live under a sub-path",
-        hint: "mount slug like /insights/",
+        label: "Existing site — Pectus only adds a section to a site you already have",
+        hint: "pages live at /insights/ or similar",
       },
     ],
     initialValue: "greenfield",
@@ -152,10 +152,10 @@ export async function create(): Promise<void> {
 
   const seedHelp =
     siteShape === "greenfield"
-      ? "Greenfield workspaces have no GSC traffic data yet. Pectus uses these to plan a sitemap. 5–10 phrases, comma-separated."
-      : "Optional. Coexist sites usually have GSC data, but seeds are still useful as ICP-aligned anchors. 5–10 phrases, comma-separated, or leave blank.";
+      ? "Brand new sites have no Search Console traffic data yet. Pectus uses these to plan a sitemap. 5-10 phrases, comma-separated."
+      : "Optional. Existing sites usually have Search Console data, but seeds are still useful as ICP-aligned anchors. 5-10 phrases, comma-separated, or leave blank.";
   const seedKeywordsRaw = await text({
-    message: `Seed keywords (5–10) — ${seedHelp}`,
+    message: `Seed keywords (5-10) — ${seedHelp}`,
     placeholder:
       "observability for python, structured logging, distributed tracing",
     validate(v) {
@@ -164,7 +164,7 @@ export async function create(): Promise<void> {
         .map((s) => s.trim())
         .filter(Boolean);
       if (siteShape === "coexist" && parts.length === 0) return undefined;
-      if (parts.length === 0) return "At least one keyword for greenfield workspaces.";
+      if (parts.length === 0) return "At least one keyword for brand new sites.";
       if (parts.length > 10) return "Cap is 10. Pick the most representative.";
       return undefined;
     },

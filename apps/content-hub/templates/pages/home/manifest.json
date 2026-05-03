@@ -1,7 +1,7 @@
 {
   "name": "Home page",
   "purpose": "home",
-  "description": "Brand-forward home page: hero, three-card feature grid, testimonial, CTA. Best for greenfield sites where this is the front door.",
+  "description": "Brand-forward home page: hero, three-card feature grid, testimonial, CTA. Best for brand new sites where this is the front door.",
   "thumbnail": "thumbnail.png",
   "default_blocks": [
     {
