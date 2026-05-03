@@ -2,6 +2,7 @@ import { createServerClient } from "@pectus/supabase";
 import { getWorkspaceByCode } from "@/lib/workspace";
 import { RunAnalysisButton } from "./RunAnalysisButton";
 import { RefreshInsightsButton } from "./RefreshInsightsButton";
+import { SetupChecklist, type ChecklistItem } from "./SetupChecklist";
 
 function isoWeekStart(d = new Date()): string {
   const day = d.getUTCDay();
@@ -46,6 +47,10 @@ export default async function DashboardPage({
     { data: latest },
     { count: keywordCount },
     { count: articleCount },
+    { count: analysisCount },
+    { data: icp },
+    { data: googleIntegration },
+    { data: brand },
   ] = await Promise.all([
     supabase
       .from("weekly_analyses")
@@ -62,7 +67,90 @@ export default async function DashboardPage({
       .from("articles")
       .select("id", { count: "exact", head: true })
       .eq("workspace_id", workspace.id),
+    supabase
+      .from("weekly_analyses")
+      .select("id", { count: "exact", head: true })
+      .eq("workspace_id", workspace.id),
+    supabase
+      .from("icp_profiles")
+      .select("personas")
+      .eq("workspace_id", workspace.id)
+      .maybeSingle(),
+    supabase
+      .from("integrations")
+      .select("provider")
+      .eq("provider", "google")
+      .maybeSingle(),
+    supabase.from("brand_profile").select("website_url, name").maybeSingle(),
   ]);
+
+  const websiteUrl = (brand?.website_url as string | null) ?? "";
+  const robotsTxtUrl = websiteUrl
+    ? `${websiteUrl.replace(/\/$/, "")}/robots.txt`
+    : "your-site.com/robots.txt";
+
+  const personas = (icp?.personas as unknown[] | null) ?? [];
+  const icpDone = personas.length > 0;
+  const googleDone = !!googleIntegration;
+  const articlesDone = (articleCount ?? 0) > 0;
+  const keywordsDone = (keywordCount ?? 0) > 0;
+  const analysisDone = (analysisCount ?? 0) > 0;
+  const brandDone = !!(brand?.name && (brand.name as string).trim().length > 0);
+
+  const checklist: ChecklistItem[] = [
+    {
+      id: "brand",
+      title: "Fill in your brand profile",
+      description:
+        "Voice, colors, fonts, website URL. Every skill and app reads from this. If it's empty, your first content will sound generic.",
+      done: brandDone,
+      href: "/brand",
+      cta: "Open Brand page",
+    },
+    {
+      id: "articles",
+      title: "Import your existing content from your sitemap",
+      description: websiteUrl
+        ? `Pulls your existing pages into Pectus so it knows what you've already written. Find your sitemap link in ${robotsTxtUrl} (look for the line starting with "Sitemap:").`
+        : "Pulls your existing pages into Pectus so it knows what you've already written. Find your sitemap link in your-site.com/robots.txt (look for the line starting with \"Sitemap:\"). Set your website URL on the Brand page first if it's blank.",
+      done: articlesDone,
+      href: `/workspaces/${code}/articles`,
+      cta: "Open Articles page",
+    },
+    {
+      id: "keywords",
+      title: "Add or refresh seed keywords",
+      description:
+        "5 to 10 short phrases the workspace plans content around. Already populated from the install wizard, but you can refine them now.",
+      done: keywordsDone,
+      href: `/workspaces/${code}/keywords`,
+      cta: "Open Keywords page",
+    },
+    {
+      id: "icp",
+      title: "Describe your Ideal Customer Profile",
+      description:
+        "Personas, pain points, and notes about who you're writing for. The analysis skill uses this to score and rank suggestions.",
+      done: icpDone,
+      href: `/workspaces/${code}/icp`,
+      cta: "Open ICP page",
+    },
+    {
+      id: "google",
+      title: "Connect Google Analytics + Search Console",
+      description:
+        "Lets Pectus read your traffic data and see which content is actually performing. The first analysis works without this, but it's much sharper with real data.",
+      done: googleDone,
+      command: "cd <install path> && npx pectus connect google",
+    },
+    {
+      id: "analysis",
+      title: "Run your first weekly analysis",
+      description:
+        "Once the steps above are in good shape, click 'Run weekly analysis' at the top of this page. The output ranks what to write next by projected traffic.",
+      done: analysisDone,
+    },
+  ];
 
   const row = latest as LatestRow | null;
   const rawAnalysis =
@@ -90,6 +178,8 @@ export default async function DashboardPage({
           <RefreshInsightsButton code={code} />
         </div>
       </header>
+
+      <SetupChecklist items={checklist} workspaceCode={code} />
 
       <section>
         <div className="flex items-baseline justify-between">
