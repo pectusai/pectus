@@ -115,9 +115,9 @@ Three services are required to boot Pectus. Two more are optional. Walk the user
   1. In the dashboard, click **New Project**. Pick an organization, name the project (anything, e.g. `pectus-<brand-slug>`), pick a region close to them, and set a database password (12+ characters, into the password manager now).
   2. Wait around 2 minutes for the project to provision.
   3. Open **Project Settings → API**. Three values to copy and paste back to you, one at a time:
-     - **Project URL** (looks like `https://xyzabc.supabase.co`)
-     - **anon (public) key** (a long string starting with `eyJ...`)
-     - **service_role (secret) key** (also starts with `eyJ...`, keep this private)
+     - **Project URL** (looks like `https://xyzabc.supabase.co`). On the first page of the API settings.
+     - **anon (public) key** (a long string starting with `eyJ...`). Important: in the current Supabase UI the first page of API settings shows new "publishable" / "secret" keys that Pectus does not use. The `anon` and `service_role` keys live on a second tab (look for "Legacy API keys", "JWT-based keys", or similar). Tell the user explicitly: do not paste the first two keys they see on the landing tab; switch tabs first and look for the keys named `anon` and `service_role`.
+     - **service_role (secret) key** (also starts with `eyJ...`, on the same second tab as `anon`, keep this one private).
   Write all three into `.env.local` as `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`. Pectus never asks for the user's Supabase account-level access token; project setup stays on their side.
 - **Anthropic** — https://console.anthropic.com. This is what powers Claude inside Pectus. After signup, click "API keys" in the sidebar, then "Create key". The value starts with `sk-ant-`. Paste it here.
 - **Google Cloud** — https://console.cloud.google.com. This unlocks Google Analytics and Google Search Console data. There are four sub-steps inside the Google Cloud console; walk the user through them one at a time:
