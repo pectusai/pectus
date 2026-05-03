@@ -22,11 +22,17 @@ export default async function AdminWorkspacesPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Workspaces</h1>
         <p className="mt-1 text-sm text-zinc-600">
-          Create new workspaces from the CLI:
+          Create new workspaces from the terminal:
         </p>
         <pre className="mt-2 inline-block rounded bg-zinc-100 px-3 py-2 text-xs text-zinc-700">
-          npx pectus workspace create &lt;code&gt; "Display name"
+          npx pectus workspace create
         </pre>
+        <p className="mt-2 text-xs text-zinc-500">
+          The command is interactive. It will ask you for the market name, a
+          short code (like <code className="rounded bg-zinc-100 px-1">uk</code>{" "}
+          or <code className="rounded bg-zinc-100 px-1">dtc-us</code>), locale,
+          site shape, content-hub repo, and seed keywords.
+        </p>
       </div>
 
       <section className="space-y-3">

@@ -29,10 +29,17 @@ export default async function WorkspacesListPage() {
 
       {!workspaces || workspaces.length === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 p-10 text-center text-sm text-zinc-500">
-          No workspaces yet. Create your first from the CLI:
+          <p>No workspaces yet. Create your first from the terminal:</p>
           <pre className="mt-3 inline-block rounded bg-zinc-100 px-3 py-2 text-left text-xs text-zinc-700">
-            npx pectus workspace create &lt;code&gt; "Display name"
+            npx pectus workspace create
           </pre>
+          <p className="mt-3 text-xs text-zinc-500">
+            The command is interactive. It will ask you for the market name, a
+            short code (like <code className="rounded bg-zinc-100 px-1">uk</code>{" "}
+            or <code className="rounded bg-zinc-100 px-1">dtc-us</code>), the
+            locale, site shape, content-hub repo, and seed keywords. Run it from
+            the install root.
+          </p>
         </div>
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2">
