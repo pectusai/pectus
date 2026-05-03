@@ -47,13 +47,23 @@ git remote get-url upstream || git remote add upstream https://github.com/pectus
 
 Move on to step 3.
 
-Otherwise, clone fresh. Default location is `~/pectus`. Confirm the path with the user before cloning, and explain that the folder name at the end of the line is theirs to change.
+Otherwise, clone fresh. Before suggesting a path, check whether the user already has a Pectus install elsewhere on the machine. Run:
+
+```
+ls ~/pectus 2>/dev/null && ls ~/pectus/cms 2>/dev/null
+```
+
+If `~/pectus` exists and contains `cms/`, the user already has a Pectus install for a different brand. One Pectus install holds one brand's data, so this new install needs its own folder. Ask the user for a short brand slug (e.g. `acme`, `jesperastrom`) and use it as the folder name: `~/pectus-<slug>`. Remember the path you land on; later steps reference it.
+
+If `~/pectus` is empty or doesn't exist, default to `~/pectus`. Either way, confirm the chosen path with the user and explain the folder name at the end of the line is theirs to change.
 
 ```
 git clone https://github.com/pectusai/pectus.git ~/pectus
 cd ~/pectus
 git remote add upstream https://github.com/pectusai/pectus.git
 ```
+
+(Substitute the chosen path for `~/pectus` in all three lines if the user picked something else.)
 
 If the target path already exists but is not a Pectus clone (no `apps/`, `cms/`, etc.), ask the user how to proceed. Do not overwrite.
 
@@ -109,7 +119,7 @@ npx pectus connect supabase
 ```
 
 This is the database setup. Using the access token from step 5, this command:
-- Creates a new Supabase project (or attaches to an existing one — ask the user which they want).
+- Creates a new Supabase project (or attaches to an existing one — ask the user which they want). If this is the user's second-or-later Pectus install on the machine, create a *new* Supabase project for this brand. Each Pectus install needs its own database so brands stay isolated.
 - Runs the migration files in `connectors/supabase/migrations/`. There are five today (numbered `0001_initial.sql` through `0005_brand_advanced_fields.sql`); each one creates or updates database tables.
 - Asks for the email and password for the first admin user. This is the login the user will use in step 10. Tell them to put it in their password manager now.
 - Writes four values to `.env.local`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_PROJECT_REF`.
@@ -145,6 +155,14 @@ npm run dev
 ```
 
 This boots the Next.js admin app at `http://localhost:3000`. The user signs in with the admin email and password they set in step 6. They'll land on an empty Workspaces view — that's expected; they create their first workspace in the next step.
+
+If another Pectus is already running on port 3000 (the user has a different brand's install open), start this one on a different port:
+
+```
+PORT=3001 npm run dev
+```
+
+Then load `http://localhost:3001`. Tell the user which port their CMS is on so they can re-open the right one later.
 
 ## 10. Create the first workspace
 
@@ -194,8 +212,8 @@ Both doors can run in parallel. The choice is just "what do you want to try firs
 
 Then, regardless of which door they pick, give them the operational basics in one tight list:
 
-- **Re-open Pectus**: terminal → `cd ~/pectus` → `npm run dev` → sign in with the email and password from step 6.
-- **Add your own data**: drop files (CSVs, BigQuery exports, audience research PDFs, anything) into `~/pectus/knowledge/raw/`, then `npx pectus knowledge digest`. The digest turns the pile into structured insights every other skill consumes.
+- **Re-open Pectus**: terminal → `cd <install path from step 2>` → `npm run dev` (or `PORT=3001 npm run dev` if you assigned a non-default port in step 9) → sign in with the email and password from step 6. If the user has multiple brands' Pectus installs on the machine, remind them which folder + port belongs to this brand.
+- **Add your own data**: drop files (CSVs, BigQuery exports, audience research PDFs, anything) into `<install path>/knowledge/raw/`, then `npx pectus knowledge digest`. The digest turns the pile into structured insights every other skill consumes.
 - **Pull updates**: `npx pectus update`. Rebases on upstream and runs new migrations. The skills and apps they've edited or written are not overwritten.
 - **Something broke?**: `npx pectus doctor` checks env vars, reachability, config. Most "it broke" reports are a stale token; doctor catches that first.
 
