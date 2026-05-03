@@ -20,6 +20,26 @@ function bail(msg = "Cancelled."): never {
 
 const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/u;
 
+// Accepts pasted GitHub URLs in any of:
+//   github.com/owner/repo
+//   https://github.com/owner/repo
+//   http://github.com/owner/repo
+//   github.com/owner/repo.git
+//   https://github.com/owner/repo.git
+//   git@github.com:owner/repo.git
+//   owner/repo (raw, for backwards compat)
+// Returns "owner/repo" or null if it can't parse.
+function parseGithubRepo(input: string): string | null {
+  const t = input.trim().replace(/\.git$/u, "").replace(/\/$/u, "");
+  const sshMatch = t.match(/^git@github\.com:([A-Za-z0-9._-]+)\/([A-Za-z0-9._-]+)$/u);
+  if (sshMatch) return `${sshMatch[1]}/${sshMatch[2]}`;
+  const httpMatch = t.match(/^(?:https?:\/\/)?(?:www\.)?github\.com\/([A-Za-z0-9._-]+)\/([A-Za-z0-9._-]+)$/u);
+  if (httpMatch) return `${httpMatch[1]}/${httpMatch[2]}`;
+  const rawMatch = t.match(/^([A-Za-z0-9._-]+)\/([A-Za-z0-9._-]+)$/u);
+  if (rawMatch) return `${rawMatch[1]}/${rawMatch[2]}`;
+  return null;
+}
+
 export async function create(): Promise<void> {
   loadEnv();
   intro(kleur.bold().bgMagenta().white(" Pectus / Workspace create "));
@@ -116,18 +136,19 @@ export async function create(): Promise<void> {
 
   const repoString = await text({
     message:
-      "GitHub repo where Pectus will commit its pages. Format: 'your-github-username/repo-name' (e.g. 'acme/acme-content'). Create a NEW empty repo on github.com for this — don't reuse your existing site's repo. Leave blank to set later in Workspace Settings.",
-    placeholder: "your-username/your-repo-name",
+      "Create a NEW empty repository on github.com (don't reuse your existing site's repo), then paste the link to it here. Looks like 'github.com/yourname/yourrepo' or 'https://github.com/yourname/yourrepo'. Leave blank to set later in Workspace Settings.",
+    placeholder: "github.com/yourname/yourrepo",
     validate(v) {
       if (!v || !v.trim()) return undefined;
-      if (!/^[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+$/u.test(v.trim())) {
-        return "Use the form 'username/repo-name'. Example: jesperastrom/jesperastrom-pectus.";
+      if (!parseGithubRepo(v.trim())) {
+        return "Paste the GitHub URL. Example: github.com/jesperastrom/jesperastrom-pectus.";
       }
       return undefined;
     },
   });
   if (isCancel(repoString)) bail();
-  const contentHubRepo = (repoString as string).trim() || null;
+  const rawRepo = (repoString as string).trim();
+  const contentHubRepo = rawRepo ? parseGithubRepo(rawRepo) : null;
 
   const seedHelp =
     siteShape === "greenfield"
