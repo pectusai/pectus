@@ -33,3 +33,19 @@ npx pectus <command>
 ```
 
 This uses the workspace-resolved CLI rather than a globally installed one — keeps the user's CLI version in lockstep with their fork's expected version.
+
+## Updating
+
+`pectus update` fetches `upstream/main`, rebases your install onto it, and runs `npm install`. It auto-stashes any modified tracked files before the rebase and pops them back after, so a dirty working tree no longer blocks an update. If the pop hits real conflicts (you and upstream both edited the same lines), the stash is preserved and the conflicts are surfaced in `git status` for you to resolve.
+
+If `npx pectus update` itself fails to start — typically a Node module-loader error from a pre-v0.2.1 install — bypass the CLI and rebase by hand from the install root:
+
+```
+git stash push -m "pre-update"
+git fetch upstream main
+git rebase upstream/main
+npm install
+git stash pop
+```
+
+That's the same sequence `pectus update` runs internally; doing it by hand bootstraps you to a version where the CLI can update itself.

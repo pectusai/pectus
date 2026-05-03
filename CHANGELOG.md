@@ -131,6 +131,10 @@ The original "greenfield seed mode" (binary mode toggle that swapped weekly-anal
 - `weekly-analysis` SKILL.md updated: frontmatter declares `insights` as a primary input alongside existing raw inputs (transitional). Prompt body instructs Claude to treat insights as primary signal, raw data as supplementary.
 - Pages actions (`planPillar`, `planFullSite`) call `runInterpretationsIfStale` before invoking plan-sitemap so the skill reads fresh insights.
 
+**Known issues:**
+
+- `npx pectus update` cannot bootstrap itself when the local CLI is broken. If `cli/package.json` is missing the `"type": "module"` field (which earlier v0.2 installs shipped without), Node refuses to load `cli/bin/pectus.js` and the updater never runs. Adding the field locally then blocks the rebase because `cli/package.json` differs from upstream — chicken and egg. **Workaround until the next release:** stash your local edits and run the rebase by hand from the install root: `git stash push -m "pre-update" && git fetch upstream main && git rebase upstream/main && npm install && git stash pop`. The fix in `cli/src/commands/update.ts` adds an auto-stash/pop around the rebase, so once you're past this version the updater handles dirty trees on its own.
+
 **What's still open in v0.2:**
 
 - PR12 finish: Astro `_preview/[draftId]` route in content-hub. Hybrid output config. Iframe in builder.
