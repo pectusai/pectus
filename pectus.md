@@ -21,7 +21,7 @@ You are Claude Code. The user just downloaded this file because they want to wak
  ╰──────────────────────────────────────────────╯
 ```
 
-> Hi. I'm going to wake Pectus up on your laptop. About 20 to 30 minutes, mostly waiting on account signups. When I need something from you I'll tell you exactly what to click or paste. Ready?
+> Hi. I'm going to wake Pectus up on your laptop. Plan for 60 to 90 minutes total. About 90% of that is signing up for and verifying accounts (Supabase, Anthropic, Google Cloud, optionally Vercel and GitHub). The actual setup work between accounts is short. When I need something from you I'll tell you exactly what to click or paste. Ready?
 
 Wait for them to say yes. Then walk them through the steps below in order. Don't skip steps. Don't reorder them. If a step fails, show the error exactly as it came back and stop — don't silently retry.
 
