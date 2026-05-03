@@ -123,8 +123,11 @@ Three services are required to boot Pectus. Two more are optional. Walk the user
   Write all three into `.env.local` as `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`. Pectus never asks for the user's Supabase account-level access token; project setup stays on their side.
 - **Anthropic** — https://console.anthropic.com. This is what powers Claude inside Pectus. After signup, click "API keys" in the sidebar, then "Create key". The value starts with `sk-ant-`. Paste it here.
 - **Google Cloud** — https://console.cloud.google.com. This unlocks Google Analytics and Google Search Console data. There are four sub-steps inside the Google Cloud console; walk the user through them one at a time:
-  1. Create a new project (top bar dropdown → "New Project"). Any name is fine.
-  2. Enable two APIs: search for "Search Console API" → click Enable, then "Google Analytics Data API" → click Enable.
+  1. Create a new project (top bar dropdown → "New Project"). Any name is fine. Note that Google generates the project ID with a numeric or random suffix (e.g. project named `jesperastrom-com` becomes ID `jesperastrom-com-412345`). The user can't change this; it's what shows up in service-account emails later.
+  2. Enable **three** APIs. For each: APIs & Services → Library, search the name, click **Enable**, wait until the page flips to "API enabled". Don't skip any of these; missing the Admin API is what makes GA4 reject the service account with "this user doesn't exist" errors when the user later tries to add it under Property access management.
+     - **Google Analytics Admin API** (lets the service account be recognized as a valid principal in GA4's user management UI)
+     - **Google Analytics Data API** (lets Pectus read the actual GA4 report data)
+     - **Google Search Console API** (reads Search Console performance data)
   3. Create an OAuth 2.0 client: APIs & Services → Credentials → "Create Credentials" → OAuth client ID → "Web application". Add `http://localhost:3000/auth/callback` as an authorized redirect URI. (Only `localhost` goes here. Don't add the user's public site domain. The OAuth handshake runs between Pectus on their laptop and Google. The public site is downstream and never participates in this flow.)
   4. Copy the client ID and client secret. Paste both here.
 
