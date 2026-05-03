@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { SubmitButton } from "@/app/components/SubmitButton";
+import { InfoDot } from "@/app/components/InfoDot";
 import { saveContentHubConfig } from "./actions";
 
 type Workspace = {
@@ -90,6 +91,7 @@ export function ContentHubDetail({ workspaces }: { workspaces: Workspace[] }) {
               onChange={() => setSiteShape("greenfield")}
               title="Brand new site"
               blurb="Pectus runs the whole site from /."
+              tooltip="Pectus owns the whole domain. Pages publish at /. Choose this if Pectus is replacing your current site or starting fresh."
             />
             <ShapeRadio
               value="coexist"
@@ -97,6 +99,7 @@ export function ContentHubDetail({ workspaces }: { workspaces: Workspace[] }) {
               onChange={() => setSiteShape("coexist")}
               title="Existing site"
               blurb="Pectus lives at /insights/ or similar."
+              tooltip="Pectus only adds a section under a sub-path like /insights/. Your current site keeps serving the rest of the domain."
             />
           </div>
         </Field>
@@ -105,6 +108,7 @@ export function ContentHubDetail({ workspaces }: { workspaces: Workspace[] }) {
           <Field
             label="Mount slug"
             hint="Where Pectus pages live on your domain. Must start and end with /."
+            tooltip="Where Pectus pages live in the URL. / for brand-new, /insights/ or /blog/ for existing-site setups."
           >
             <input
               type="text"
@@ -122,6 +126,7 @@ export function ContentHubDetail({ workspaces }: { workspaces: Workspace[] }) {
         <Field
           label="GitHub repo"
           hint="Create an empty repo on GitHub, paste the URL here. Pectus pushes built pages there on every Publish; your deploy target (Vercel, Netlify, Pages) takes it from there."
+          tooltip="owner/name of the repo Pectus commits published pages to. The content-hub site reads from this repo to render."
         >
           <input
             type="text"
@@ -146,16 +151,19 @@ export function ContentHubDetail({ workspaces }: { workspaces: Workspace[] }) {
 function Field({
   label,
   hint,
+  tooltip,
   children,
 }: {
   label: string;
   hint: string;
+  tooltip?: string;
   children: React.ReactNode;
 }) {
   return (
     <label className="block text-sm">
       <span className="mb-1 flex items-center gap-1.5 text-xs font-medium text-zinc-700">
         {label}
+        {tooltip ? <InfoDot text={tooltip} /> : null}
       </span>
       <p className="mb-2 text-xs text-zinc-500">{hint}</p>
       {children}
@@ -169,12 +177,14 @@ function ShapeRadio({
   onChange,
   title,
   blurb,
+  tooltip,
 }: {
   value: string;
   checked: boolean;
   onChange: () => void;
   title: string;
   blurb: string;
+  tooltip?: string;
 }) {
   return (
     <label
@@ -194,6 +204,7 @@ function ShapeRadio({
           onChange={onChange}
         />
         <span className="font-medium text-zinc-900">{title}</span>
+        {tooltip ? <InfoDot text={tooltip} /> : null}
       </span>
       <span className="mt-1 pl-5 text-xs text-zinc-600">{blurb}</span>
     </label>
