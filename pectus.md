@@ -35,9 +35,19 @@ which node npm npx git
 
 You need Node.js 20+, npm 10+, and git. If any are missing, walk the user through installing them. macOS path: install Homebrew (`https://brew.sh`), then `brew install node git`. Verify with `node --version`.
 
-## 2. Clone the upstream repo
+## 2. Clone the upstream repo (or confirm an existing clone)
 
-Default location is `~/pectus`. Confirm the path with the user before cloning.
+First, figure out whether the user already has the repo on disk.
+
+Run `pwd` and `ls`. If the current folder contains `apps/`, `cms/`, `connectors/`, `skills/`, and a `package.json` that names `pectusai`, the user has already cloned (likely via the install page's git command, which lands the repo and then opens Claude inside it). Do not clone again. Tell the user: "Looks like Pectus is already cloned here at `<pwd>`. I'll continue from this folder." Then make sure the upstream remote is set:
+
+```
+git remote get-url upstream || git remote add upstream https://github.com/pectusai/pectus.git
+```
+
+Move on to step 3.
+
+Otherwise, clone fresh. Default location is `~/pectus`. Confirm the path with the user before cloning, and explain that the folder name at the end of the line is theirs to change.
 
 ```
 git clone https://github.com/pectusai/pectus.git ~/pectus
@@ -45,7 +55,7 @@ cd ~/pectus
 git remote add upstream https://github.com/pectusai/pectus.git
 ```
 
-If `~/pectus` already exists, ask the user how to proceed — do not overwrite.
+If the target path already exists but is not a Pectus clone (no `apps/`, `cms/`, etc.), ask the user how to proceed. Do not overwrite.
 
 ## 3. Install dependencies
 
