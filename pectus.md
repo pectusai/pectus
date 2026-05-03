@@ -81,19 +81,25 @@ This installs across all workspaces (connectors, apps, cli, cms). Should complet
 
 ## 4. Brand setup
 
-```
-npx pectus brand
-```
+This step writes `brand/brand.json`, which is the seed for everything Pectus produces. We keep it light at install: just ask the user to describe their brand in their own words, then turn that description into `brand.json` directly. Do **not** run the full `npx pectus brand` wizard, and do **not** ask the user for a Claude Design URL here. That option is available later from the CMS Brand page once Pectus is running.
 
-The wizard's first prompt is **Manual** vs **Import from Claude Design**.
+Tell the user something like:
 
-**Manual** walks through brand name, tagline, colors, voice and tonality, website URL, sitemap URL, logo upload (path or skip), font choices (system, Google, or upload). Plan for 10 to 15 minutes.
+> "I'm going to set up your brand. Just describe it to me in your own words. Tell me the brand name and what you do, the voice you write in (warm? technical? dry? formal?), your main colors (hex codes if you have them, or descriptions like 'navy and burnt orange'), and your website URL. Anything else you want me to know about the brand. Don't worry about being thorough; you'll be able to polish all of this from the Brand page in Pectus once it's running, and you can swap in a full design system from Claude Design later if you want."
 
-**Import from Claude Design** asks for a Claude Design URL (something like `https://api.anthropic.com/v1/design/h/...`). Pectus fetches the bundle, asks Claude to extract brand fields from the bundle's `tokens.css`, README, and chat transcript, and writes the result to `brand/brand.json`. The full unzipped bundle is saved to `brand/imports/<timestamp>/` so apps can re-read raw tokens later. Logo, image model, and website/sitemap URLs are not in the bundle and stay blank — fill them in later via the CMS Brand page.
+Wait for their description. Ask one or two follow-up questions if you're missing a name, primary color, or voice direction. Don't grill them.
 
-Either way, the result lands at `brand/brand.json`. No external services touched yet.
+Then write `brand/brand.json` directly. The schema is at `brand/brand.json` already (you'll see the placeholder template there). Fields to fill in from their description:
 
-Do not skip this step. The brand profile is the seed for everything downstream — the CMS, every installed app (including the pre-installed `content-hub`), and skills all read from `brand/brand.json`.
+- `name`, `tagline`, `website_url`, `sitemap_url`
+- `colors.accent`, `colors.surface`, `colors.text`, `colors.muted`, `colors.border` (use sensible defaults if they only gave you one or two colors; cream surface, dark text, gray muted, hairline border are safe)
+- `voice` (one or two sentences in their own words)
+- `tonality` (a short comma-separated list of adjectives if they gave you any)
+- Leave `logo`, `fonts`, `radius`, `image_model`, `imported_from` at their defaults. They can change these from the CMS later.
+
+After writing the file, summarize back to the user what you captured: "Brand name: X. Voice: Y. Primary color: Z. Anything I should change before we move on?" If they want corrections, edit and re-confirm.
+
+Once they're happy, mention briefly: "If you want a richer design system later (full color palette, typography, component styles), open the Brand page in the CMS after install and import a Claude Design URL there. Skip that for now; we'll keep going."
 
 ## 5. Register external accounts
 
