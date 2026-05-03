@@ -83,11 +83,15 @@ This installs across all workspaces (connectors, apps, cli, cms). Should complet
 
 This step writes `brand/brand.json`, which is the seed for everything Pectus produces. We keep it light at install: just ask the user to describe their brand in their own words, then turn that description into `brand.json` directly. Do **not** run the full `npx pectus brand` wizard, and do **not** ask the user for a Claude Design URL here. That option is available later from the CMS Brand page once Pectus is running.
 
-Tell the user something like:
+Open with a reassuring framing message so the user knows they're not expected to nail the brand in one shot. Say something like:
 
-> "I'm going to set up your brand. Just describe it to me in your own words. Tell me the brand name and what you do, the voice you write in (warm? technical? dry? formal?), your main colors (hex codes if you have them, or descriptions like 'navy and burnt orange'), and your website URL. Anything else you want me to know about the brand. Don't worry about being thorough; you'll be able to polish all of this from the Brand page in Pectus once it's running, and you can swap in a full design system from Claude Design later if you want."
+> "Heads up before we start: dialing in a brand description, system, and prompt that really sings takes a few days. That's normal. Pectus gives you tools all the way through, from tone of voice to camera settings to a full design system. We don't have to get it perfect now. Right now we're just giving Pectus a quick start so it has something to work from."
 
-Wait for their description. Ask one or two follow-up questions if you're missing a name, primary color, or voice direction. Don't grill them.
+Then ask for a short description:
+
+> "So tell me about the brand in your own words. The brand name and what you do, the voice you write in (warm? technical? dry? formal?), your main colors (hex codes if you have them, or descriptions like 'navy and burnt orange'), and your website URL. Anything else you want me to know is welcome. Two or three sentences is plenty. You'll polish everything from the Brand page once Pectus is running."
+
+Wait for their description. Ask one or two follow-up questions if you're missing a name, primary color, or voice direction. Don't grill them. The point of this step is to write *something* sensible to `brand/brand.json`, not to extract a complete brand strategy.
 
 Then write `brand/brand.json` directly. The schema is at `brand/brand.json` already (you'll see the placeholder template there). Fields to fill in from their description:
 
