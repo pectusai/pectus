@@ -1,8 +1,6 @@
 import { SubmitButton } from "@/app/components/SubmitButton";
-import {
-  saveGoogleServiceAccount,
-  clearGoogleServiceAccount,
-} from "./actions";
+import { clearGoogleServiceAccount } from "./actions";
+import { GoogleSAForm } from "./InlineActionForm";
 
 export type GoogleIntegration = {
   service_account_json: { client_email?: string } | null;
@@ -132,48 +130,7 @@ export function GoogleConnectionPanel({
         <li>Upload the JSON below (or paste its contents).</li>
       </ol>
 
-      <form action={saveGoogleServiceAccount} className="mt-5 space-y-3">
-        <div>
-          <label className="block text-xs font-medium text-zinc-700">
-            Upload the JSON file
-          </label>
-          <input
-            type="file"
-            name="service_account_file"
-            accept="application/json,.json"
-            className="mt-1 block w-full text-xs file:mr-3 file:rounded-md file:border-0 file:bg-zinc-900 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white hover:file:bg-zinc-800"
-          />
-        </div>
-
-        <div className="relative flex items-center gap-2 text-[11px] uppercase tracking-widest text-zinc-400">
-          <span className="h-px flex-1 bg-zinc-200" />
-          <span>or paste it</span>
-          <span className="h-px flex-1 bg-zinc-200" />
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-zinc-700">
-            Paste the JSON contents
-          </label>
-          <textarea
-            name="service_account_json"
-            rows={5}
-            placeholder='{"type":"service_account","project_id":"...","private_key":"...","client_email":"..."}'
-            className="mt-1 block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-xs"
-          />
-        </div>
-
-        <p className="text-[11px] text-zinc-500">
-          Pectus stores the JSON in the <code>integrations</code> table in
-          your Supabase. It never leaves your install.
-        </p>
-        <SubmitButton
-          pendingLabel="Saving…"
-          className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800"
-        >
-          Save Google connection
-        </SubmitButton>
-      </form>
+      <GoogleSAForm />
     </section>
   );
 }

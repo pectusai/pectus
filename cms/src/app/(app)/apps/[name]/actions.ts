@@ -105,7 +105,12 @@ async function loadIntegration() {
   return data ?? null;
 }
 
-export async function saveGoogleServiceAccount(formData: FormData) {
+export type ActionState = { ok: boolean; error?: string; message?: string };
+
+export async function saveGoogleServiceAccount(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
   const file = formData.get("service_account_file");
   const pasted = String(formData.get("service_account_json") ?? "");
   let raw = pasted;
@@ -113,14 +118,17 @@ export async function saveGoogleServiceAccount(formData: FormData) {
     raw = await (file as File).text();
   }
   if (!raw.trim()) {
-    throw new Error("Upload the service account JSON file or paste its contents.");
+    return {
+      ok: false,
+      error: "Upload the service account JSON file or paste its contents.",
+    };
   }
   const parsed = parseServiceAccountKey(raw);
   if (!parsed.ok) {
-    throw new Error(parsed.error);
+    return { ok: false, error: parsed.error };
   }
   const supabase = await createServerClient();
-  await supabase.from("integrations").upsert(
+  const { error } = await supabase.from("integrations").upsert(
     {
       provider: "google",
       service_account_json: parsed.key,
@@ -128,9 +136,13 @@ export async function saveGoogleServiceAccount(formData: FormData) {
     },
     { onConflict: "provider" },
   );
+  if (error) {
+    return { ok: false, error: `Save failed: ${error.message}` };
+  }
   revalidatePath("/apps/ga4");
   revalidatePath("/apps/gsc");
   revalidatePath("/apps/google-ads");
+  return { ok: true, message: `Connected as ${parsed.key.client_email}.` };
 }
 
 export async function clearGoogleServiceAccount() {
@@ -158,23 +170,31 @@ export async function clearGoogleServiceAccount() {
 // GA4
 // ---------------------------------------------------------------------------
 
-export async function saveGa4(formData: FormData) {
+export async function saveGa4(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
   const propertyId = String(formData.get("ga4_property_id") ?? "").trim();
   if (!/^\d+$/u.test(propertyId)) {
-    throw new Error("GA4 property ID must be numeric (e.g. 123456789).");
+    return {
+      ok: false,
+      error: "GA4 property ID must be numeric (e.g. 123456789).",
+    };
   }
 
   const integration = await loadIntegration();
   if (!integration?.service_account_json) {
-    throw new Error(
-      "Connect a Google service account before saving a GA4 property.",
-    );
+    return {
+      ok: false,
+      error:
+        "Connect a Google service account first (panel above), then come back.",
+    };
   }
 
   const key = integration.service_account_json as ServiceAccountKey;
   const test = await testGa4Property(key, propertyId);
   if (!test.ok) {
-    throw new Error(`GA4 test failed: ${test.message}`);
+    return { ok: false, error: humanizeGoogleError("GA4", test.message, key) };
   }
 
   const supabase = await createServerClient();
@@ -190,6 +210,7 @@ export async function saveGa4(formData: FormData) {
   await activateApp("ga4");
   revalidatePath("/apps/ga4");
   revalidatePath("/apps");
+  return { ok: true, message: "GA4 connected and activated." };
 }
 
 export async function testGa4Action(formData: FormData) {
@@ -228,20 +249,36 @@ function validateGscSite(raw: string): string {
   }
 }
 
-export async function saveGsc(formData: FormData) {
-  const siteUrl = validateGscSite(String(formData.get("gsc_site_url") ?? ""));
+export async function saveGsc(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  let siteUrl: string;
+  try {
+    siteUrl = validateGscSite(String(formData.get("gsc_site_url") ?? ""));
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
 
   const integration = await loadIntegration();
   if (!integration?.service_account_json) {
-    throw new Error(
-      "Connect a Google service account before saving a Search Console site.",
-    );
+    return {
+      ok: false,
+      error:
+        "Connect a Google service account first (panel above), then come back.",
+    };
   }
 
   const key = integration.service_account_json as ServiceAccountKey;
   const test = await testSearchConsoleSite(key, siteUrl);
   if (!test.ok) {
-    throw new Error(`Search Console test failed: ${test.message}`);
+    return {
+      ok: false,
+      error: humanizeGoogleError("Search Console", test.message, key),
+    };
   }
 
   const supabase = await createServerClient();
@@ -257,6 +294,7 @@ export async function saveGsc(formData: FormData) {
   await activateApp("gsc");
   revalidatePath("/apps/gsc");
   revalidatePath("/apps");
+  return { ok: true, message: "Search Console connected and activated." };
 }
 
 export async function testGscAction(formData: FormData) {
@@ -271,6 +309,27 @@ export async function testGscAction(formData: FormData) {
     throw new Error(`Search Console test failed: ${test.message}`);
   }
   revalidatePath("/apps/gsc");
+}
+
+function humanizeGoogleError(
+  api: string,
+  rawMessage: string,
+  key: ServiceAccountKey,
+): string {
+  const email = key.client_email;
+  if (/PERMISSION_DENIED|sufficient permissions|403/i.test(rawMessage)) {
+    if (api === "GA4") {
+      return `Google says the service account does not have access to this GA4 property. Open GA4 → Admin → Property access management → click the blue +, paste the service account email (${email}), role = Viewer, save. Then try again. Raw error: ${rawMessage.slice(0, 300)}`;
+    }
+    return `Google says the service account does not have access to this Search Console site. Open Search Console → Settings → Users and permissions → Add user, paste the service account email (${email}), permission = Restricted (or Full), save. Then try again. Raw error: ${rawMessage.slice(0, 300)}`;
+  }
+  if (/SERVICE_DISABLED|API.*not enabled/i.test(rawMessage)) {
+    return `The Google API for ${api} is not enabled in your Google Cloud project. Open Google Cloud Console → APIs & Services → Library, search for the ${api} API, and click Enable. Wait ~30 seconds for propagation. Raw error: ${rawMessage.slice(0, 300)}`;
+  }
+  if (/INVALID_ARGUMENT|invalid_grant|400/i.test(rawMessage)) {
+    return `${api} rejected the request as invalid. Most often this means a typo in the property ID or site URL. Double-check what you pasted. Raw error: ${rawMessage.slice(0, 300)}`;
+  }
+  return `${api} test failed: ${rawMessage}`;
 }
 
 // ---------------------------------------------------------------------------

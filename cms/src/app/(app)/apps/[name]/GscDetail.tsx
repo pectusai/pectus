@@ -2,8 +2,7 @@ import {
   GoogleConnectionPanel,
   type GoogleIntegration,
 } from "./GoogleConnectionPanel";
-import { SubmitButton } from "@/app/components/SubmitButton";
-import { saveGsc } from "./actions";
+import { GscSiteForm } from "./InlineActionForm";
 
 export function GscDetail({
   integration,
@@ -80,25 +79,7 @@ export function GscDetail({
             Cloud connection panel and upload your service account JSON.
           </div>
         ) : (
-          <form action={saveGsc} className="mt-4 space-y-3">
-            <label className="block text-xs font-medium text-zinc-700">
-              Site identifier
-            </label>
-            <input
-              type="text"
-              name="gsc_site_url"
-              defaultValue={siteUrl ?? ""}
-              placeholder="https://example.com/  or  sc-domain:example.com"
-              required
-              className="block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-sm"
-            />
-            <SubmitButton
-              pendingLabel="Testing + saving…"
-              className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800"
-            >
-              Test + save (activates Search Console)
-            </SubmitButton>
-          </form>
+          <GscSiteForm defaultSiteUrl={siteUrl ?? ""} />
         )}
       </section>
     </div>

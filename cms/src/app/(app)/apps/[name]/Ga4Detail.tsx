@@ -2,8 +2,7 @@ import {
   GoogleConnectionPanel,
   type GoogleIntegration,
 } from "./GoogleConnectionPanel";
-import { SubmitButton } from "@/app/components/SubmitButton";
-import { saveGa4 } from "./actions";
+import { Ga4PropertyForm } from "./InlineActionForm";
 
 export function Ga4Detail({
   integration,
@@ -67,27 +66,7 @@ export function Ga4Detail({
             Cloud connection panel and upload your service account JSON.
           </div>
         ) : (
-          <form action={saveGa4} className="mt-4 space-y-3">
-            <label className="block text-xs font-medium text-zinc-700">
-              Property ID
-            </label>
-            <input
-              type="text"
-              name="ga4_property_id"
-              defaultValue={propertyId ?? ""}
-              placeholder="123456789"
-              required
-              inputMode="numeric"
-              pattern="\d+"
-              className="block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-sm sm:max-w-xs"
-            />
-            <SubmitButton
-              pendingLabel="Testing + saving…"
-              className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800"
-            >
-              Test + save (activates GA4)
-            </SubmitButton>
-          </form>
+          <Ga4PropertyForm defaultPropertyId={propertyId ?? ""} />
         )}
       </section>
     </div>
