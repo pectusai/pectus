@@ -1,5 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import type { ZodSchema } from "zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
 import { createServerClient } from "@pectus/supabase";
 import { getClaude, DEFAULT_MODEL } from "@pectus/anthropic";
 import {
@@ -8,17 +10,21 @@ import {
   type BrandProfile,
   type IcpProfile,
 } from "@/lib/format-icp-context";
+import { skillSchemas } from "@/lib/skill-schemas";
+import { InsightBatch, type InsightBatchOutput } from "@/lib/types/insight";
 
 /* ------------------------------------------------------------------------- *
  * Skill runner. Loads a skill folder, gathers inputs, calls Claude, logs.
  * cms/src/lib/skill-runner.ts
  *
- * Skills live at ../../skills/<skill-name>/ relative to cms/. Each folder
- * contains SKILL.md (with YAML frontmatter) and optionally a reference/
- * subfolder. The frontmatter declares the inputs the skill needs; this
- * runner pulls them from Supabase and feeds them to Claude as one message.
+ * Two output modes:
+ *   - text mode: skill SKILL.md has no `schema:` frontmatter. Returns raw text.
+ *   - structured mode: skill declares `schema: ./schema.ts`. Runner looks up
+ *     the schema in skill-schemas.ts, forces a tool call shaped like the
+ *     schema, parses + validates with Zod, returns the typed object.
  *
- * For now we return the raw text response. PR4 will plug Zod schemas in.
+ * Status enum matches the migration check constraint:
+ *   'running' | 'completed' | 'failed'
  * ------------------------------------------------------------------------- */
 
 export type SkillInput =
@@ -31,7 +37,12 @@ export type SkillInput =
   | "answer_public_entries"
   | "last_run"
   | "sitemap"
-  | "article_bodies";
+  | "article_bodies"
+  | "topic_clusters"
+  | "site_plan_tree"
+  | "seed_keywords"
+  | "topics"
+  | "insights";
 
 export type SkillFrontmatter = {
   name?: string;
@@ -51,18 +62,57 @@ export type SkillRunOptions = {
   userId?: string;
   /* Override the model declared in frontmatter. */
   model?: string;
+  /* Free-form per-invocation arguments injected as a USER ARGS block. */
+  args?: Record<string, unknown>;
 };
 
-export type SkillRunResult =
-  | { ok: true; output: string; runId: string | null }
-  | { ok: false; error: string; runId: string | null };
+export type SkillRunResultText = {
+  ok: true;
+  mode: "text";
+  output: string;
+  runId: string | null;
+};
+
+export type SkillRunResultStructured<T = unknown> = {
+  ok: true;
+  mode: "structured";
+  output: T;
+  rawOutput: string;
+  runId: string | null;
+};
+
+export type SkillRunResultError = {
+  ok: false;
+  error: string;
+  runId: string | null;
+};
+
+export type SkillRunResult<T = unknown> =
+  | SkillRunResultText
+  | SkillRunResultStructured<T>
+  | SkillRunResultError;
 
 const SKILLS_ROOT = path.resolve(process.cwd(), "..", "skills");
+const APPS_ROOT = path.resolve(process.cwd(), "..", "apps");
+const KNOWLEDGE_ROOT = path.resolve(process.cwd(), "..", "knowledge");
+
+/* Resolve a skill name to its folder.
+ *
+ * Names without a "/" → workspace-level skill at skills/<name>/.
+ * Names with a "/" → inbound app interpretation skill at apps/<app>/<sub>/.
+ *   E.g. "seed-keywords/insights" → apps/seed-keywords/insights/.
+ *
+ * The skill-schemas.ts registry uses the same string as the key. */
+function resolveSkillDir(skill: string): string {
+  if (skill.includes("/")) {
+    const [app, ...rest] = skill.split("/");
+    return path.join(APPS_ROOT, app, ...rest);
+  }
+  return path.join(SKILLS_ROOT, skill);
+}
 
 /* ------------------------------------------------------------------------- *
- * Frontmatter parser. We don't pull in `gray-matter` to keep deps minimal.
- * Skills frontmatter is YAML-ish but only uses simple key/value, lists, and
- * scalars. Good enough.
+ * Frontmatter parser. Local mini-YAML, no extra dep.
  * ------------------------------------------------------------------------- */
 function parseFrontmatter(raw: string): {
   meta: SkillFrontmatter;
@@ -95,9 +145,7 @@ function parseFrontmatter(raw: string): {
         meta[key] = currentList;
       } else {
         currentList = null;
-        // Strip surrounding quotes if present.
         const stripped = val.replace(/^["'](.*)["']$/, "$1");
-        // Coerce numbers.
         const asNum = Number(stripped);
         meta[key] = stripped !== "" && !Number.isNaN(asNum) && /^[-\d.]+$/.test(stripped)
           ? asNum
@@ -109,8 +157,6 @@ function parseFrontmatter(raw: string): {
   return { meta: meta as SkillFrontmatter, body };
 }
 
-/* Replace `{{ reference/<file> }}` directives with the referenced file's
- * contents. Files are resolved relative to the skill folder. */
 async function expandReferences(
   body: string,
   skillDir: string,
@@ -134,8 +180,7 @@ async function expandReferences(
 }
 
 /* ------------------------------------------------------------------------- *
- * Input gatherers. One function per declared input. Each returns a string
- * fragment we paste into the user message, plus a count for the digest.
+ * Input gatherers. One function per declared input.
  * ------------------------------------------------------------------------- */
 
 type GatheredInput = { label: string; text: string; count: number };
@@ -220,24 +265,34 @@ async function gatherBrandProfile(
   };
 }
 
+/* Knowledge insights live as files at knowledge/insights.md (project root) or
+ * knowledge/<workspace_code>/insights.md (workspace-scoped). Per the design:
+ * the knowledge-digest skill writes these. We just read whichever exists. */
 async function gatherKnowledgeInsights(
-  supabase: Supabase,
-  workspaceId: string,
+  workspaceCode: string,
 ): Promise<GatheredInput> {
-  const { data } = await supabase
-    .from("knowledge_insights")
-    .select("title, summary, source")
-    .eq("workspace_id", workspaceId)
-    .order("created_at", { ascending: false })
-    .limit(50);
-
-  const lines = (data ?? []).map(
-    (i) => `- ${i.title ?? "(untitled)"}${i.source ? ` (${i.source})` : ""}: ${i.summary ?? ""}`,
-  );
+  const candidates = [
+    path.join(KNOWLEDGE_ROOT, workspaceCode, "insights.md"),
+    path.join(KNOWLEDGE_ROOT, "insights.md"),
+  ];
+  for (const p of candidates) {
+    try {
+      const text = await fs.readFile(p, "utf8");
+      if (text.trim()) {
+        return {
+          label: "KNOWLEDGE INSIGHTS",
+          text: text.trim(),
+          count: 1,
+        };
+      }
+    } catch {
+      /* keep trying next path */
+    }
+  }
   return {
     label: "KNOWLEDGE INSIGHTS",
-    text: lines.length ? lines.join("\n") : "(no insights uploaded yet)",
-    count: data?.length ?? 0,
+    text: "(no knowledge insights — run knowledge-digest after dropping files into knowledge/raw/)",
+    count: 0,
   };
 }
 
@@ -268,18 +323,18 @@ async function gatherLastRun(
 ): Promise<GatheredInput> {
   const { data } = await supabase
     .from("skill_runs")
-    .select("output, model, created_at")
+    .select("output, model, started_at")
     .eq("workspace_id", workspaceId)
     .eq("skill_name", skillName)
-    .eq("status", "ok")
-    .order("created_at", { ascending: false })
+    .eq("status", "completed")
+    .order("started_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
   return {
     label: "LAST RUN",
     text: data?.output
-      ? `(generated ${data.created_at})\n${String(data.output).slice(0, 4000)}`
+      ? `(generated ${data.started_at})\n${typeof data.output === "string" ? data.output.slice(0, 4000) : JSON.stringify(data.output).slice(0, 4000)}`
       : "(no previous run)",
     count: data ? 1 : 0,
   };
@@ -303,23 +358,160 @@ async function gatherSitemap(
   };
 }
 
+/* Articles have `blocks jsonb`, not body_markdown. Derive a plaintext approximation. */
 async function gatherArticleBodies(
   supabase: Supabase,
   workspaceId: string,
 ): Promise<GatheredInput> {
   const { data } = await supabase
     .from("articles")
-    .select("title, body_markdown")
+    .select("title, blocks")
     .eq("workspace_id", workspaceId)
-    .not("body_markdown", "is", null)
     .limit(20);
-  const lines = (data ?? []).map(
-    (a) => `--- ${a.title}\n${String(a.body_markdown ?? "").slice(0, 2000)}`,
-  );
+  const lines = (data ?? []).map((a) => {
+    const blocks = Array.isArray(a.blocks) ? (a.blocks as Array<Record<string, unknown>>) : [];
+    const text = blocks
+      .map((b) => {
+        if (typeof b.text === "string") return b.text;
+        if (Array.isArray(b.items)) return (b.items as unknown[]).join(" · ");
+        return "";
+      })
+      .filter(Boolean)
+      .join("\n")
+      .slice(0, 2000);
+    return `--- ${a.title}\n${text}`;
+  });
   return {
     label: "ARTICLE BODIES",
-    text: lines.length ? lines.join("\n\n") : "(no article bodies stored)",
+    text: lines.length ? lines.join("\n\n") : "(no article bodies)",
     count: data?.length ?? 0,
+  };
+}
+
+async function gatherTopicClusters(
+  supabase: Supabase,
+  workspaceId: string,
+): Promise<GatheredInput> {
+  const { data } = await supabase
+    .from("weekly_analyses")
+    .select("analysis, week_start")
+    .eq("workspace_id", workspaceId)
+    .eq("status", "done")
+    .order("week_start", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const analysis = (data?.analysis ?? null) as { keyword_clusters?: unknown[] } | null;
+  const clusters = Array.isArray(analysis?.keyword_clusters)
+    ? analysis!.keyword_clusters
+    : [];
+  return {
+    label: "TOPIC CLUSTERS",
+    text: clusters.length
+      ? `(from week ${data?.week_start})\n${JSON.stringify(clusters, null, 2)}`
+      : "(no topic clusters — run weekly-analysis first)",
+    count: clusters.length,
+  };
+}
+
+async function gatherSitePlanTree(
+  supabase: Supabase,
+  workspaceId: string,
+): Promise<GatheredInput> {
+  const { data } = await supabase
+    .from("site_plan_nodes")
+    .select("id, parent_id, title, intent, suggested_template, suggested_purpose, materialized_path, status")
+    .eq("workspace_id", workspaceId)
+    .order("materialized_path", { ascending: true });
+  return {
+    label: "EXISTING SITE PLAN",
+    text: data && data.length
+      ? JSON.stringify(data, null, 2)
+      : "(no plan yet)",
+    count: data?.length ?? 0,
+  };
+}
+
+async function gatherSeedKeywords(
+  supabase: Supabase,
+  workspaceId: string,
+): Promise<GatheredInput> {
+  const { data } = await supabase
+    .from("seed_keywords")
+    .select("keyword")
+    .eq("workspace_id", workspaceId);
+  const lines = (data ?? []).map((k) => `- ${k.keyword}`);
+  return {
+    label: "SEED KEYWORDS",
+    text: lines.length ? lines.join("\n") : "(no seed keywords)",
+    count: data?.length ?? 0,
+  };
+}
+
+async function gatherTopics(
+  supabase: Supabase,
+  workspaceId: string,
+): Promise<GatheredInput> {
+  const { data } = await supabase
+    .from("topics")
+    .select("id, name, intent, source, status")
+    .eq("workspace_id", workspaceId);
+  return {
+    label: "TOPICS",
+    text: data && data.length
+      ? data.map((t) => `- ${t.name} (${t.intent}, ${t.status}, ${t.source})`).join("\n")
+      : "(no topics yet)",
+    count: data?.length ?? 0,
+  };
+}
+
+/* Gather active Insights from every connected app. Grouped by source for the
+ * consumer's prompt readability. Filters out expired insights. */
+async function gatherInsights(
+  supabase: Supabase,
+  workspaceId: string,
+): Promise<GatheredInput> {
+  const { data } = await supabase
+    .from("insights")
+    .select(
+      "app_id, source, type, title, opportunity, evidence, confidence, topic_hint, related_keywords, related_urls, created_at",
+    )
+    .eq("workspace_id", workspaceId)
+    .or("expires_at.is.null,expires_at.gt." + new Date().toISOString())
+    .order("created_at", { ascending: false });
+
+  if (!data || data.length === 0) {
+    return {
+      label: "INSIGHTS",
+      text: "(no active insights — connect data sources or add seed keywords to populate)",
+      count: 0,
+    };
+  }
+
+  const bySource = new Map<string, typeof data>();
+  for (const i of data) {
+    if (!bySource.has(i.source)) bySource.set(i.source, []);
+    bySource.get(i.source)!.push(i);
+  }
+
+  const lines: string[] = [];
+  for (const [source, items] of bySource) {
+    lines.push(`### ${source.toUpperCase()} (${items.length})`);
+    for (const i of items) {
+      const kws = i.related_keywords?.length
+        ? ` · keywords: ${i.related_keywords.slice(0, 5).join(", ")}`
+        : "";
+      const topic = i.topic_hint ? ` · topic: ${i.topic_hint}` : "";
+      lines.push(
+        `- [${i.type}, ${i.confidence}] ${i.title}\n  → ${i.opportunity}${topic}${kws}`,
+      );
+    }
+    lines.push("");
+  }
+
+  return {
+    label: "INSIGHTS",
+    text: lines.join("\n"),
+    count: data.length,
   };
 }
 
@@ -327,16 +519,16 @@ async function gatherArticleBodies(
  * Public entry.
  * ------------------------------------------------------------------------- */
 
-export async function runSkill(
+export async function runSkill<T = unknown>(
   options: SkillRunOptions,
-): Promise<SkillRunResult> {
-  const { skill, workspaceId, userId } = options;
+): Promise<SkillRunResult<T>> {
+  const { skill, workspaceId, userId, args } = options;
 
   let runId: string | null = null;
   const supabase = await createServerClient();
 
   try {
-    const skillDir = path.join(SKILLS_ROOT, skill);
+    const skillDir = resolveSkillDir(skill);
     const skillFile = path.join(skillDir, "SKILL.md");
 
     let raw: string;
@@ -387,7 +579,7 @@ export async function runSkill(
           gathered.push(await gatherBrandProfile(supabase, workspace.name));
           break;
         case "knowledge_insights":
-          gathered.push(await gatherKnowledgeInsights(supabase, workspace.id));
+          gathered.push(await gatherKnowledgeInsights(workspace.code));
           break;
         case "answer_public_entries":
           gathered.push(await gatherAnswerPublic(supabase, workspace.id));
@@ -401,6 +593,21 @@ export async function runSkill(
         case "article_bodies":
           gathered.push(await gatherArticleBodies(supabase, workspace.id));
           break;
+        case "topic_clusters":
+          gathered.push(await gatherTopicClusters(supabase, workspace.id));
+          break;
+        case "site_plan_tree":
+          gathered.push(await gatherSitePlanTree(supabase, workspace.id));
+          break;
+        case "seed_keywords":
+          gathered.push(await gatherSeedKeywords(supabase, workspace.id));
+          break;
+        case "topics":
+          gathered.push(await gatherTopics(supabase, workspace.id));
+          break;
+        case "insights":
+          gathered.push(await gatherInsights(supabase, workspace.id));
+          break;
         default:
           gathered.push({
             label: String(input).toUpperCase(),
@@ -408,6 +615,14 @@ export async function runSkill(
             count: 0,
           });
       }
+    }
+
+    if (args && Object.keys(args).length) {
+      gathered.push({
+        label: "USER ARGS",
+        text: JSON.stringify(args, null, 2),
+        count: 1,
+      });
     }
 
     const inputDigest: Record<string, number> = {};
@@ -420,15 +635,16 @@ export async function runSkill(
         .map((g) => `## ${g.label}\n\n${g.text}`)
         .join("\n\n") || "(no inputs declared)";
 
-    /* Pre-insert a "running" row so we can correlate logs / failures. */
+    /* Pre-insert a "running" row for correlation. */
+    const model = options.model ?? meta.model ?? DEFAULT_MODEL;
     const { data: insertedRun } = await supabase
       .from("skill_runs")
       .insert({
         skill_name: skill,
         workspace_id: workspace.id,
-        user_id: userId ?? null,
+        generated_by: userId ?? null,
         status: "running",
-        model: options.model ?? meta.model ?? DEFAULT_MODEL,
+        model,
         input_digest: inputDigest,
       })
       .select("id")
@@ -438,45 +654,316 @@ export async function runSkill(
     const claude = getClaude();
     const startedAt = Date.now();
 
+    const useStructured = Boolean(meta.schema && skillSchemas[skill]);
+    const schema = useStructured ? skillSchemas[skill] : null;
+
+    let rawOutput = "";
+    let structuredOutput: unknown = null;
+
+    if (useStructured && schema) {
+      const jsonSchema = zodToJsonSchema(schema as ZodSchema, {
+        target: "openApi3",
+      }) as Record<string, unknown>;
+      /* zod-to-json-schema may wrap in { definitions, $ref }; flatten if so. */
+      const flattened = flattenJsonSchema(jsonSchema);
+
+      const response = await claude.messages.create({
+        model,
+        max_tokens: meta.max_tokens ?? 16000,
+        system: expandedBody.trim(),
+        messages: [{ role: "user", content: userMessage }],
+        tools: [
+          {
+            name: "produce_output",
+            description: "Produce the structured output for this skill.",
+            input_schema: flattened as { type: "object" } & Record<string, unknown>,
+          },
+        ],
+        tool_choice: { type: "tool", name: "produce_output" },
+      });
+
+      const toolUse = response.content.find(
+        (c): c is Extract<typeof c, { type: "tool_use" }> => c.type === "tool_use",
+      );
+      if (!toolUse) {
+        throw new Error("Claude did not return a tool_use block.");
+      }
+      rawOutput = JSON.stringify(toolUse.input);
+      const parsed = (schema as ZodSchema).safeParse(toolUse.input);
+      if (!parsed.success) {
+        throw new Error(
+          `Output failed schema validation: ${parsed.error.message}`,
+        );
+      }
+      structuredOutput = parsed.data;
+
+      await finalizeRun(supabase, runId, {
+        status: "completed",
+        output: structuredOutput,
+        durationMs: Date.now() - startedAt,
+        usage: response.usage,
+      });
+
+      /* If this is an app interpretation skill (apps/<X>/insights/), persist
+       * the produced Insight rows to the insights table. The skill's schema
+       * extends InsightBatch; runtime parse via the shared schema confirms. */
+      if (skill.endsWith("/insights")) {
+        const appId = skill.slice(0, -"/insights".length);
+        const batchParse = InsightBatch.safeParse(structuredOutput);
+        if (batchParse.success) {
+          await persistInsights(
+            supabase,
+            workspace.id,
+            appId,
+            batchParse.data,
+            runId,
+          );
+        }
+      }
+
+      return {
+        ok: true,
+        mode: "structured",
+        output: structuredOutput as T,
+        rawOutput,
+        runId,
+      };
+    }
+
+    /* Text mode — original behavior. */
     const response = await claude.messages.create({
-      model: options.model ?? meta.model ?? DEFAULT_MODEL,
+      model,
       max_tokens: meta.max_tokens ?? 16000,
       system: expandedBody.trim(),
       messages: [{ role: "user", content: userMessage }],
     });
 
-    const durationMs = Date.now() - startedAt;
-    const output = response.content
-      .filter((c): c is { type: "text"; text: string } => c.type === "text")
+    rawOutput = response.content
+      .filter((c): c is Extract<typeof c, { type: "text" }> => c.type === "text")
       .map((c) => c.text)
       .join("\n");
 
-    const usage = response.usage as
-      | { input_tokens?: number; output_tokens?: number }
-      | undefined;
+    await finalizeRun(supabase, runId, {
+      status: "completed",
+      output: rawOutput,
+      durationMs: Date.now() - startedAt,
+      usage: response.usage,
+    });
 
-    if (runId) {
-      await supabase
-        .from("skill_runs")
-        .update({
-          status: "ok",
-          output,
-          duration_ms: durationMs,
-          input_tokens: usage?.input_tokens ?? null,
-          output_tokens: usage?.output_tokens ?? null,
-        })
-        .eq("id", runId);
-    }
-
-    return { ok: true, output, runId };
+    return { ok: true, mode: "text", output: rawOutput, runId };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     if (runId) {
       await supabase
         .from("skill_runs")
-        .update({ status: "error", error_message: message })
+        .update({ status: "failed", error_message: message })
         .eq("id", runId);
     }
     return { ok: false, error: message, runId };
   }
 }
+
+/* ------------------------------------------------------------------------- *
+ * Interpretation pipeline.
+ *
+ * Consumers (weekly-analysis, plan-sitemap) call this BEFORE their own input
+ * gather phase. It checks each connected inbound app's interpretation skill,
+ * detects staleness, and runs interpretations in parallel for any that need
+ * refreshing. By the time the consumer runs, the `insights` table is fresh.
+ * ------------------------------------------------------------------------- */
+
+/** List inbound apps that have an insights/ skill. Read at module init time. */
+async function listAppsWithInsights(): Promise<string[]> {
+  try {
+    const apps = await fs.readdir(APPS_ROOT);
+    const checks = await Promise.all(
+      apps.map(async (app) => {
+        try {
+          await fs.access(path.join(APPS_ROOT, app, "insights", "SKILL.md"));
+          return app;
+        } catch {
+          return null;
+        }
+      }),
+    );
+    return checks.filter((a): a is string => Boolean(a));
+  } catch {
+    return [];
+  }
+}
+
+/** Run any stale app interpretations for the workspace, in parallel.
+ *
+ * Staleness rule: if there's no insight for this (workspace, app) pair, OR if
+ * the app's last_fetched_at in workspace_data_freshness is newer than the
+ * most recent insight, the app needs re-interpretation.
+ *
+ * Returns the apps that were re-interpreted. */
+export async function runInterpretationsIfStale(
+  workspaceId: string,
+  options: { force?: boolean } = {},
+): Promise<{ reinterpreted: string[]; skipped: string[]; failed: string[] }> {
+  const supabase = await createServerClient();
+  const apps = await listAppsWithInsights();
+  if (apps.length === 0) {
+    return { reinterpreted: [], skipped: [], failed: [] };
+  }
+
+  const [{ data: latestInsights }, { data: freshness }] = await Promise.all([
+    supabase
+      .from("insights")
+      .select("app_id, created_at")
+      .eq("workspace_id", workspaceId)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("workspace_data_freshness")
+      .select("surface, last_updated_at")
+      .eq("workspace_id", workspaceId),
+  ]);
+
+  /* Latest insight per app. */
+  const latestByApp = new Map<string, string>();
+  for (const i of latestInsights ?? []) {
+    if (!latestByApp.has(i.app_id)) latestByApp.set(i.app_id, i.created_at);
+  }
+  /* Last fetched per surface (we use app_id as surface key). */
+  const fetchedByApp = new Map<string, string>();
+  for (const f of freshness ?? []) {
+    fetchedByApp.set(f.surface, f.last_updated_at);
+  }
+
+  const stale: string[] = [];
+  for (const app of apps) {
+    if (options.force) {
+      stale.push(app);
+      continue;
+    }
+    const lastInsight = latestByApp.get(app);
+    const lastFetched = fetchedByApp.get(app);
+    /* Special case for seed-keywords: there's no fetch step, so check whether
+     * any seed_keywords row is newer than the latest insight. */
+    if (app === "seed-keywords") {
+      const { data: seeds } = await supabase
+        .from("seed_keywords")
+        .select("created_at")
+        .eq("workspace_id", workspaceId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!seeds) continue;
+      if (!lastInsight || new Date(seeds.created_at) > new Date(lastInsight)) {
+        stale.push(app);
+      }
+      continue;
+    }
+    /* Regular apps: stale if no insight, or if data has been fetched since. */
+    if (!lastInsight) {
+      if (lastFetched) stale.push(app);
+      continue;
+    }
+    if (lastFetched && new Date(lastFetched) > new Date(lastInsight)) {
+      stale.push(app);
+    }
+  }
+
+  const results = await Promise.allSettled(
+    stale.map((app) =>
+      runSkill({
+        skill: `${app}/insights`,
+        workspaceId,
+      }),
+    ),
+  );
+
+  const reinterpreted: string[] = [];
+  const failed: string[] = [];
+  for (let i = 0; i < stale.length; i++) {
+    const r = results[i];
+    if (r.status === "fulfilled" && r.value.ok) {
+      reinterpreted.push(stale[i]);
+    } else {
+      failed.push(stale[i]);
+    }
+  }
+  const skipped = apps.filter((a) => !stale.includes(a));
+  return { reinterpreted, skipped, failed };
+}
+
+/* Persist a fresh batch of insights from an app interpretation skill.
+ * Strategy: replace-on-rerun. Delete existing insights for (workspace, app)
+ * before inserting the new set. Avoids stale insights piling up across
+ * reruns. The previous batch lives in skill_runs.output for history. */
+async function persistInsights(
+  supabase: Supabase,
+  workspaceId: string,
+  appId: string,
+  batch: InsightBatchOutput,
+  runId: string | null,
+): Promise<void> {
+  await supabase
+    .from("insights")
+    .delete()
+    .eq("workspace_id", workspaceId)
+    .eq("app_id", appId);
+
+  if (batch.insights.length === 0) return;
+
+  const rows = batch.insights.map((i) => ({
+    workspace_id: workspaceId,
+    app_id: appId,
+    source: appId,
+    type: i.type,
+    title: i.title,
+    opportunity: i.opportunity,
+    evidence: i.evidence,
+    confidence: i.confidence,
+    topic_hint: i.topic_hint,
+    related_keywords: i.related_keywords,
+    related_urls: i.related_urls,
+    expires_at: i.expires_at,
+    generated_by_run_id: runId,
+  }));
+  await supabase.from("insights").insert(rows);
+}
+
+async function finalizeRun(
+  supabase: Supabase,
+  runId: string | null,
+  args: {
+    status: "completed" | "failed";
+    output: unknown;
+    durationMs: number;
+    usage?: { input_tokens?: number; output_tokens?: number } | null;
+  },
+) {
+  if (!runId) return;
+  await supabase
+    .from("skill_runs")
+    .update({
+      status: args.status,
+      output: args.output,
+      duration_ms: args.durationMs,
+      input_tokens: args.usage?.input_tokens ?? null,
+      output_tokens: args.usage?.output_tokens ?? null,
+      completed_at: new Date().toISOString(),
+    })
+    .eq("id", runId);
+}
+
+/* zod-to-json-schema sometimes emits { $ref: "#/definitions/X", definitions: {X: {...}} }.
+ * The Anthropic tools API wants the schema inline. Flatten one level. */
+function flattenJsonSchema(schema: Record<string, unknown>): Record<string, unknown> {
+  const ref = schema.$ref;
+  const definitions = schema.definitions as Record<string, unknown> | undefined;
+  if (typeof ref === "string" && definitions) {
+    const key = ref.replace(/^#\/definitions\//, "");
+    const target = definitions[key];
+    if (target && typeof target === "object") {
+      return target as Record<string, unknown>;
+    }
+  }
+  // Strip $schema field which Anthropic doesn't accept
+  const { $schema: _$schema, ...rest } = schema;
+  return rest;
+}
+

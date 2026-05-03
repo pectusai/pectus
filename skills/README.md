@@ -13,12 +13,21 @@ Each skill is a folder with a `SKILL.md` file at its root, in Anthropic's standa
 | `jobs-to-be-done/` | Maps your keywords to jobs your ICP is actually trying to do | Per-persona JTBD list with keyword coverage |
 | `internal-linking/` | Crawls your site, recommends inter-page links | `linksculpting.md` written to the workspace |
 | `knowledge-digest/` | Reads everything in `knowledge/raw/` (CSVs, BigQuery exports, images) and writes a single `knowledge/insights.md` other skills consume | `knowledge/insights.md` |
+| `make-it/` | Scaffolds a new skill or app from a brief: manifest, Zod schema, provision skeleton, README. The ecosystem flywheel. | `ScaffoldSpec` consumed by the CLI |
 
 ## Authoring a new skill
 
-Skills are upstream code. Don't add them to your local fork — they won't survive `pectus update`. Submit a PR to `github.com/pectusai/pectus`, or contribute via the community at `https://pectus.dev`.
+Use `make-it`:
 
-Full author guide: `docs/skills-spec.md`.
+```
+npx pectus make-it skill
+```
+
+The CLI prompts you for what the skill should do, what it consumes from the core, what it produces. Then it writes the scaffolded files. Open a PR to `github.com/pectusai/pectus` to land it as official, or publish your own GitHub repo for community distribution.
+
+Skills are upstream code. Don't author them directly in your local fork — they won't survive `pectus update`. The `make-it` flow is designed for forking, scaffolding, then PRing back.
+
+Full author guide: https://pectus.ai/docs/skills-spec.
 
 ## SKILL.md format
 

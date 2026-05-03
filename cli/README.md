@@ -16,11 +16,15 @@ pectus workspace list               list workspaces
 pectus analyze                      run a skill
 pectus skills list                  list installed skills + versions
 pectus knowledge digest             run knowledge-digest skill
+pectus app install <repo-url>       install a community app
+pectus app list                     list installed apps
+pectus make-it skill                scaffold a new skill (interactive)
+pectus make-it app                  scaffold a new app (interactive)
 pectus doctor                       health check
 pectus update                       pull upstream + run migrations
 ```
 
-All commands are stubbed in v1. Implementation lands in PR5 alongside the hub-template port.
+All commands are stubbed in v1. Implementation lands in PR5 alongside the `content-hub` app port.
 
 ## Run from the repo
 

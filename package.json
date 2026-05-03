@@ -2,7 +2,7 @@
   "name": "pectus",
   "version": "0.1.0",
   "private": true,
-  "description": "Self-hosted content insights platform. Connect your data, get a weekly content plan ranked by projected traffic.",
+  "description": "Self-hosted creator insights kit. Connect your data, get a weekly content plan ranked by projected traffic.",
   "license": "MIT",
   "homepage": "https://pectus.ai",
   "repository": {
@@ -11,9 +11,9 @@
   },
   "workspaces": [
     "apps/*",
+    "connectors/*",
     "cli",
-    "cms",
-    "hub-template"
+    "cms"
   ],
   "scripts": {
     "dev": "npm --workspace cms run dev",

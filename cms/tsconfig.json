@@ -3,8 +3,12 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "lib": ["dom", "dom.iterable", "ES2022"],
-    "jsx": "preserve",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "ES2022"
+    ],
+    "jsx": "react-jsx",
     "strict": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -13,19 +17,65 @@
     "incremental": true,
     "isolatedModules": true,
     "resolveJsonModule": true,
-    "plugins": [{ "name": "next" }],
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@pectus/supabase": ["../apps/supabase/client.ts"],
-      "@pectus/supabase/*": ["../apps/supabase/*"],
-      "@pectus/anthropic": ["../apps/anthropic/client.ts"],
-      "@pectus/google/oauth": ["../apps/google/oauth.ts"],
-      "@pectus/google/service-account": ["../apps/google/service-account.ts"],
-      "@pectus/google/gsc": ["../apps/google/gsc.ts"],
-      "@pectus/google/ga4": ["../apps/google/ga4.ts"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@pectus/supabase": [
+        "../connectors/supabase/client.ts"
+      ],
+      "@pectus/supabase/*": [
+        "../connectors/supabase/*"
+      ],
+      "@pectus/anthropic": [
+        "../connectors/anthropic/client.ts"
+      ],
+      "@pectus/google/oauth": [
+        "../connectors/google/oauth.ts"
+      ],
+      "@pectus/google/service-account": [
+        "../connectors/google/service-account.ts"
+      ],
+      "@pectus/google/gsc": [
+        "../connectors/google/gsc.ts"
+      ],
+      "@pectus/google/ga4": [
+        "../connectors/google/ga4.ts"
+      ],
+      "@pectus/github": [
+        "../connectors/github/client.ts"
+      ],
+      "@pectus/cli/import-design": [
+        "../cli/src/lib/import-design.ts"
+      ],
+      "@pectus/content-hub/templates": [
+        "../apps/content-hub/templates/index.ts"
+      ],
+      "@pectus/content-hub/blocks": [
+        "../apps/content-hub/src/components/blocks/types.ts"
+      ],
+      "@pectus/skills/*/schema": [
+        "../skills/*/schema.ts"
+      ],
+      "@pectus/apps/*/insights/schema": [
+        "../apps/*/insights/schema.ts"
+      ]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

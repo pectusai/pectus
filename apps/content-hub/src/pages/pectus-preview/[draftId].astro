@@ -1,0 +1,94 @@
+---
+export const prerender = false;
+
+import HomeRender from "../../../templates/pages/home/Render.astro";
+import PillarRender from "../../../templates/pages/pillar/Render.astro";
+import ContentRender from "../../../templates/pages/content/Render.astro";
+import LandingRender from "../../../templates/pages/landing/Render.astro";
+import ListingRender from "../../../templates/pages/listing/Render.astro";
+import ContactRender from "../../../templates/pages/contact/Render.astro";
+import AboutRender from "../../../templates/pages/about/Render.astro";
+import type { PageBlock } from "../../components/blocks/types";
+
+const renderers: Record<string, typeof HomeRender> = {
+  home: HomeRender,
+  pillar: PillarRender,
+  content: ContentRender,
+  landing: LandingRender,
+  listing: ListingRender,
+  contact: ContactRender,
+  about: AboutRender,
+};
+
+const { draftId } = Astro.params;
+
+const supabaseUrl =
+  process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.PUBLIC_SUPABASE_URL;
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!draftId) {
+  return new Response("Missing draft id.", { status: 400 });
+}
+if (!supabaseUrl || !serviceKey) {
+  return new Response(
+    "Supabase env not configured. Run `pectus connect supabase` and start astro dev with .env.local loaded.",
+    { status: 500 },
+  );
+}
+
+const restHeaders = {
+  apikey: serviceKey,
+  Authorization: `Bearer ${serviceKey}`,
+};
+
+const variantRes = await fetch(
+  `${supabaseUrl}/rest/v1/page_variants?id=eq.${encodeURIComponent(draftId)}&select=id,locale,title,slug,blocks,page_id`,
+  { headers: restHeaders },
+);
+if (!variantRes.ok) {
+  return new Response(
+    `Variant lookup failed: ${variantRes.status} ${await variantRes.text()}`,
+    { status: 502 },
+  );
+}
+const variants = (await variantRes.json()) as Array<{
+  id: string;
+  locale: string;
+  title: string;
+  slug: string;
+  blocks: PageBlock[] | null;
+  page_id: string;
+}>;
+const variant = variants[0];
+if (!variant) {
+  return new Response("Draft not found.", { status: 404 });
+}
+
+const pageRes = await fetch(
+  `${supabaseUrl}/rest/v1/pages?id=eq.${encodeURIComponent(variant.page_id)}&select=id,template_id,purpose`,
+  { headers: restHeaders },
+);
+const pages = (await pageRes.json()) as Array<{
+  id: string;
+  template_id: string;
+  purpose: string;
+}>;
+const page = pages[0];
+if (!page) {
+  return new Response("Page not found.", { status: 404 });
+}
+
+const Renderer = renderers[page.template_id] ?? HomeRender;
+const blocks: PageBlock[] = variant.blocks ?? [];
+---
+<Renderer title={variant.title ?? "Preview"} blocks={blocks} />
+<script is:inline>
+  /* Builder posts { type: 'pectus:reload' } after each edit-page apply.
+   * Origin check: parent is the CMS dev/prod URL — we accept any since the
+   * preview route is dev-only and middleware blocks it in production. */
+  window.addEventListener("message", (event) => {
+    if (event?.data?.type === "pectus:reload") {
+      window.location.reload();
+    }
+  });
+</script>

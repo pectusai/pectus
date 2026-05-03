@@ -19,10 +19,10 @@ knowledge/insights.md
 brand/reference-images/*
 !brand/reference-images/.gitkeep
 
+brand/imports/
+
 .DS_Store
 *.log
 .vercel
 .turbo
-
-hub-template/public/article-images/
-!hub-template/public/article-images/.gitkeep
+*.tsbuildinfo

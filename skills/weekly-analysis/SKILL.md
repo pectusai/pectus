@@ -1,10 +1,17 @@
 ---
 name: weekly-analysis
 description: Weekly content plan with post suggestions ranked by projected traffic
-version: 1.0.0
+version: 1.1.0
 inputs:
   - workspace_id
-  - week_start
+  - brand_profile
+  - icp_profile
+  - knowledge_insights
+  - insights
+  - top_keywords
+  - recent_articles
+  - answer_public_entries
+  - last_run
 outputs:
   - post_suggestions
   - keyword_clusters
@@ -25,13 +32,19 @@ You are a senior content strategist. The user has connected their site, their se
 
 ## Inputs you receive
 
-1. **Top 200 keywords** for this workspace — `{keyword, search_volume, current_rank, intent, gsc_impressions, gsc_clicks, gsc_position}`. The GSC fields are last 28 days.
+**Primary signal — Insights** (from connected app interpretation skills): pre-interpreted findings grouped by source (gsc, ga4, google-ads, meta, linkedin, seed-keywords). Each insight has a `type`, `title`, `opportunity`, `confidence`, optional `topic_hint`, and source-specific evidence. **This is your strongest input.** Reason from these first.
+
+**Supplementary raw data** (during the v0.2 → v0.3 transition; some sources don't have insights skills yet):
+
+1. **Top 200 keywords** for this workspace — `{keyword, search_volume, current_rank, intent, gsc_impressions, gsc_clicks, gsc_position}`. Last 28 days. (Will be retired once `apps/gsc/insights/` ships in v0.3.)
 2. **Last 500 articles** the user has published — `{slug, title, category, date_published, word_count, status}`.
 3. **ICP** — personas and their pain points.
 4. **Brand profile** — voice, tonality, taglines, guidelines.
 5. **Knowledge insights** — the digested summary of whatever the user has uploaded to `knowledge/raw/`.
-6. **AnswerThePublic entries** (if the workspace has any) — questions the audience is asking, grouped by source (search engines, LLMs, social, shopping).
+6. **AnswerThePublic entries** (if the workspace has any) — questions the audience is asking, grouped by source. (Will be retired once `apps/answer-public/insights/` ships in v0.3.)
 7. **Last week's analysis** (if it exists) — so you don't re-suggest the same topics.
+
+**Treat Insights as primary.** They've already done the per-source synthesis work. Use the raw data sections to fill gaps and validate, not as the starting point. As more insights skills land, the raw sections shrink and eventually disappear.
 
 ## What to produce
 

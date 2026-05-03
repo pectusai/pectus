@@ -25,6 +25,12 @@ export function WorkspaceNav({ code }: { code: string }) {
         Dashboard
       </Link>
       <Link
+        href={`/workspaces/${code}/pages`}
+        className={linkClass(`/workspaces/${code}/pages`)}
+      >
+        Pages
+      </Link>
+      <Link
         href={`/workspaces/${code}/articles`}
         className={linkClass(`/workspaces/${code}/articles`)}
       >

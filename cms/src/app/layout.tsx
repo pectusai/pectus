@@ -9,7 +9,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Pectus CMS",
-  description: "Self-hosted content insights admin app.",
+  description: "Self-hosted creator insights admin app.",
   robots: { index: false, follow: false, nocache: true },
 };
 

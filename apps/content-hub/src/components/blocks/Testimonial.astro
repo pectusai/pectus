@@ -1,0 +1,49 @@
+---
+interface Props {
+  quote: string;
+  author?: string;
+  role?: string;
+  avatar_url?: string;
+}
+const { quote, author, role, avatar_url } = Astro.props;
+---
+<section class="testimonial">
+  <blockquote class="quote">{quote}</blockquote>
+  {(author || role || avatar_url) && (
+    <div class="attribution">
+      {avatar_url && <img src={avatar_url} alt="" class="avatar" />}
+      <div>
+        {author && <p class="author">{author}</p>}
+        {role && <p class="role">{role}</p>}
+      </div>
+    </div>
+  )}
+</section>
+
+<style>
+.testimonial {
+  max-width: 42rem;
+  margin: 3rem auto;
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+.quote {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  margin: 0 0 1.5rem;
+  color: var(--color-text);
+}
+.quote::before { content: "\201C"; }
+.quote::after { content: "\201D"; }
+.attribution {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: left;
+}
+.avatar { width: 40px; height: 40px; border-radius: 9999px; }
+.author { margin: 0; font-weight: 500; font-size: 0.95rem; }
+.role { margin: 0; font-size: 0.85rem; color: var(--color-muted); }
+</style>

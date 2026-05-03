@@ -1,0 +1,74 @@
+---
+interface Props {
+  title: string;
+  subtitle?: string;
+  eyebrow?: string;
+  image_url?: string;
+  cta_label?: string;
+  cta_href?: string;
+}
+const { title, subtitle, eyebrow, image_url, cta_label, cta_href } = Astro.props;
+---
+<section class="hero">
+  <div class="hero-inner">
+    {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+    <h1 class="hero-title">{title}</h1>
+    {subtitle && <p class="hero-subtitle">{subtitle}</p>}
+    {cta_label && cta_href && (
+      <a href={cta_href} class="hero-cta">{cta_label}</a>
+    )}
+  </div>
+  {image_url && <img src={image_url} alt="" class="hero-image" loading="eager" />}
+</section>
+
+<style>
+.hero {
+  display: grid;
+  gap: 2rem;
+  padding: 4rem 1.5rem;
+  max-width: 64rem;
+  margin: 0 auto;
+}
+@media (min-width: 768px) {
+  .hero {
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    padding: 6rem 1.5rem;
+  }
+}
+.hero-inner { max-width: 36rem; }
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  margin-bottom: 0.75rem;
+}
+.hero-title {
+  font-family: var(--font-heading);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin: 0 0 1rem;
+}
+.hero-subtitle {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: var(--color-muted);
+  margin: 0 0 1.5rem;
+}
+.hero-cta {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: var(--color-accent);
+  color: var(--color-surface);
+  border-radius: 0.5rem;
+  font-weight: 500;
+}
+.hero-cta:hover { text-decoration: none; opacity: 0.9; }
+.hero-image {
+  width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+}
+</style>

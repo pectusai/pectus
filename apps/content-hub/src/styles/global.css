@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+/* Tailwind theme tokens read from brand vars (set by brand-tokens.css +
+ * BaseLayout). Hardcoded fallbacks keep the site usable when brand.json is
+ * missing or partial. */
+@theme {
+  --color-surface: var(--brand-surface, #ffffff);
+  --color-surface-soft: var(--brand-surface-alt, #fafafa);
+  --color-text: var(--brand-text, #0a0a0a);
+  --color-muted: var(--brand-muted, #6b7280);
+  --color-border: var(--brand-border, #e5e7eb);
+  --color-accent: var(--brand-accent, #2563eb);
+  --color-accent-soft: var(--brand-accent-alt, #dbeafe);
+
+  --font-heading: var(--brand-font-heading);
+  --font-body: var(--brand-font-body);
+}
+
+html {
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.01em;
+}
+
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+/* Surfaces and accents that pick up the imported brand. The radius hook means
+ * a "sharp" import really does flatten cards across the hub. */
+.brand-card {
+  background: var(--brand-surface-alt);
+  border: 1px solid var(--brand-border);
+  border-radius: var(--brand-radius);
+}
+
+.brand-cta {
+  background: var(--brand-accent);
+  color: #fff;
+  border-radius: var(--brand-radius);
+}
+
+.brand-cta-secondary {
+  background: var(--brand-accent-alt);
+  color: var(--brand-accent-alt-ink);
+  border-radius: var(--brand-radius);
+}
+
+.prose p { margin: 0 0 1rem; line-height: 1.7; }
+.prose h2 { margin: 2.5rem 0 1rem; font-size: 1.75rem; font-weight: 700; }
+.prose h3 { margin: 2rem 0 0.75rem; font-size: 1.375rem; font-weight: 600; }
+.prose h4 { margin: 1.5rem 0 0.5rem; font-size: 1.125rem; font-weight: 600; }
+.prose ul, .prose ol { margin: 0 0 1.5rem; padding-left: 1.5rem; }
+.prose li { margin-bottom: 0.5rem; line-height: 1.7; }
+.prose blockquote {
+  margin: 1.5rem 0;
+  padding-left: 1.25rem;
+  border-left: 3px solid var(--brand-accent);
+  color: var(--brand-muted);
+  font-style: italic;
+}
+.prose figure { margin: 1.5rem 0; }
+.prose figure img { width: 100%; height: auto; border-radius: var(--brand-radius); }
+.prose code {
+  font-family: var(--brand-font-mono);
+  background: var(--brand-surface-alt);
+  padding: 0.1em 0.3em;
+  border-radius: calc(var(--brand-radius) / 2);
+  font-size: 0.95em;
+}
+.prose a { color: var(--brand-accent); }

@@ -1,0 +1,92 @@
+---
+import "../styles/brand-tokens.css";
+import "../styles/global.css";
+import { config } from "../../pectus.config";
+import { websiteLd, blogLd } from "../lib/schema";
+import { brandTokensCss, brandFontLinks } from "../lib/brand-tokens";
+
+const brandStyle = brandTokensCss();
+const fontLinks = brandFontLinks();
+
+type ArticleMeta = {
+  publishedTime?: string;
+  modifiedTime?: string;
+  author?: string;
+  section?: string;
+  image?: string;
+};
+
+interface Props {
+  title: string;
+  description?: string;
+  canonical?: string;
+  ogType?: "website" | "article";
+  articleMeta?: ArticleMeta;
+  ldJson?: object[];
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description = config.site.description,
+  canonical,
+  ogType = "website",
+  articleMeta,
+  ldJson = [],
+  noindex = false,
+} = Astro.props;
+
+const site = Astro.site ?? new URL(config.site.url);
+const canonicalUrl = canonical ?? new URL(Astro.url.pathname, site).href;
+
+const baseLd = [websiteLd(site), blogLd(site)];
+const allLd = [...baseLd, ...ldJson];
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <link rel="canonical" href={canonicalUrl} />
+    {fontLinks.map((href) => (
+      <link rel="stylesheet" href={href} />
+    ))}
+    {brandStyle && <style set:html={brandStyle} />}
+
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:site_name" content={config.site.name} />
+    <meta property="og:locale" content="en_US" />
+    {articleMeta?.image && <meta property="og:image" content={articleMeta.image} />}
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    {articleMeta?.image && <meta name="twitter:image" content={articleMeta.image} />}
+
+    {articleMeta?.publishedTime && (
+      <meta property="article:published_time" content={articleMeta.publishedTime} />
+    )}
+    {articleMeta?.modifiedTime && (
+      <meta property="article:modified_time" content={articleMeta.modifiedTime} />
+    )}
+    {articleMeta?.author && <meta property="article:author" content={articleMeta.author} />}
+    {articleMeta?.section && <meta property="article:section" content={articleMeta.section} />}
+
+    {allLd.map((ld) => (
+      <script type="application/ld+json" set:html={JSON.stringify(ld)} />
+    ))}
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <slot name="header" />
+    <main class="flex-1">
+      <slot />
+    </main>
+    <slot name="footer" />
+  </body>
+</html>

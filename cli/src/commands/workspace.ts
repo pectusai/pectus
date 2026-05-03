@@ -4,6 +4,7 @@ import {
   intro,
   outro,
   text,
+  select,
   isCancel,
   cancel,
   spinner,
@@ -70,6 +71,84 @@ export async function create(): Promise<void> {
   });
   if (isCancel(locale)) bail();
 
+  const siteShape = await select({
+    message: "Where will Pectus content live on this site?",
+    options: [
+      {
+        value: "greenfield",
+        label: "Greenfield — brand new site, Pectus pages live at the root",
+        hint: "mount slug = /",
+      },
+      {
+        value: "coexist",
+        label: "Coexist — there's an existing site, Pectus pages live under a sub-path",
+        hint: "mount slug like /insights/",
+      },
+    ],
+    initialValue: "greenfield",
+  });
+  if (isCancel(siteShape)) bail();
+
+  let mountSlug = "/";
+  if (siteShape === "coexist") {
+    const sub = await text({
+      message: "Sub-path for Pectus pages (you can change this later)",
+      initialValue: "/insights/",
+      validate(v) {
+        if (!v) return "Required.";
+        const t = v.trim();
+        if (!t.startsWith("/")) return "Must start with /";
+        if (!t.endsWith("/")) return "Must end with /";
+        if (!/^\/[a-z0-9/-]+\/$/.test(t)) {
+          return "Use lowercase letters, digits, hyphens, and slashes.";
+        }
+        return undefined;
+      },
+    });
+    if (isCancel(sub)) bail();
+    mountSlug = (sub as string).trim();
+  }
+
+  const repoString = await text({
+    message:
+      "Content-hub GitHub repo (owner/name) — leave blank to set later in Workspace Settings",
+    placeholder: "your-org/site",
+    validate(v) {
+      if (!v || !v.trim()) return undefined;
+      if (!/^[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+$/u.test(v.trim())) {
+        return "Use the form 'owner/name'.";
+      }
+      return undefined;
+    },
+  });
+  if (isCancel(repoString)) bail();
+  const contentHubRepo = (repoString as string).trim() || null;
+
+  const seedHelp =
+    siteShape === "greenfield"
+      ? "Greenfield workspaces have no GSC traffic data yet. Pectus uses these to plan a sitemap. 5–10 phrases, comma-separated."
+      : "Optional. Coexist sites usually have GSC data, but seeds are still useful as ICP-aligned anchors. 5–10 phrases, comma-separated, or leave blank.";
+  const seedKeywordsRaw = await text({
+    message: `Seed keywords (5–10) — ${seedHelp}`,
+    placeholder:
+      "observability for python, structured logging, distributed tracing",
+    validate(v) {
+      const parts = (v ?? "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (siteShape === "coexist" && parts.length === 0) return undefined;
+      if (parts.length === 0) return "At least one keyword for greenfield workspaces.";
+      if (parts.length > 10) return "Cap is 10. Pick the most representative.";
+      return undefined;
+    },
+  });
+  if (isCancel(seedKeywordsRaw)) bail();
+  const seedKeywords = (seedKeywordsRaw as string)
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
   const s = spinner();
   s.start("Creating workspace");
 
@@ -79,6 +158,8 @@ export async function create(): Promise<void> {
       name: (name as string).trim(),
       code: codeStr,
       locale: (locale as string).trim(),
+      mount_slug: mountSlug,
+      content_hub_repo: contentHubRepo,
     })
     .select("id, code")
     .single();
@@ -98,11 +179,23 @@ export async function create(): Promise<void> {
     min_approvals: 1,
   });
   if (rpErr) {
-    s.stop("Workspace created, review_policy insert failed.");
     console.warn(kleur.yellow(`review_policy: ${rpErr.message}`));
-  } else {
-    s.stop("Workspace created.");
   }
+
+  // Seed keywords.
+  if (seedKeywords.length > 0) {
+    const { error: skErr } = await supabase.from("seed_keywords").insert(
+      seedKeywords.map((keyword) => ({
+        workspace_id: created.id,
+        keyword,
+      })),
+    );
+    if (skErr) {
+      console.warn(kleur.yellow(`seed_keywords: ${skErr.message}`));
+    }
+  }
+
+  s.stop("Workspace created.");
 
   outro(
     kleur.green(

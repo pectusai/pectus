@@ -1,0 +1,16 @@
+{
+  "name": "Listing page",
+  "purpose": "listing",
+  "description": "Index page that lists child pages or articles. Hero + a link list of children. Good for resource hubs, category pages, archives.",
+  "thumbnail": "thumbnail.png",
+  "default_blocks": [
+    {
+      "type": "hero",
+      "props": { "title": "", "subtitle": "" }
+    },
+    {
+      "type": "link_list",
+      "props": { "heading": "", "items": [] }
+    }
+  ]
+}

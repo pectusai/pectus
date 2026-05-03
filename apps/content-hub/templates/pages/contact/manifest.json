@@ -1,0 +1,20 @@
+{
+  "name": "Contact page",
+  "purpose": "contact",
+  "description": "Hero, prose explaining how to reach the team, single CTA. Replace with a real form post-launch.",
+  "thumbnail": "thumbnail.png",
+  "default_blocks": [
+    {
+      "type": "hero",
+      "props": { "title": "", "subtitle": "" }
+    },
+    {
+      "type": "prose",
+      "props": { "markdown": "" }
+    },
+    {
+      "type": "cta",
+      "props": { "heading": "", "label": "", "href": "mailto:" }
+    }
+  ]
+}

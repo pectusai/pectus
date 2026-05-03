@@ -1,0 +1,17 @@
+---
+import { marked } from "marked";
+interface Props { markdown: string; }
+const { markdown } = Astro.props;
+const html = marked.parse(markdown ?? "", { async: false });
+---
+<section class="prose-block">
+  <div class="prose" set:html={html}></div>
+</section>
+
+<style>
+.prose-block {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+</style>

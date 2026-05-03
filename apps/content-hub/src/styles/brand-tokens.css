@@ -1,0 +1,30 @@
+/* Brand token bridge.
+ *
+ * BaseLayout reads brand/brand.json at render time and emits a <style> block
+ * setting `--brand-color-*`, `--brand-font-*`, and `--brand-radius-value` on
+ * :root. This file maps those raw inputs to the `--brand-*` aliases the rest
+ * of the site uses, with sensible fallbacks for the case where a token is null
+ * or the layout never injected a value.
+ */
+
+:root {
+  --brand-accent: var(--brand-color-accent, #2563eb);
+  --brand-surface: var(--brand-color-surface, #ffffff);
+  --brand-text: var(--brand-color-text, #0a0a0a);
+  --brand-muted: var(--brand-color-muted, #6b7280);
+  --brand-border: var(--brand-color-border, #e5e7eb);
+
+  --brand-accent-alt: var(--brand-color-accent-alt, var(--brand-accent));
+  --brand-accent-alt-ink: var(--brand-color-accent-alt-ink, #ffffff);
+  --brand-surface-alt: var(--brand-color-surface-alt, var(--brand-surface));
+  --brand-surface-inv: var(--brand-color-surface-inv, var(--brand-text));
+  --brand-ok: var(--brand-color-ok, #0e8a2e);
+  --brand-warn: var(--brand-color-warn, #b8730d);
+  --brand-err: var(--brand-color-err, #c5160e);
+
+  --brand-font-heading: var(--brand-font-heading-family, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
+  --brand-font-body: var(--brand-font-body-family, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
+  --brand-font-mono: var(--brand-font-mono-family, ui-monospace, monospace);
+
+  --brand-radius: var(--brand-radius-value, 6px);
+}

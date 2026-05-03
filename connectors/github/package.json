@@ -1,0 +1,9 @@
+{
+  "name": "@pectus/github",
+  "version": "0.1.0",
+  "private": true,
+  "main": "client.ts",
+  "dependencies": {
+    "@octokit/rest": "^22.0.1"
+  }
+}

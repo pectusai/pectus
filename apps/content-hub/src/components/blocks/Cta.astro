@@ -1,0 +1,51 @@
+---
+interface Props {
+  heading: string;
+  body?: string;
+  label: string;
+  href: string;
+}
+const { heading, body, label, href } = Astro.props;
+---
+<section class="cta">
+  <div class="cta-inner">
+    <h2 class="cta-heading">{heading}</h2>
+    {body && <p class="cta-body">{body}</p>}
+    <a href={href} class="cta-button">{label}</a>
+  </div>
+</section>
+
+<style>
+.cta {
+  background: var(--color-accent-soft);
+  padding: 4rem 1.5rem;
+  margin: 3rem 0;
+}
+.cta-inner {
+  max-width: 36rem;
+  margin: 0 auto;
+  text-align: center;
+}
+.cta-heading {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  letter-spacing: -0.01em;
+  margin: 0 0 1rem;
+  color: var(--color-text);
+}
+.cta-body {
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  color: var(--color-text);
+  margin: 0 0 1.75rem;
+}
+.cta-button {
+  display: inline-block;
+  padding: 0.875rem 1.75rem;
+  background: var(--color-accent);
+  color: var(--color-surface);
+  border-radius: 0.5rem;
+  font-weight: 500;
+}
+.cta-button:hover { text-decoration: none; opacity: 0.92; }
+</style>

@@ -1,6 +1,7 @@
 import { createServerClient } from "@pectus/supabase";
 import { getWorkspaceByCode } from "@/lib/workspace";
 import { RunAnalysisButton } from "./RunAnalysisButton";
+import { RefreshInsightsButton } from "./RefreshInsightsButton";
 
 function isoWeekStart(d = new Date()): string {
   const day = d.getUTCDay();
@@ -84,8 +85,9 @@ export default async function DashboardPage({
           <Stat value={articleCount ?? 0} label="Articles" />
         </dl>
 
-        <div className="mt-6">
+        <div className="mt-6 flex flex-wrap items-start gap-3">
           <RunAnalysisButton code={code} />
+          <RefreshInsightsButton code={code} />
         </div>
       </header>
 

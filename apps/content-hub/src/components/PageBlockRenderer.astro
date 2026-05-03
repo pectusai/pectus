@@ -1,0 +1,27 @@
+---
+import Hero from "./blocks/Hero.astro";
+import Prose from "./blocks/Prose.astro";
+import FeatureGrid from "./blocks/FeatureGrid.astro";
+import Testimonial from "./blocks/Testimonial.astro";
+import Cta from "./blocks/Cta.astro";
+import ImageBlock from "./blocks/ImageBlock.astro";
+import LinkList from "./blocks/LinkList.astro";
+import Faq from "./blocks/Faq.astro";
+import type { PageBlock } from "./blocks";
+
+interface Props { blocks: PageBlock[]; }
+const { blocks } = Astro.props;
+---
+{blocks.map((block) => {
+  switch (block.type) {
+    case "hero": return <Hero {...block.props} />;
+    case "prose": return <Prose {...block.props} />;
+    case "feature_grid": return <FeatureGrid {...block.props} />;
+    case "testimonial": return <Testimonial {...block.props} />;
+    case "cta": return <Cta {...block.props} />;
+    case "image": return <ImageBlock {...block.props} />;
+    case "link_list": return <LinkList {...block.props} />;
+    case "faq": return <Faq {...block.props} />;
+    default: return null;
+  }
+})}

@@ -1,0 +1,17 @@
+---
+import BaseLayout from "../../../src/layouts/BaseLayout.astro";
+import PageBlockRenderer from "../../../src/components/PageBlockRenderer.astro";
+import type { PageBlock } from "../../../src/components/blocks";
+
+interface Props {
+  title: string;
+  description?: string;
+  blocks: PageBlock[];
+}
+const { title, description, blocks } = Astro.props;
+---
+<BaseLayout title={title} description={description} ogType="article">
+  <article>
+    <PageBlockRenderer blocks={blocks} />
+  </article>
+</BaseLayout>

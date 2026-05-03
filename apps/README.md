@@ -1,33 +1,54 @@
-# Apps — service connectors
+# Apps — installable surfaces
 
-Each folder in `apps/` is a connector to one external service. The CMS, the CLI, and the skill runner all import from here.
+An app is a unit of capability that plugs into Pectus. Two flavors:
+
+- **Inbound apps** bring data in (GA4, Google Ads, Meta, LinkedIn, GSC).
+- **Outbound apps** publish things out (`content-hub`, WordPress, Storyblok, ecom storefronts).
+
+Apps are not infrastructure. Infrastructure (Supabase, Anthropic API, OAuth) lives in `connectors/`. Apps consume connectors when they need to.
+
+## The "core covers the app" property
+
+When the runner invokes any app, it composes the system prompt as:
+
+```
+[1] Brand block       → voice, name, colors, tagline (from brand/brand.json)
+[2] Workspace block   → ICP, market, locale, keywords (from active workspace)
+[3] Knowledge block   → digested insights (from knowledge/insights.md)
+[4] App block         → only "what to do", never "how to sound"
+```
+
+App authors write layer 4 in core-aware language. They never set tone, voice, or copy. The brand voice is already in scope from layer 1.
+
+This is the rule that prevents apps from drifting into theming. Apps describe behavior; the core describes identity.
 
 ## Contract
 
-Every `apps/<service>/` folder ships:
+Every app folder ships:
 
-- `README.md` — what the connector does, env vars it reads, links to upstream service docs.
-- `client.ts` — the configured client. Other code imports from this file.
-- `provision.ts` (optional) — CLI-callable setup logic. Used by `pectus connect <service>`.
-- Domain-specific methods in their own files (e.g. `gsc.ts`, `ga4.ts`).
+- `APP.md` — manifest with frontmatter (name, type, needs, inputs, outputs, config, schema). Body is the prompt body, written core-aware.
+- `schema.ts` — Zod schema for structured output the runner validates.
+- `provision.ts` (optional) — CLI-callable setup if the app has external API credentials.
+- `README.md` — overview for the user.
 
-## v1 connectors
+## v1 apps
 
-- `supabase/` — database, auth, storage. Provisioning + migrations live here.
-- `google/` — Search Console + Analytics 4 via OAuth and service account.
-- `anthropic/` — the Claude API wrapper used by skills and the dashboard.
-- `vercel/` — optional, for deploying the hub-template.
-- `github/` — optional, for fork sync helpers.
+**Outbound (publishers):**
+- `content-hub/` — pre-installed Astro publisher. The flagship "what Pectus can build for you" surface. Was previously a top-level `hub-template/`; now lives here as an app to demonstrate that the same pattern targets WordPress, Storyblok, etc.
 
-## Adding a new connector
+**Inbound (data sources):**
+- `gsc/` — Google Search Console organic performance. Auth shared with `connectors/google`. Wraps the existing API client in `connectors/google/gsc.ts`.
+- `ga4/` — Google Analytics 4 web analytics. Auth shared with `connectors/google`.
+- `google-ads/` — Google Ads paid search. Needs developer token plus the shared Google OAuth.
+- `meta/` — Meta Marketing API for Facebook + Instagram paid social. App-specific auth via System User token.
+- `linkedin/` — LinkedIn Marketing API. App-specific OAuth, requires Marketing Developer Platform approval.
 
-Connectors are upstream code. Don't add them in your local fork — submit a PR to `github.com/pectusai/pectus`.
+## Where do community apps live
 
-To add (e.g.) SerpAPI:
+When `npx pectus app install <repo-url>` is implemented, third-party apps land in `apps/community/<name>/`. Official apps stay at the top level of `apps/`.
 
-1. Create `apps/serpapi/` with the contract above.
-2. Add a CLI subcommand in `cli/src/commands/connect.ts` so users can wire it up.
-3. Document env vars in the root `.env.example`.
-4. If the connector produces data skills should consume, write the data into `knowledge/` so `knowledge-digest` can fold it into `insights.md`.
+## Authoring a new app
 
-See `docs/architecture.md` for how connectors fit into the wider system.
+Use the `make-it` skill (`npx pectus skill run make-it`). It walks you through the manifest, the core-context dependencies, the input and output shapes, and scaffolds the files. Then submit a PR to `github.com/pectusai/pectus` for an official app, or publish to your own GitHub repo for a community app.
+
+See https://pectus.ai/docs/architecture for the apps model in depth.

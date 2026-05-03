@@ -1,0 +1,24 @@
+{
+  "name": "Pillar page",
+  "purpose": "content",
+  "description": "Long-form pillar with hero, prose body, link list to sub-pages, and a closing CTA. Optimised for ranking on a topic and feeding link equity to children.",
+  "thumbnail": "thumbnail.png",
+  "default_blocks": [
+    {
+      "type": "hero",
+      "props": { "title": "", "subtitle": "", "eyebrow": "" }
+    },
+    {
+      "type": "prose",
+      "props": { "markdown": "" }
+    },
+    {
+      "type": "link_list",
+      "props": { "heading": "Continue reading", "items": [] }
+    },
+    {
+      "type": "cta",
+      "props": { "heading": "", "label": "", "href": "" }
+    }
+  ]
+}

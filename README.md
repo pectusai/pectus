@@ -1,16 +1,17 @@
 # Pectus
 
-A self-hosted, open-source content insights platform. Connect your site, your search data, and your audience research, and get back a weekly content plan ranked by projected traffic.
+A self-hosted, open-source creator insights kit. Connect your site, your search data, and your audience research, and get back a weekly content plan ranked by projected traffic.
 
 Pectus runs locally on your machine. You own your data, your fork, and your stack.
 
 ## What you get
 
 - A dashboard that tells you what content to write next, ranked by projected traffic.
-- A workspace per market (UK, DE, FR — or whatever you sell into) with its own ICP, keywords, and analysis.
-- An Astro public hub template with perfect SEO/AEO/GEO out of the box.
-- A skills system: dev-authored growth loops you pull into your repo via `git pull upstream`. New skill upstream means new capabilities downstream — no migrations, no rebuilds.
-- Knowledge folder where you drop your own data (AnswerThePublic exports, BigQuery dumps, anything) and Pectus turns it into insights your skills consume.
+- A workspace per market (UK, DE, FR or whatever you sell into) with its own ICP, keywords, and analysis.
+- A pre-installed Astro `content-hub` app with perfect SEO/AEO/GEO out of the box, ready to publish to.
+- An apps system: installable surfaces for data sources (GA4, Google Ads, Meta, LinkedIn) and publishers (WordPress, Storyblok, content-hub). Anyone can build and share apps.
+- A skills system: portable verbs (write a post, run weekly analysis, audit internal linking) that target any installed app. One skill, many targets.
+- A knowledge folder where you drop your own data (AnswerThePublic exports, BigQuery dumps, anything) and Pectus turns it into insights your skills consume.
 
 ## Install
 
@@ -27,16 +28,27 @@ Estimated time: 20 to 30 minutes, mostly waiting for account signups.
 ```
 pectus/
 ├── pectus.md          The install script Claude Code reads
-├── CLAUDE.md          Rails — what Claude is allowed to do in this repo
-├── apps/              Service connectors (Supabase, Google, Vercel, GitHub, Anthropic)
-├── skills/            Growth loops (SEO strategy, JTBD, internal linking, weekly analysis, knowledge digest)
-├── knowledge/         Your data lake — drop files here, skills consume them
+├── AGENTS.md          Rails for coding agents working in this repo
+├── CHANGELOG.md       Release notes
+├── connectors/        Infrastructure (Supabase, Anthropic, Vercel, GitHub, Google auth)
+├── apps/              Installable surfaces (data sources, publishers — content-hub ships pre-installed)
+├── skills/            Portable verbs (analysis, write-post, internal-linking, knowledge-digest, make-it)
+├── knowledge/         Your data lake. Drop files here, skills consume them
 ├── brand/             Your brand profile (voice, colors, fonts, taglines)
 ├── cms/               The Next.js admin UI you run at localhost:3000
-├── hub-template/      The Astro public site you can preview locally
-├── cli/               The `pectus` command-line tool
-└── docs/              Architecture, skills spec, upgrading guide
+└── cli/               The `pectus` command-line tool
 ```
+
+## Documentation
+
+Full docs live at https://pectus.ai/docs:
+
+- **Install walkthrough** — https://pectus.ai/docs/install
+- **Architecture** — https://pectus.ai/docs/architecture
+- **Skills spec** (how to author a skill) — https://pectus.ai/docs/skills-spec
+- **Integrations** (GSC, GA4, Google Ads, Meta, LinkedIn) — https://pectus.ai/docs/integrations
+- **Upgrading** — https://pectus.ai/docs/upgrading
+- **FAQ** — https://pectus.ai/docs/faq
 
 ## Updating
 

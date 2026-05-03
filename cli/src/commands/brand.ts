@@ -1,6 +1,7 @@
 // pectus brand — interactive brand setup.
-// Prompts for brand metadata, colors, voice, fonts, logo.
-// Writes <repo-root>/brand/brand.json and copies a logo file if provided.
+// Two paths: manual (the original wizard) or import-from-Claude-Design (paste a
+// handoff URL, let the importer fill brand.json, edit afterwards). Either path
+// writes <repo-root>/brand/brand.json.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -12,10 +13,17 @@ import {
   isCancel,
   cancel,
   note,
+  spinner,
 } from "@clack/prompts";
 import kleur from "kleur";
 import { findRepoRoot } from "../lib/repo-root.js";
 import { loadEnv } from "../lib/load-env.js";
+import {
+  importDesign,
+  timestampDir,
+  type BrandDraft,
+  type FontDraft,
+} from "../lib/import-design.js";
 
 type FontSource = "system" | "google" | "uploaded";
 
@@ -39,12 +47,26 @@ type BrandJson = {
     text: string;
     muted: string;
     border: string;
+    accent_alt: string | null;
+    accent_alt_ink: string | null;
+    surface_alt: string | null;
+    surface_inv: string | null;
+    ok: string | null;
+    warn: string | null;
+    err: string | null;
   };
-  fonts: { heading: FontDef; body: FontDef };
+  fonts: { heading: FontDef; body: FontDef; mono: FontDef };
+  radius: "sharp" | "default" | "soft";
   voice: string;
   tonality: string;
   guidelines: string;
   image_model: string;
+  imported_from: {
+    source: "claude-design";
+    url: string;
+    imported_at: string;
+    bundle_path: string;
+  } | null;
 };
 
 const DEFAULT_COLORS = {
@@ -53,6 +75,20 @@ const DEFAULT_COLORS = {
   text: "#0a0a0a",
   muted: "#6b7280",
   border: "#e5e7eb",
+};
+
+const DEFAULT_FONT_SYSTEM: FontDef = {
+  source: "system",
+  family: "system-ui",
+  google_url: null,
+  files: null,
+};
+
+const DEFAULT_FONT_MONO: FontDef = {
+  source: "system",
+  family: "ui-monospace, monospace",
+  google_url: null,
+  files: null,
 };
 
 function isHex(v: string): boolean {
@@ -78,7 +114,7 @@ async function promptHex(label: string, def: string): Promise<string> {
 }
 
 async function promptFont(role: "heading" | "body"): Promise<FontDef> {
-  const source = await select<FontSource>({
+  const choice = await select({
     message: `${role === "heading" ? "Heading" : "Body"} font source`,
     options: [
       { value: "system", label: "System (system-ui)" },
@@ -87,10 +123,11 @@ async function promptFont(role: "heading" | "body"): Promise<FontDef> {
     ],
     initialValue: "system",
   });
-  if (isCancel(source)) bail();
+  if (isCancel(choice)) bail();
+  const source = choice as FontSource;
 
   if (source === "system") {
-    return { source: "system", family: "system-ui", google_url: null, files: null };
+    return { ...DEFAULT_FONT_SYSTEM };
   }
 
   const family = await text({
@@ -149,8 +186,37 @@ export async function run(): Promise<void> {
 
   intro(kleur.bold().bgBlue().white(" Pectus brand setup "));
 
+  const mode = await select({
+    message: "How would you like to set up your brand?",
+    options: [
+      {
+        value: "manual",
+        label: "Manual — enter name, colors, voice etc. step by step (10-15 min)",
+      },
+      {
+        value: "import",
+        label: "Import from Claude Design — paste a bundle URL (1 min, edit afterwards)",
+      },
+    ],
+    initialValue: "manual",
+  });
+  if (isCancel(mode)) bail();
+
+  if (mode === "import") {
+    await runImport({ repo, brandDir, brandFile });
+  } else {
+    await runManual({ brandDir, brandFile });
+  }
+}
+
+async function runManual(opts: {
+  brandDir: string;
+  brandFile: string;
+}): Promise<void> {
+  const { brandDir, brandFile } = opts;
+
   note(
-    "Answers go to brand/brand.json. The CMS and hub-template both read from there at build time.",
+    "Answers go to brand/brand.json. The CMS and every installed app (including the pre-installed content-hub) read from there.",
     "What this does",
   );
 
@@ -202,7 +268,6 @@ export async function run(): Promise<void> {
   });
   if (isCancel(sitemapUrl)) bail();
 
-  // Colors.
   const accent = await promptHex("Accent color", DEFAULT_COLORS.accent);
   const surface = await promptHex("Surface color", DEFAULT_COLORS.surface);
   const textCol = await promptHex("Text color", DEFAULT_COLORS.text);
@@ -269,12 +334,21 @@ export async function run(): Promise<void> {
       text: textCol,
       muted,
       border,
+      accent_alt: null,
+      accent_alt_ink: null,
+      surface_alt: null,
+      surface_inv: null,
+      ok: null,
+      warn: null,
+      err: null,
     },
-    fonts: { heading, body },
+    fonts: { heading, body, mono: { ...DEFAULT_FONT_MONO } },
+    radius: "default",
     voice: (voice as string) || "",
     tonality: (tonality as string) || "",
     guidelines: "./guidelines.md",
     image_model: imageModel as string,
+    imported_from: null,
   };
 
   fs.mkdirSync(brandDir, { recursive: true });
@@ -283,4 +357,159 @@ export async function run(): Promise<void> {
   outro(
     kleur.green("Brand saved to brand/brand.json. Next: npx pectus connect supabase."),
   );
+}
+
+async function runImport(opts: {
+  repo: string;
+  brandDir: string;
+  brandFile: string;
+}): Promise<void> {
+  const { repo, brandDir, brandFile } = opts;
+
+  note(
+    "Paste a Claude Design URL (or the full handoff prompt — Pectus will pull the URL out). Pectus will fetch the bundle, ask Claude to extract your brand fields, and save the result. You can edit anything afterwards.",
+    "Import from Claude Design",
+  );
+
+  const input = await text({
+    message: "Claude Design URL or handoff prompt",
+    placeholder: "https://api.anthropic.com/v1/design/h/...",
+    validate(v) {
+      if (!v || !v.trim()) return "Paste a URL to continue.";
+      return undefined;
+    },
+  });
+  if (isCancel(input)) bail();
+
+  const stamp = timestampDir();
+  const bundleDestDir = path.join(repo, "brand", "imports", stamp);
+
+  const sp = spinner();
+  sp.start("Fetching bundle and extracting brand fields…");
+  const result = await importDesign(input as string, { bundleDestDir });
+  if (!result.ok) {
+    sp.stop("Import failed.");
+    const err = result.error;
+    const message =
+      err.kind === "fetch-failed"
+        ? `Couldn't fetch ${err.url}. The bundle may have expired. Try a different URL.`
+        : err.kind === "extract-failed"
+          ? `Fetched the bundle, but couldn't extract brand fields: ${err.message}`
+          : err.kind === "schema-invalid"
+            ? `Extraction returned an unexpected shape: ${err.details.join("; ")}`
+            : err.kind === "unzip-failed"
+              ? `Couldn't unzip the bundle: ${err.message}`
+              : err.message;
+    cancel(message);
+    process.exit(1);
+  }
+  sp.stop("Bundle imported.");
+
+  const merged = mergeDraftIntoBrand(result.draft, result.url, result.bundlePath);
+  fs.mkdirSync(brandDir, { recursive: true });
+  fs.writeFileSync(brandFile, `${JSON.stringify(merged, null, 2)}\n`, "utf8");
+
+  if (result.draft.guidelines_md) {
+    fs.writeFileSync(
+      path.join(brandDir, "guidelines.md"),
+      result.draft.guidelines_md.trim() + "\n",
+      "utf8",
+    );
+  }
+
+  const filled = collectFilledLabels(result.draft);
+  const summaryLines = [
+    kleur.green("Imported from Claude Design."),
+    `  Filled: ${filled.length > 0 ? filled.join(", ") : "(no fields)"}`,
+    `  Still needed: ${result.missing.join(", ")}`,
+    `  Bundle saved to: ${path.relative(repo, result.bundlePath)}/`,
+  ];
+  outro(summaryLines.join("\n"));
+}
+
+function mergeDraftIntoBrand(
+  draft: BrandDraft,
+  url: string,
+  bundlePath: string,
+): BrandJson {
+  return {
+    $schema: "https://pectus.ai/schemas/brand.schema.json",
+    name: draft.name?.trim() || "Your Brand",
+    tagline: draft.tagline?.trim() ?? "",
+    website_url: "",
+    sitemap_url: "",
+    logo: "./logo.svg",
+    colors: {
+      accent: draft.colors?.accent ?? DEFAULT_COLORS.accent,
+      surface: draft.colors?.surface ?? DEFAULT_COLORS.surface,
+      text: draft.colors?.text ?? DEFAULT_COLORS.text,
+      muted: draft.colors?.muted ?? DEFAULT_COLORS.muted,
+      border: draft.colors?.border ?? DEFAULT_COLORS.border,
+      accent_alt: draft.colors?.accent_alt ?? null,
+      accent_alt_ink: draft.colors?.accent_alt_ink ?? null,
+      surface_alt: draft.colors?.surface_alt ?? null,
+      surface_inv: draft.colors?.surface_inv ?? null,
+      ok: draft.colors?.ok ?? null,
+      warn: draft.colors?.warn ?? null,
+      err: draft.colors?.err ?? null,
+    },
+    fonts: {
+      heading: fontFromDraft(draft.fonts?.heading) ?? { ...DEFAULT_FONT_SYSTEM },
+      body: fontFromDraft(draft.fonts?.body) ?? { ...DEFAULT_FONT_SYSTEM },
+      mono: fontFromDraft(draft.fonts?.mono) ?? { ...DEFAULT_FONT_MONO },
+    },
+    radius: draft.radius ?? "default",
+    voice: draft.voice?.trim() ?? "",
+    tonality: draft.tonality?.trim() ?? "",
+    guidelines: "./guidelines.md",
+    image_model: "imagen-4",
+    imported_from: {
+      source: "claude-design",
+      url,
+      imported_at: new Date().toISOString(),
+      bundle_path: bundlePath,
+    },
+  };
+}
+
+function fontFromDraft(d: FontDraft | null | undefined): FontDef | null {
+  if (!d) return null;
+  return {
+    source: d.source,
+    family: d.family || "system-ui",
+    google_url: d.source === "google" ? d.google_url : null,
+    files: null,
+  };
+}
+
+function collectFilledLabels(draft: BrandDraft): string[] {
+  const labels: string[] = [];
+  if (draft.name) labels.push("name");
+  if (draft.tagline) labels.push("tagline");
+  if (draft.voice) labels.push("voice");
+  if (draft.tonality) labels.push("tonality");
+  if (draft.guidelines_md) labels.push("guidelines");
+  const basicColors = ["accent", "surface", "text", "muted", "border"].filter(
+    (k) => draft.colors?.[k as keyof BrandDraft["colors"]],
+  );
+  if (basicColors.length > 0) {
+    labels.push(`${basicColors.length} basic colors`);
+  }
+  const advColors = [
+    "accent_alt",
+    "accent_alt_ink",
+    "surface_alt",
+    "surface_inv",
+    "ok",
+    "warn",
+    "err",
+  ].filter((k) => draft.colors?.[k as keyof BrandDraft["colors"]]);
+  if (advColors.length > 0) {
+    labels.push(`${advColors.length} advanced colors`);
+  }
+  if (draft.fonts?.heading) labels.push("heading font");
+  if (draft.fonts?.body) labels.push("body font");
+  if (draft.fonts?.mono) labels.push("mono font");
+  if (draft.radius) labels.push(`radius (${draft.radius})`);
+  return labels;
 }

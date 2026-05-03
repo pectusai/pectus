@@ -159,7 +159,7 @@ async function connectSupabase(): Promise<void> {
 
   // Migrations — manual paste in v1.
   const repo = findRepoRoot();
-  const migration = path.join(repo, "apps/supabase/migrations/0001_initial.sql");
+  const migration = path.join(repo, "connectors/supabase/migrations/0001_initial.sql");
   if (fs.existsSync(migration)) {
     note(
       [
@@ -378,7 +378,7 @@ async function connectGoogle(): Promise<void> {
   outro(kleur.green("Google connected. Next: npx pectus workspace create."));
 }
 
-// Dynamically load apps/google/* by absolute file URL. Works under tsx (which
+// Dynamically load connectors/google/* by absolute file URL. Works under tsx (which
 // resolves .ts files at runtime) and under a built dist/ if those modules are
 // also compiled to .js — extension will be .js in that case.
 type ServiceAccountKey = {
@@ -421,11 +421,11 @@ async function loadGoogleApps(repo: string): Promise<GoogleApps> {
 
   const [saMod, ga4Mod, gscMod] = (await Promise.all([
     importFirstAvailable([
-      "apps/google/service-account.ts",
-      "apps/google/service-account.js",
+      "connectors/google/service-account.ts",
+      "connectors/google/service-account.js",
     ]),
-    importFirstAvailable(["apps/google/ga4.ts", "apps/google/ga4.js"]),
-    importFirstAvailable(["apps/google/gsc.ts", "apps/google/gsc.js"]),
+    importFirstAvailable(["connectors/google/ga4.ts", "connectors/google/ga4.js"]),
+    importFirstAvailable(["connectors/google/gsc.ts", "connectors/google/gsc.js"]),
   ])) as [
     { parseServiceAccountKey: GoogleApps["parseServiceAccountKey"] },
     { testGa4Property: GoogleApps["testGa4Property"] },

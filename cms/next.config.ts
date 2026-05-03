@@ -6,6 +6,8 @@ const config: NextConfig = {
     "@pectus/supabase",
     "@pectus/anthropic",
     "@pectus/google",
+    "@pectus/github",
+    "@pectus/cli",
   ],
   experimental: {
     serverActions: {

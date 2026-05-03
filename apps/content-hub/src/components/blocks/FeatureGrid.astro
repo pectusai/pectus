@@ -1,0 +1,80 @@
+---
+interface FeatureItem {
+  title: string;
+  description?: string;
+  icon?: string;
+  href?: string;
+}
+interface Props {
+  heading?: string;
+  items: FeatureItem[];
+}
+const { heading, items } = Astro.props;
+---
+<section class="feature-grid">
+  {heading && <h2 class="feature-grid-heading">{heading}</h2>}
+  <div class="grid">
+    {items.map((item) => {
+      const inner = (
+        <>
+          {item.icon && <div class="icon">{item.icon}</div>}
+          <h3 class="title">{item.title}</h3>
+          {item.description && <p class="description">{item.description}</p>}
+        </>
+      );
+      return item.href ? (
+        <a href={item.href} class="card card-link">{inner}</a>
+      ) : (
+        <div class="card">{inner}</div>
+      );
+    })}
+  </div>
+</section>
+
+<style>
+.feature-grid {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+}
+.feature-grid-heading {
+  font-family: var(--font-heading);
+  font-size: 1.875rem;
+  letter-spacing: -0.01em;
+  margin: 0 0 2rem;
+  text-align: center;
+}
+.grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.card {
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+}
+.card-link { display: block; }
+.card-link:hover {
+  border-color: var(--color-accent);
+  text-decoration: none;
+}
+.icon {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+  line-height: 1;
+}
+.title {
+  font-family: var(--font-heading);
+  font-size: 1.125rem;
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+}
+.description {
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--color-muted);
+  margin: 0;
+}
+</style>

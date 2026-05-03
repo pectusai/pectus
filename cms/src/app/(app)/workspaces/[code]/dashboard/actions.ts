@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { getWorkspaceByCode, touchFreshness } from "@/lib/workspace";
-import { runSkill } from "@/lib/skill-runner";
+import { runSkill, runInterpretationsIfStale } from "@/lib/skill-runner";
+import { createServerClient } from "@pectus/supabase";
 
 export type GenerateResult =
   | { ok: true; output: string; runId: string | null }
@@ -59,4 +60,57 @@ export async function generateWeeklyAnalysis(
   revalidatePath(`/workspaces/${code}`);
 
   return { ok: true, output: result.output, runId: result.runId };
+}
+
+/* Force re-interpretation of every connected app's data. Wired to a button
+ * with a cost-warning modal — see feedback_act_before_regenerate.md. */
+export async function refreshInsights(
+  code: string,
+): Promise<
+  | { ok: true; reinterpreted: string[]; skipped: string[]; failed: string[] }
+  | { ok: false; error: string }
+> {
+  if (!code) return { ok: false, error: "Missing workspace." };
+  await requireUser();
+  const workspace = await getWorkspaceByCode(code);
+
+  const result = await runInterpretationsIfStale(workspace.id, { force: true });
+  revalidatePath(`/workspaces/${code}/dashboard`);
+  return { ok: true, ...result };
+}
+
+/* Surface the data the cost-warning modal uses to size up "have you acted on
+ * the last batch?". Returns counts of unacted-on items. */
+export async function getInsightsActionableSnapshot(
+  code: string,
+): Promise<{
+  insightCount: number;
+  unadoptedSuggestedNodes: number;
+  hasSeedKeywords: boolean;
+}> {
+  await requireUser();
+  const supabase = await createServerClient();
+  const workspace = await getWorkspaceByCode(code);
+
+  const [insights, suggested, seeds] = await Promise.all([
+    supabase
+      .from("insights")
+      .select("id", { count: "exact", head: true })
+      .eq("workspace_id", workspace.id),
+    supabase
+      .from("site_plan_nodes")
+      .select("id", { count: "exact", head: true })
+      .eq("workspace_id", workspace.id)
+      .eq("status", "suggested"),
+    supabase
+      .from("seed_keywords")
+      .select("id", { count: "exact", head: true })
+      .eq("workspace_id", workspace.id),
+  ]);
+
+  return {
+    insightCount: insights.count ?? 0,
+    unadoptedSuggestedNodes: suggested.count ?? 0,
+    hasSeedKeywords: (seeds.count ?? 0) > 0,
+  };
 }

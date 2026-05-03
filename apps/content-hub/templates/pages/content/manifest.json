@@ -1,0 +1,16 @@
+{
+  "name": "Content page",
+  "purpose": "content",
+  "description": "Standard content page: hero + prose body. Use for child or grandchild pages under a pillar.",
+  "thumbnail": "thumbnail.png",
+  "default_blocks": [
+    {
+      "type": "hero",
+      "props": { "title": "", "subtitle": "" }
+    },
+    {
+      "type": "prose",
+      "props": { "markdown": "" }
+    }
+  ]
+}

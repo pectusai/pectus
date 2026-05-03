@@ -1,0 +1,69 @@
+---
+interface LinkItem {
+  label: string;
+  href: string;
+  description?: string;
+}
+interface Props {
+  heading?: string;
+  items: LinkItem[];
+}
+const { heading, items } = Astro.props;
+---
+<section class="link-list">
+  {heading && <h2 class="link-list-heading">{heading}</h2>}
+  <ul>
+    {items.map((item) => (
+      <li>
+        <a href={item.href}>
+          <span class="label">{item.label}</span>
+          {item.description && <span class="description">{item.description}</span>}
+        </a>
+      </li>
+    ))}
+  </ul>
+</section>
+
+<style>
+.link-list {
+  max-width: 42rem;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+}
+.link-list-heading {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  margin: 0 0 1rem;
+  letter-spacing: -0.01em;
+}
+.link-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+.link-list li a {
+  display: block;
+  padding: 1rem 1.25rem;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+}
+.link-list li a:hover {
+  border-color: var(--color-accent);
+  text-decoration: none;
+}
+.label {
+  display: block;
+  font-weight: 500;
+  font-size: 1rem;
+}
+.description {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+</style>

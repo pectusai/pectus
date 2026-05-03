@@ -10,7 +10,14 @@
     "surface": "#ffffff",
     "text": "#0a0a0a",
     "muted": "#6b7280",
-    "border": "#e5e7eb"
+    "border": "#e5e7eb",
+    "accent_alt": null,
+    "accent_alt_ink": null,
+    "surface_alt": null,
+    "surface_inv": null,
+    "ok": null,
+    "warn": null,
+    "err": null
   },
   "fonts": {
     "heading": {
@@ -24,10 +31,18 @@
       "family": "system-ui",
       "google_url": null,
       "files": null
+    },
+    "mono": {
+      "source": "system",
+      "family": "ui-monospace, monospace",
+      "google_url": null,
+      "files": null
     }
   },
+  "radius": "default",
   "voice": "",
   "tonality": "",
   "guidelines": "./guidelines.md",
-  "image_model": "imagen-4"
+  "image_model": "imagen-4",
+  "imported_from": null
 }

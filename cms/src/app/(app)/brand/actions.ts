@@ -4,6 +4,11 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
+import {
+  importDesign,
+  timestampDir,
+  type BrandDraft,
+} from "@pectus/cli/import-design";
 
 export type BrandColors = {
   accent: string;
@@ -11,6 +16,13 @@ export type BrandColors = {
   text: string;
   muted: string;
   border: string;
+  accent_alt: string | null;
+  accent_alt_ink: string | null;
+  surface_alt: string | null;
+  surface_inv: string | null;
+  ok: string | null;
+  warn: string | null;
+  err: string | null;
 };
 
 export type FontSlot = {
@@ -20,7 +32,16 @@ export type FontSlot = {
   files: string[] | null;
 };
 
-export type BrandFonts = { heading: FontSlot; body: FontSlot };
+export type BrandFonts = { heading: FontSlot; body: FontSlot; mono: FontSlot };
+
+export type BrandRadius = "sharp" | "default" | "soft";
+
+export type ImportedFrom = {
+  source: "claude-design";
+  url: string;
+  imported_at: string;
+  bundle_path: string;
+};
 
 export type BrandJson = {
   $schema?: string;
@@ -31,10 +52,26 @@ export type BrandJson = {
   logo: string;
   colors: BrandColors;
   fonts: BrandFonts;
+  radius: BrandRadius;
   voice: string;
   tonality: string;
   guidelines: string;
   image_model: string;
+  imported_from: ImportedFrom | null;
+};
+
+const DEFAULT_FONT_SYSTEM: FontSlot = {
+  source: "system",
+  family: "system-ui",
+  google_url: null,
+  files: null,
+};
+
+const DEFAULT_FONT_MONO: FontSlot = {
+  source: "system",
+  family: "ui-monospace, monospace",
+  google_url: null,
+  files: null,
 };
 
 const DEFAULT_BRAND: BrandJson = {
@@ -50,29 +87,47 @@ const DEFAULT_BRAND: BrandJson = {
     text: "#0a0a0a",
     muted: "#6b7280",
     border: "#e5e7eb",
+    accent_alt: null,
+    accent_alt_ink: null,
+    surface_alt: null,
+    surface_inv: null,
+    ok: null,
+    warn: null,
+    err: null,
   },
   fonts: {
-    heading: { source: "system", family: "system-ui", google_url: null, files: null },
-    body: { source: "system", family: "system-ui", google_url: null, files: null },
+    heading: { ...DEFAULT_FONT_SYSTEM },
+    body: { ...DEFAULT_FONT_SYSTEM },
+    mono: { ...DEFAULT_FONT_MONO },
   },
+  radius: "default",
   voice: "",
   tonality: "",
   guidelines: "./guidelines.md",
   image_model: "imagen-4",
+  imported_from: null,
 };
 
-const BRAND_JSON_PATH = path.resolve(
-  process.cwd(),
-  "..",
-  "brand",
-  "brand.json",
-);
+const REPO_ROOT = path.resolve(process.cwd(), "..");
+const BRAND_DIR = path.join(REPO_ROOT, "brand");
+const BRAND_JSON_PATH = path.join(BRAND_DIR, "brand.json");
 
 async function readBrandJson(): Promise<BrandJson> {
   try {
     const raw = await fs.readFile(BRAND_JSON_PATH, "utf8");
     const parsed = JSON.parse(raw);
-    return { ...DEFAULT_BRAND, ...parsed };
+    /* Merge nested shape so older brand.json files (pre-Advanced) still
+     * surface every required key with a sensible default. */
+    return {
+      ...DEFAULT_BRAND,
+      ...parsed,
+      colors: { ...DEFAULT_BRAND.colors, ...(parsed.colors ?? {}) },
+      fonts: {
+        heading: { ...DEFAULT_BRAND.fonts.heading, ...(parsed.fonts?.heading ?? {}) },
+        body: { ...DEFAULT_BRAND.fonts.body, ...(parsed.fonts?.body ?? {}) },
+        mono: { ...DEFAULT_BRAND.fonts.mono, ...(parsed.fonts?.mono ?? {}) },
+      },
+    };
   } catch {
     return DEFAULT_BRAND;
   }
@@ -107,6 +162,7 @@ export async function saveBrand(formData: FormData): Promise<SaveBrandResult> {
   const guidelines_md = String(formData.get("guidelines_md") ?? "").trim();
   const image_model =
     String(formData.get("image_model") ?? "imagen-4").trim() || "imagen-4";
+  const radius = parseRadius(String(formData.get("radius") ?? "default"));
 
   const colors: BrandColors = {
     accent: String(formData.get("color_accent") ?? "#2563eb").trim(),
@@ -114,12 +170,23 @@ export async function saveBrand(formData: FormData): Promise<SaveBrandResult> {
     text: String(formData.get("color_text") ?? "#0a0a0a").trim(),
     muted: String(formData.get("color_muted") ?? "#6b7280").trim(),
     border: String(formData.get("color_border") ?? "#e5e7eb").trim(),
+    accent_alt: optionalHex(formData.get("color_accent_alt")),
+    accent_alt_ink: optionalHex(formData.get("color_accent_alt_ink")),
+    surface_alt: optionalHex(formData.get("color_surface_alt")),
+    surface_inv: optionalHex(formData.get("color_surface_inv")),
+    ok: optionalHex(formData.get("color_ok")),
+    warn: optionalHex(formData.get("color_warn")),
+    err: optionalHex(formData.get("color_err")),
   };
 
   const fonts: BrandFonts = {
     heading: parseFontSlot(formData, "heading"),
     body: parseFontSlot(formData, "body"),
+    mono: parseFontSlot(formData, "mono"),
   };
+
+  const importedFromRaw = String(formData.get("imported_from") ?? "").trim();
+  const importedFrom = parseImportedFrom(importedFromRaw);
 
   const current = await readBrandJson();
   const next: BrandJson = {
@@ -130,12 +197,13 @@ export async function saveBrand(formData: FormData): Promise<SaveBrandResult> {
     sitemap_url,
     colors,
     fonts,
+    radius,
     voice,
     tonality,
     image_model,
+    imported_from: importedFrom ?? current.imported_from,
   };
 
-  /* Persist to brand_profile (singleton) for runtime use across the CMS. */
   const { error } = await supabase
     .from("brand_profile")
     .upsert(
@@ -151,6 +219,16 @@ export async function saveBrand(formData: FormData): Promise<SaveBrandResult> {
         image_model,
         colors,
         fonts,
+        accent_alt: colors.accent_alt,
+        accent_alt_ink: colors.accent_alt_ink,
+        surface_alt: colors.surface_alt,
+        surface_inv: colors.surface_inv,
+        color_ok: colors.ok,
+        color_warn: colors.warn,
+        color_err: colors.err,
+        font_mono: fonts.mono,
+        radius,
+        imported_from: next.imported_from ?? null,
         updated_by: user.id,
       },
       { onConflict: "singleton" },
@@ -160,8 +238,6 @@ export async function saveBrand(formData: FormData): Promise<SaveBrandResult> {
     return { ok: false, error: `Database save failed: ${error.message}` };
   }
 
-  /* Mirror to brand/brand.json so the public hub-template, CLI, and skills
-   * can read brand config without going through Supabase. */
   try {
     await writeBrandJson(next);
   } catch (err) {
@@ -176,6 +252,162 @@ export async function saveBrand(formData: FormData): Promise<SaveBrandResult> {
   return { ok: true, brand: next };
 }
 
+export type ImportDraft = {
+  name: string;
+  tagline: string;
+  voice: string;
+  tonality: string;
+  guidelines_md: string;
+  colors: BrandColors;
+  fonts: BrandFonts;
+  radius: BrandRadius;
+};
+
+export type ImportBrandResult =
+  | {
+      ok: true;
+      draft: ImportDraft;
+      missing: string[];
+      bundlePath: string;
+      url: string;
+      importedFrom: ImportedFrom;
+    }
+  | { ok: false; error: string };
+
+export async function importBrandFromUrl(
+  formData: FormData,
+): Promise<ImportBrandResult> {
+  await requireAdmin();
+
+  const input = String(formData.get("input") ?? "").trim();
+  if (!input) {
+    return { ok: false, error: "Paste a Claude Design URL to continue." };
+  }
+
+  const stamp = timestampDir();
+  const bundleDestDir = path.join(BRAND_DIR, "imports", stamp);
+
+  const result = await importDesign(input, { bundleDestDir });
+  if (!result.ok) {
+    const err = result.error;
+    const message =
+      err.kind === "fetch-failed"
+        ? `Couldn't fetch ${err.url}. The bundle may have expired. Try a different URL.`
+        : err.kind === "extract-failed"
+          ? `Fetched the bundle, but couldn't extract brand fields. ${err.message}`
+          : err.kind === "schema-invalid"
+            ? `Extraction returned an unexpected shape: ${err.details.join("; ")}`
+            : err.kind === "unzip-failed"
+              ? `Couldn't unzip the bundle: ${err.message}`
+              : err.message;
+    return { ok: false, error: message };
+  }
+
+  const current = await readBrandJson();
+  const draft = mergeDraftForForm(result.draft, current);
+  const importedFrom: ImportedFrom = {
+    source: "claude-design",
+    url: result.url,
+    imported_at: new Date().toISOString(),
+    bundle_path: result.bundlePath,
+  };
+
+  return {
+    ok: true,
+    draft,
+    missing: result.missing,
+    bundlePath: result.bundlePath,
+    url: result.url,
+    importedFrom,
+  };
+}
+
+function mergeDraftForForm(
+  draft: BrandDraft,
+  current: BrandJson,
+): ImportDraft {
+  const colors: BrandColors = {
+    accent: draft.colors?.accent ?? current.colors.accent,
+    surface: draft.colors?.surface ?? current.colors.surface,
+    text: draft.colors?.text ?? current.colors.text,
+    muted: draft.colors?.muted ?? current.colors.muted,
+    border: draft.colors?.border ?? current.colors.border,
+    accent_alt: draft.colors?.accent_alt ?? null,
+    accent_alt_ink: draft.colors?.accent_alt_ink ?? null,
+    surface_alt: draft.colors?.surface_alt ?? null,
+    surface_inv: draft.colors?.surface_inv ?? null,
+    ok: draft.colors?.ok ?? null,
+    warn: draft.colors?.warn ?? null,
+    err: draft.colors?.err ?? null,
+  };
+
+  const fonts: BrandFonts = {
+    heading: fontSlotFromDraft(draft.fonts?.heading) ?? current.fonts.heading,
+    body: fontSlotFromDraft(draft.fonts?.body) ?? current.fonts.body,
+    mono: fontSlotFromDraft(draft.fonts?.mono) ?? current.fonts.mono,
+  };
+
+  return {
+    name: draft.name?.trim() || current.name,
+    tagline: draft.tagline?.trim() ?? current.tagline,
+    voice: draft.voice?.trim() ?? current.voice,
+    tonality: draft.tonality?.trim() ?? current.tonality,
+    guidelines_md: draft.guidelines_md?.trim() ?? "",
+    colors,
+    fonts,
+    radius: draft.radius ?? current.radius,
+  };
+}
+
+function fontSlotFromDraft(
+  d: BrandDraft["fonts"]["heading"] | null | undefined,
+): FontSlot | null {
+  if (!d) return null;
+  return {
+    source: d.source,
+    family: d.family || "system-ui",
+    google_url: d.source === "google" ? d.google_url : null,
+    files: null,
+  };
+}
+
+function optionalHex(v: FormDataEntryValue | null): string | null {
+  const s = String(v ?? "").trim();
+  if (!s) return null;
+  return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/u.test(s) ? s : null;
+}
+
+function parseRadius(s: string): BrandRadius {
+  return s === "sharp" || s === "soft" ? s : "default";
+}
+
+function parseImportedFrom(raw: string): ImportedFrom | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      parsed.source === "claude-design" &&
+      typeof parsed.url === "string"
+    ) {
+      return {
+        source: "claude-design",
+        url: parsed.url,
+        imported_at:
+          typeof parsed.imported_at === "string"
+            ? parsed.imported_at
+            : new Date().toISOString(),
+        bundle_path:
+          typeof parsed.bundle_path === "string" ? parsed.bundle_path : "",
+      };
+    }
+  } catch {
+    // fall through
+  }
+  return null;
+}
+
 function parseFontSlot(formData: FormData, prefix: string): FontSlot {
   const sourceRaw = String(formData.get(`${prefix}_source`) ?? "system").trim();
   const source: FontSlot["source"] =
@@ -184,9 +416,6 @@ function parseFontSlot(formData: FormData, prefix: string): FontSlot {
     String(formData.get(`${prefix}_family`) ?? "").trim() || "system-ui";
   const googleUrl = String(formData.get(`${prefix}_google_url`) ?? "").trim();
 
-  /* Uploaded files are out of scope for the plumbing PR — we accept the slot
-   * but don't persist binary uploads here. Future work: signed Supabase
-   * upload URL + populate `files`. */
   return {
     source,
     family,

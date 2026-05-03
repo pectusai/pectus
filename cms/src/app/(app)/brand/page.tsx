@@ -25,6 +25,9 @@ export default async function BrandPage() {
 
   /* DB is the source of truth for fields the CMS edits, but fall back to the
    * brand.json mirror for fields not yet persisted (or before first save). */
+  const dbColors = (brandRow?.colors ?? {}) as Partial<typeof fileBrand.colors>;
+  const dbFonts = (brandRow?.fonts ?? {}) as Partial<typeof fileBrand.fonts>;
+
   const initial = {
     name: (brandRow?.name as string | null) ?? fileBrand.name,
     tagline: (brandRow?.tagline as string | null) ?? fileBrand.tagline,
@@ -37,8 +40,17 @@ export default async function BrandPage() {
     guidelines_md: (brandRow?.guidelines_md as string | null) ?? "",
     image_model:
       (brandRow?.image_model as string | null) ?? fileBrand.image_model,
-    colors: (brandRow?.colors as typeof fileBrand.colors | null) ?? fileBrand.colors,
-    fonts: (brandRow?.fonts as typeof fileBrand.fonts | null) ?? fileBrand.fonts,
+    colors: { ...fileBrand.colors, ...dbColors },
+    fonts: {
+      heading: { ...fileBrand.fonts.heading, ...(dbFonts.heading ?? {}) },
+      body: { ...fileBrand.fonts.body, ...(dbFonts.body ?? {}) },
+      mono: { ...fileBrand.fonts.mono, ...(dbFonts.mono ?? {}) },
+    },
+    radius:
+      (brandRow?.radius as typeof fileBrand.radius | null) ?? fileBrand.radius,
+    imported_from:
+      (brandRow?.imported_from as typeof fileBrand.imported_from | null) ??
+      fileBrand.imported_from,
   };
 
   return (

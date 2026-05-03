@@ -15,5 +15,5 @@ The CMS reads `brand.json` on first run, syncs into the `brand_profile` Supabase
 
 This means:
 - Your brand survives a Supabase reset (just re-sync from `brand.json`).
-- The Astro hub-template can read brand at build time without DB access.
+- Installed apps (the pre-installed `content-hub`, plus any community publisher) can read brand at build time without DB access.
 - Your fork's brand is portable (committed to git).

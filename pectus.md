@@ -1,8 +1,27 @@
 # Pectus install
 
-You are Claude Code. The user has pasted this file because they want to install Pectus on their machine. Walk them through the steps below in order. Do not skip steps. Do not reorder steps. Surface errors verbatim and stop if anything fails — do not silently retry.
+You are Claude Code. The user just downloaded this file because they want to wake Pectus up on their machine.
 
-The user is going to register accounts on a few services and paste keys back to you. Be patient at each prompt. Estimated total time: 20 to 30 minutes, mostly waiting on signups.
+**Before you do anything else, print this welcome to them, verbatim. No commentary, no editorializing — just print the box, then the one-line greeting underneath, then wait.**
+
+```
+ ╭──────────────────────────────────────────────╮
+ │                                              │
+ │                                              │
+ │                < pectus />                   │
+ │                                              │
+ │           creator insights kit               │
+ │           self-hosted  ·  v0.2               │
+ │                                              │
+ │                                              │
+ ╰──────────────────────────────────────────────╯
+```
+
+> Hi. I'm going to wake Pectus up on your laptop. About 20 to 30 minutes, mostly waiting on account signups. When I need something from you I'll tell you exactly what to click or paste. Ready?
+
+Wait for them to say yes. Then walk them through the steps below in order. Don't skip steps. Don't reorder them. If a step fails, show the error exactly as it came back and stop — don't silently retry.
+
+Speak to the user like a person who has installed maybe one or two dev tools before. Define jargon the first time it shows up. When you ask for a value, say what it looks like (e.g. "starts with `sk-ant-`"). When you point them at a console, tell them what they'll click once they're there.
 
 ---
 
@@ -34,7 +53,7 @@ If `~/pectus` already exists, ask the user how to proceed — do not overwrite.
 npm install
 ```
 
-This installs across all workspaces (apps, cli, cms, hub-template). Should complete in under 90 seconds on a normal connection.
+This installs across all workspaces (connectors, apps, cli, cms). Should complete in under 90 seconds on a normal connection.
 
 ## 4. Brand setup
 
@@ -42,20 +61,36 @@ This installs across all workspaces (apps, cli, cms, hub-template). Should compl
 npx pectus brand
 ```
 
-This prompts the user for: brand name, tagline, primary color, secondary color, voice and tonality (multiline), website URL, sitemap URL, logo upload (path or skip), font choices (system, Google, or upload). Writes `brand/brand.json`. No external services touched yet.
+The wizard's first prompt is **Manual** vs **Import from Claude Design**.
 
-Do not skip this step. The brand profile is the seed for everything downstream — both the CMS and the hub-template read from `brand/brand.json` at build time.
+**Manual** walks through brand name, tagline, colors, voice and tonality, website URL, sitemap URL, logo upload (path or skip), font choices (system, Google, or upload). Plan for 10 to 15 minutes.
+
+**Import from Claude Design** asks for a Claude Design URL (something like `https://api.anthropic.com/v1/design/h/...`). Pectus fetches the bundle, asks Claude to extract brand fields from the bundle's `tokens.css`, README, and chat transcript, and writes the result to `brand/brand.json`. The full unzipped bundle is saved to `brand/imports/<timestamp>/` so apps can re-read raw tokens later. Logo, image model, and website/sitemap URLs are not in the bundle and stay blank — fill them in later via the CMS Brand page.
+
+Either way, the result lands at `brand/brand.json`. No external services touched yet.
+
+Do not skip this step. The brand profile is the seed for everything downstream — the CMS, every installed app (including the pre-installed `content-hub`), and skills all read from `brand/brand.json`.
 
 ## 5. Register external accounts
 
-The user needs accounts on four services. For each, give them the link, wait for them to register, then ask for the value Pectus needs.
+Three services are required to boot Pectus. Two more are optional. Walk the user through each one in order. For each, give them the link, wait for them to sign up, then ask for the specific value Pectus needs. Write each value into `.env.local` as you receive it (use `.env.example` as the field reference).
 
-- **Supabase** — https://supabase.com. After signup, create an access token at https://supabase.com/dashboard/account/tokens. Paste it here. (We'll create the project itself in step 6.)
-- **Anthropic** — https://console.anthropic.com. Create an API key. Paste here.
-- **Google Cloud** — https://console.cloud.google.com. Create a project. Enable the Search Console API and the Google Analytics Data API. Create an OAuth 2.0 client (Web application). Set redirect URI to `http://localhost:3000/auth/callback`. Paste client ID and client secret here.
-- **Vercel** (optional in v1) — https://vercel.com. Create a token at https://vercel.com/account/tokens. Skip if the user isn't deploying yet.
+**Required**
 
-Write each value to `.env.local` as you receive it. Use `.env.example` as the field reference.
+- **Supabase** — https://supabase.com. This is the database. After signup, head to https://supabase.com/dashboard/account/tokens and click "Generate new token". Paste it here. (You'll create the actual project in step 6.)
+- **Anthropic** — https://console.anthropic.com. This is what powers Claude inside Pectus. After signup, click "API keys" in the sidebar, then "Create key". The value starts with `sk-ant-`. Paste it here.
+- **Google Cloud** — https://console.cloud.google.com. This unlocks Google Analytics and Google Search Console data. There are four sub-steps inside the Google Cloud console; walk the user through them one at a time:
+  1. Create a new project (top bar dropdown → "New Project"). Any name is fine.
+  2. Enable two APIs: search for "Search Console API" → click Enable, then "Google Analytics Data API" → click Enable.
+  3. Create an OAuth 2.0 client: APIs & Services → Credentials → "Create Credentials" → OAuth client ID → "Web application". Add `http://localhost:3000/auth/callback` as an authorized redirect URI.
+  4. Copy the client ID and client secret. Paste both here.
+
+**Optional (skippable)**
+
+- **Vercel** — https://vercel.com. Only needed when the user is ready to publish their content-hub site to a public URL. Create a token at https://vercel.com/account/tokens. Skip if they're staying local-only for now.
+- **GitHub** — https://github.com. Used by the publish flow to commit pages to a content-hub repo. Pectus will help set this up in step 9.
+
+If the user wants to analyze ad spend later (Google Ads, Meta, LinkedIn), the LinkedIn Marketing Developer Platform application takes 1 to 3 weeks to be approved. Suggest they apply on day one at https://www.linkedin.com/developers — it doesn't block anything else, and it'll be ready when those connectors ship.
 
 ## 6. Provision Supabase
 
@@ -63,26 +98,26 @@ Write each value to `.env.local` as you receive it. Use `.env.example` as the fi
 npx pectus connect supabase
 ```
 
-This uses the Supabase access token from step 5 to:
-- Create a new project (or attach to an existing one — ask the user).
-- Run migrations from `apps/supabase/migrations/`.
-- Create the first admin user (prompt for email + password).
-- Write `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_PROJECT_REF` to `.env.local`.
+This is the database setup. Using the access token from step 5, this command:
+- Creates a new Supabase project (or attaches to an existing one — ask the user which they want).
+- Runs the migration files in `connectors/supabase/migrations/`. There are five today (numbered `0001_initial.sql` through `0005_brand_advanced_fields.sql`); each one creates or updates database tables.
+- Asks for the email and password for the first admin user. This is the login the user will use in step 10. Tell them to put it in their password manager now.
+- Writes four values to `.env.local`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_PROJECT_REF`.
 
-If creation fails, surface the error verbatim and stop.
+If anything fails, surface the error exactly and stop. The most common cause is a typo in the access token — double-check it before retrying.
 
-## 7. Connect Google (GSC + GA4)
+## 7. Connect Google (Search Console + Analytics)
 
 ```
 npx pectus connect google
 ```
 
-Walks the user through:
-- Uploading a Google service account JSON (created in their Google Cloud project, with viewer access on Search Console + Analytics properties).
-- Selecting which GSC site URL to track per workspace.
-- Selecting which GA4 property to track per workspace.
+This pulls in Search Console and Google Analytics data. The user will need to do two things outside the terminal:
 
-Tests both connections before finishing. If either test fails, surface the error and stop.
+1. Create a service account in their Google Cloud project (the same project from step 5). Give it viewer access on the Search Console properties and the Analytics 4 properties they want Pectus to read.
+2. Download the service account JSON file. Pectus will ask for the path to it.
+
+Then back in the terminal, the command will ask which GSC site URL and which GA4 property to track. Pectus tests both connections before finishing — if either test fails, show the error and stop. The most common cause is the service account not having viewer access on the property; have them double-check the sharing settings in GSC and GA4.
 
 ## 8. Link Vercel and GitHub (optional)
 
@@ -91,7 +126,7 @@ npx pectus connect vercel
 npx pectus connect github
 ```
 
-These are optional. Skip if the user isn't deploying or doesn't have a GitHub fork yet.
+Both are optional and can be done later. Skip Vercel if the user isn't ready to deploy a public hub yet. Skip GitHub if they don't have a content-hub repo set up — they can run `npx pectus connect github` from `~/pectus` any time later. The publish flow needs GitHub configured before pages can be committed; the rest of Pectus works fine without it.
 
 ## 9. Start the CMS
 
@@ -99,7 +134,7 @@ These are optional. Skip if the user isn't deploying or doesn't have a GitHub fo
 npm run dev
 ```
 
-Opens `http://localhost:3000`. Have the user sign in with the admin credentials from step 6. They should land on an empty Workspaces view.
+This boots the Next.js admin app at `http://localhost:3000`. The user signs in with the admin email and password they set in step 6. They'll land on an empty Workspaces view — that's expected; they create their first workspace in the next step.
 
 ## 10. Create the first workspace
 
@@ -107,25 +142,51 @@ Opens `http://localhost:3000`. Have the user sign in with the admin credentials 
 npx pectus workspace create
 ```
 
-Prompts for: market name (e.g. "United Kingdom"), code (e.g. "uk"), locale (e.g. "en-GB"). Creates the workspace row, sets up the default review policy, and opens the workspace dashboard at `http://localhost:3000/workspaces/uk`.
+A workspace is one market or audience segment. If the user only sells in one country, one workspace is enough. If they have separate sites for the UK, US, and Sweden, that's three workspaces. The wizard asks six questions:
+
+1. **Market name** — a human label, e.g. "United Kingdom" or "DTC US".
+2. **Code** — short kebab-case identifier, e.g. `uk` or `dtc-us`. Must be unique. Used in URLs.
+3. **Locale** — the BCP-47 locale, e.g. `en-GB`, `en-US`, `sv-SE`.
+4. **Site shape** — pick one:
+    - **Greenfield**: Pectus runs the whole site. The hub mounts at `/`. Use this for new sites.
+    - **Coexist**: Pectus pages live under a sub-path (default `/insights/`). Use this when the user already has a site and just wants to add a content section.
+    The user can change this later in the CMS at Workspace Settings → Site URL.
+5. **Content-hub GitHub repo** — `owner/name` of the repo where Publish will commit pages (e.g. `acme/acme-blog`). Optional at this step; they can fill it in later via Workspace Settings.
+6. **Seed keywords** — 5 to 10 short phrases the workspace plans content around when there's no Search Console traffic yet (e.g. "best dtc skincare, retinol myths, sensitive skin routine"). Required for greenfield, optional for coexist. The dashboard's first analysis uses these as the starting topic spine.
+
+The command creates the workspace row, sets a default review policy, and saves the seed keywords. The dashboard opens at `http://localhost:3000/workspaces/<code>`.
 
 ## 11. Run the first analysis
 
 ```
-npx pectus analyze --workspace uk --skill weekly-analysis
+npx pectus analyze --workspace <code> --skill weekly-analysis
 ```
 
-Or have the user click the "Run weekly analysis" button on the dashboard. Either way, this calls the `weekly-analysis` skill, which gathers keywords, articles, ICP, and brand context, sends it to Claude, and writes the output to the dashboard.
+(Or have the user click "Run weekly analysis" on the dashboard — same effect.)
 
-Wait for it to complete (typically 30 to 90 seconds). Summarize the result for the user: number of post suggestions, top-ranked topics, any old posts identified as rising. Point them at the dashboard to dig in.
+This runs the `weekly-analysis` skill. It gathers everything Pectus knows about the workspace (keywords, existing articles, the ICP, brand voice, knowledge insights) and asks Claude to produce a content plan: what to write next, ranked by projected traffic.
 
-## 12. Done
+Wait for it to finish (typically 30 to 90 seconds). When it returns, summarize the result for the user in plain words: how many post suggestions came back, the top three topics by score, any of their existing posts the analysis flagged as rising. Then point them at the dashboard to read the full output.
 
-Tell the user:
-- Pectus is running at `http://localhost:3000`.
-- Next time, just run `npm run dev` from `~/pectus`.
-- To pull updates from upstream: `npx pectus update`.
-- To add data to the knowledge layer: drop files into `~/pectus/knowledge/raw/`, then `npx pectus knowledge digest`.
-- To check connection health any time: `npx pectus doctor`.
+## 12. Pectus is awake. Pick a door.
 
-That's it. The user owns their stack from here.
+The CMS is running at `http://localhost:3000`, signed in as the admin from step 6. The first workspace exists. The first analysis has run. Pectus knows who they are, what they care about, and what data they have.
+
+Now they choose what to do first. Present both doors clearly, then let them pick:
+
+**Door A — Start producing with the bundled content-hub.**
+Open the dashboard. The weekly analysis has ranked content opportunities by projected traffic. Pick one, click into the page builder, draft, publish. This is the fastest path to seeing Pectus do something useful, and it's where most users start.
+
+**Door B — Teach Pectus a new trick.**
+The bundled apps focus on content publishing. Pectus is a container; what it actually does depends on what skills and apps live inside it. Run `npx pectus make-it skill` to scaffold a new skill (a unit of logic that produces an output), or `npx pectus make-it app` for a new data source or publish target. Best for users who came to Pectus to do something the bundle doesn't already do.
+
+Both doors can run in parallel. The choice is just "what do you want to try first."
+
+Then, regardless of which door they pick, give them the operational basics in one tight list:
+
+- **Re-open Pectus**: terminal → `cd ~/pectus` → `npm run dev` → sign in with the email and password from step 6.
+- **Add your own data**: drop files (CSVs, BigQuery exports, audience research PDFs, anything) into `~/pectus/knowledge/raw/`, then `npx pectus knowledge digest`. The digest turns the pile into structured insights every other skill consumes.
+- **Pull updates**: `npx pectus update`. Rebases on upstream and runs new migrations. The skills and apps they've edited or written are not overwritten.
+- **Something broke?**: `npx pectus doctor` checks env vars, reachability, config. Most "it broke" reports are a stale token; doctor catches that first.
+
+That's it. They own the stack.
