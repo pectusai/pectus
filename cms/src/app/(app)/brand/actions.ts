@@ -204,35 +204,50 @@ export async function saveBrand(formData: FormData): Promise<SaveBrandResult> {
     imported_from: importedFrom ?? current.imported_from,
   };
 
-  const { error } = await supabase
+  /* The brand_profile table has a partial unique index on `singleton` (WHERE
+   * singleton = true). Postgres ON CONFLICT cannot target a partial index, so
+   * the upsert path errors with "no unique or exclusion constraint matching
+   * the ON CONFLICT specification." Resolve via explicit select-then-update-or-
+   * insert. The 0001 migration also seeds a singleton row at install time, so
+   * the update branch is the steady-state path; the insert branch covers the
+   * edge case where the seed got removed. */
+  const payload = {
+    singleton: true,
+    name,
+    tagline: tagline || null,
+    website_url: website_url || null,
+    sitemap_url: sitemap_url || null,
+    voice: voice || null,
+    tonality: tonality || null,
+    guidelines_md: guidelines_md || null,
+    image_model,
+    colors,
+    fonts,
+    accent_alt: colors.accent_alt,
+    accent_alt_ink: colors.accent_alt_ink,
+    surface_alt: colors.surface_alt,
+    surface_inv: colors.surface_inv,
+    color_ok: colors.ok,
+    color_warn: colors.warn,
+    color_err: colors.err,
+    font_mono: fonts.mono,
+    radius,
+    imported_from: next.imported_from ?? null,
+    updated_by: user.id,
+  };
+
+  const { data: existing } = await supabase
     .from("brand_profile")
-    .upsert(
-      {
-        singleton: true,
-        name,
-        tagline: tagline || null,
-        website_url: website_url || null,
-        sitemap_url: sitemap_url || null,
-        voice: voice || null,
-        tonality: tonality || null,
-        guidelines_md: guidelines_md || null,
-        image_model,
-        colors,
-        fonts,
-        accent_alt: colors.accent_alt,
-        accent_alt_ink: colors.accent_alt_ink,
-        surface_alt: colors.surface_alt,
-        surface_inv: colors.surface_inv,
-        color_ok: colors.ok,
-        color_warn: colors.warn,
-        color_err: colors.err,
-        font_mono: fonts.mono,
-        radius,
-        imported_from: next.imported_from ?? null,
-        updated_by: user.id,
-      },
-      { onConflict: "singleton" },
-    );
+    .select("id")
+    .eq("singleton", true)
+    .maybeSingle();
+
+  const { error } = existing
+    ? await supabase
+        .from("brand_profile")
+        .update(payload)
+        .eq("id", existing.id)
+    : await supabase.from("brand_profile").insert(payload);
 
   if (error) {
     return { ok: false, error: `Database save failed: ${error.message}` };
