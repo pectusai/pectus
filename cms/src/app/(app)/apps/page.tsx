@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { listApps, type AppListing } from "@/lib/apps";
-import { SubmitButton } from "@/app/components/SubmitButton";
-import { activateAppAction, deactivateAppAction } from "./actions";
 
 const APP_TOOLTIPS: Record<string, string> = {
   inbound:
@@ -11,20 +9,8 @@ const APP_TOOLTIPS: Record<string, string> = {
   unknown:
     "Unknown app type. The APP.md frontmatter is missing a `type:` field.",
   activated: "Active right now. Surfaces and skills are wired into the CMS.",
-  available: "Installed in this Pectus folder, but not turned on yet.",
-};
-
-const PLUGGABLE = new Set(["content-hub"]);
-
-const CLI_HINT: Record<string, string> = {
-  ga4: "Use the CLI: cd <install path> && npx pectus connect google",
-  gsc: "Use the CLI: cd <install path> && npx pectus connect google",
-  "google-ads": "Wire the API key in the workspace settings.",
-  meta: "v0.4 will plug Meta in here. For now it ships as a CLI fetch only.",
-  linkedin:
-    "v0.4 will plug LinkedIn in here. For now it ships as a CLI fetch only.",
-  "seed-keywords":
-    "Always available — keywords live in workspace settings. No activation step.",
+  available:
+    "Installed in this Pectus folder. Open the app to configure it; activation happens when configuration is saved.",
 };
 
 export default async function AppsPage() {
@@ -41,7 +27,8 @@ export default async function AppsPage() {
           <h1 className="text-2xl font-semibold tracking-tight">Apps</h1>
           <p className="mt-1 max-w-2xl text-sm text-zinc-600">
             Apps add surfaces, skills, and data sources to Pectus. The CMS is
-            minimal by default; activate apps for the capabilities you want.
+            minimal by default. Open an app to configure it; saving the config
+            activates it.
           </p>
         </div>
         <span className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs text-zinc-600">
@@ -64,86 +51,44 @@ export default async function AppsPage() {
           <code className="rounded bg-zinc-100 px-1 py-0.5 text-xs">
             APP.md
           </code>{" "}
-          file. The make-it skill scaffolds a new one in seconds.
+          file. The make-it skill scaffolds a new one in seconds. Full guide
+          lands on pectus.ai once the custom domain is live.
         </p>
-        <a
-          href="https://pectus.ai/docs/faq/customization/add-skills-or-apps"
-          className="mt-3 inline-block text-xs font-medium text-blue-600 hover:text-blue-800"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Read the guide →
-        </a>
       </aside>
     </div>
   );
 }
 
 function AppCard({ app }: { app: AppListing }) {
-  const isPluggable = PLUGGABLE.has(app.name);
-  const cliHint = CLI_HINT[app.name];
-
   return (
-    <li className="flex flex-col rounded-lg border border-zinc-200 bg-white p-5">
-      <div className="flex items-baseline justify-between gap-3">
-        <h3 className="font-mono text-sm font-semibold text-zinc-900">
-          {app.name}
-        </h3>
-        <StatusBadge activated={app.activated} />
-      </div>
+    <li>
+      <Link
+        href={`/apps/${app.name}`}
+        className="flex h-full flex-col rounded-lg border border-zinc-200 bg-white p-5 transition hover:border-zinc-400"
+      >
+        <div className="flex items-baseline justify-between gap-3">
+          <h3 className="font-mono text-sm font-semibold text-zinc-900">
+            {app.name}
+          </h3>
+          <StatusBadge activated={app.activated} />
+        </div>
 
-      <div className="mt-1 flex items-center gap-1.5">
-        <span className="text-[11px] uppercase tracking-widest text-zinc-500">
-          {app.type}
+        <div className="mt-1 flex items-center gap-1.5">
+          <span className="text-[11px] uppercase tracking-widest text-zinc-500">
+            {app.type}
+          </span>
+          <InfoDot text={APP_TOOLTIPS[app.type] ?? ""} />
+          <span className="text-[11px] text-zinc-400">v{app.version}</span>
+        </div>
+
+        <p className="mt-3 flex-1 text-sm text-zinc-600">
+          {app.description || "No description in APP.md frontmatter."}
+        </p>
+
+        <span className="mt-4 inline-block text-xs font-medium text-blue-600">
+          Open app →
         </span>
-        <InfoDot text={APP_TOOLTIPS[app.type] ?? ""} />
-        <span className="text-[11px] text-zinc-400">v{app.version}</span>
-      </div>
-
-      <p className="mt-3 flex-1 text-sm text-zinc-600">
-        {app.description || "No description in APP.md frontmatter."}
-      </p>
-
-      <div className="mt-4 flex items-center gap-2">
-        {isPluggable ? (
-          app.activated ? (
-            <>
-              <Link
-                href={`/apps/${app.name}/activate`}
-                className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
-                title="Add or change Content Hub config for a workspace"
-              >
-                Configure workspace
-              </Link>
-              <form action={deactivateAppAction}>
-                <input type="hidden" name="app_name" value={app.name} />
-                <SubmitButton
-                  pendingLabel="Pausing…"
-                  className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50"
-                >
-                  Pause
-                </SubmitButton>
-              </form>
-            </>
-          ) : (
-            <Link
-              href={`/apps/${app.name}/activate`}
-              className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800"
-              title="Open the activation wizard for this app"
-            >
-              Activate
-            </Link>
-          )
-        ) : cliHint ? (
-          <p className="text-xs text-zinc-500" title={cliHint}>
-            {cliHint}
-          </p>
-        ) : (
-          <p className="text-xs text-zinc-500">
-            CMS surfaces for this app land in a future release.
-          </p>
-        )}
-      </div>
+      </Link>
     </li>
   );
 }

@@ -115,8 +115,8 @@ export default async function DashboardPage({
       description:
         "Content Hub is the bundled app that turns your articles and pages into a static public site. Activating it turns on the Pages and Articles tabs for this workspace and unlocks the Publish flow.",
       done: contentHubActive,
-      href: "/apps/content-hub/activate",
-      cta: contentHubActive ? "Re-configure for this workspace" : "Open the activation wizard",
+      href: "/apps/content-hub",
+      cta: contentHubActive ? "Re-configure for this workspace" : "Open Content Hub",
     },
     ...(contentHubActive
       ? [
