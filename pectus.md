@@ -1,5 +1,9 @@
 # Pectus install
 
+> **A note for the human who downloaded this file.** You don't run these steps yourself. This file is the script Claude reads to install Pectus on your laptop. Open Claude Code in your install folder and tell it: "Read pectus.md and follow it." Claude greets you, asks for what it needs, and walks you through every step. You can stop reading here. The rest of this file is technical instructions written for Claude.
+
+---
+
 You are Claude Code. The user just downloaded this file because they want to wake Pectus up on their machine.
 
 **Before you do anything else, print this welcome to them, verbatim. No commentary, no editorializing — just print the box, then the one-line greeting underneath, then wait.**
@@ -39,7 +43,7 @@ You need Node.js 20+, npm 10+, and git. If any are missing, walk the user throug
 
 First, figure out whether the user already has the repo on disk.
 
-Run `pwd` and `ls`. If the current folder contains `apps/`, `cms/`, `connectors/`, `skills/`, and a `package.json` that names `pectusai`, the user has already cloned (likely via the install page's git command, which lands the repo and then opens Claude inside it). Do not clone again. Tell the user: "Looks like Pectus is already cloned here at `<pwd>`. I'll continue from this folder." Then make sure the upstream remote is set:
+Run `pwd` and `ls`. If the current folder contains `apps/`, `cms/`, `connectors/`, `skills/`, and a `package.json` that names `pectusai`, the user has already downloaded the Pectus code (most likely via the install page's git command, which lands the code and then opens Claude inside the folder). Do not download it again. Tell the user something like: "Looks like Pectus is already in this folder. I'll continue from here." Then quietly make sure the upstream link is set so future updates know where to pull from:
 
 ```
 git remote get-url upstream || git remote add upstream https://github.com/pectusai/pectus.git
@@ -47,15 +51,15 @@ git remote get-url upstream || git remote add upstream https://github.com/pectus
 
 Move on to step 3.
 
-Otherwise, clone fresh. Before suggesting a path, check whether the user already has a Pectus install elsewhere on the machine. Run:
+Otherwise, you need to download Pectus. Before picking a folder, check whether the user already has a Pectus install elsewhere on their machine. Run:
 
 ```
 ls ~/pectus 2>/dev/null && ls ~/pectus/cms 2>/dev/null
 ```
 
-If `~/pectus` exists and contains `cms/`, the user already has a Pectus install for a different brand. One Pectus install holds one brand's data, so this new install needs its own folder. Ask the user for a short brand slug (e.g. `acme`, `jesperastrom`) and use it as the folder name: `~/pectus-<slug>`. Remember the path you land on; later steps reference it.
+If `~/pectus` exists and contains a `cms/` folder, the user already has a Pectus install for a different brand. One Pectus install holds one brand's data, so this new install needs its own folder. Ask the user something like: "Looks like you already have Pectus set up at `~/pectus`. Each Pectus install holds one brand, so this one needs its own folder. What's the brand called? A short word like `acme` or `jesperastrom` works." Use what they give you as the folder name: `~/pectus-<their-word>`. Remember the path you land on; later steps reference it.
 
-If `~/pectus` is empty or doesn't exist, default to `~/pectus`. Either way, confirm the chosen path with the user and explain the folder name at the end of the line is theirs to change.
+If `~/pectus` is empty or doesn't exist, the default `~/pectus` is fine. Either way, confirm the chosen path with the user. Explain in plain words what `~` means: it's their user folder (on a Mac, that's the folder named after them inside `Users/`), so `~/pectus` is a folder called `pectus` inside their user folder. Tell them they can change the folder name at the end of the line if they want.
 
 ```
 git clone https://github.com/pectusai/pectus.git ~/pectus
@@ -206,7 +210,7 @@ Now they choose what to do first. Present both doors clearly, then let them pick
 Open the dashboard. The weekly analysis has ranked content opportunities by projected traffic. Pick one, click into the page builder, draft, publish. This is the fastest path to seeing Pectus do something useful, and it's where most users start.
 
 **Door B — Teach Pectus a new trick.**
-The bundled apps focus on content publishing. Pectus is a container; what it actually does depends on what skills and apps live inside it. Run `npx pectus make-it skill` to scaffold a new skill (a unit of logic that produces an output), or `npx pectus make-it app` for a new data source or publish target. Best for users who came to Pectus to do something the bundle doesn't already do.
+Pectus comes with content-publishing built in. If you want it to do something else (generate weekly LinkedIn posts, analyze a competitor's pricing, summarize customer reviews), you can teach it. Skip this for now and come back when you have a specific job in mind. When you do: run `npx pectus make-it skill` to write a new piece of logic, or `npx pectus make-it app` to add a new data source or a new place for Pectus to publish to.
 
 Both doors can run in parallel. The choice is just "what do you want to try first."
 
