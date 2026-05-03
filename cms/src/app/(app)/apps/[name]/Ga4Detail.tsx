@@ -29,20 +29,48 @@ export function Ga4Detail({
             </span>
           ) : null}
         </header>
-        <p className="mt-1 text-xs text-zinc-600">
-          Find the property ID in GA4 → Admin → Property settings. It looks
-          like <code className="rounded bg-zinc-100 px-1 py-0.5">123456789</code>.
-          Saving runs a live test against the property; if the service account
-          isn&apos;t a Viewer on it, the save fails with the API error.
+        <p className="mt-2 text-sm text-zinc-700">
+          Tell Pectus which GA4 property feeds this install.
         </p>
 
+        <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-zinc-700">
+          <li>
+            Open{" "}
+            <a
+              href="https://analytics.google.com/"
+              target="_blank"
+              rel="noreferrer"
+              className="text-blue-600 hover:text-blue-800"
+            >
+              Google Analytics
+            </a>{" "}
+            and switch to the property you want Pectus to read from.
+          </li>
+          <li>
+            Bottom-left gear → <strong>Admin</strong> →{" "}
+            <strong>Property settings</strong>. Copy the{" "}
+            <strong>Property ID</strong> (a number like{" "}
+            <code className="rounded bg-zinc-100 px-1 py-0.5 text-xs">123456789</code>
+            ). Not the &ldquo;Measurement ID&rdquo; (which starts with G-).
+          </li>
+          <li>
+            Paste the property ID below and click{" "}
+            <strong>Test + save</strong>. Pectus runs a live API call against
+            it; if the service account isn&apos;t a Viewer on the property,
+            you&apos;ll get the Google error verbatim and the save aborts.
+          </li>
+        </ol>
+
         {!connected ? (
-          <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-            Connect a Google service account above first. The same credential
-            is used for GA4, Search Console, and Google Ads.
-          </p>
+          <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            <strong>Connect Google first.</strong> Scroll up to the Google
+            Cloud connection panel and upload your service account JSON.
+          </div>
         ) : (
-          <form action={saveGa4} className="mt-3 space-y-3">
+          <form action={saveGa4} className="mt-4 space-y-3">
+            <label className="block text-xs font-medium text-zinc-700">
+              Property ID
+            </label>
             <input
               type="text"
               name="ga4_property_id"

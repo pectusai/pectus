@@ -106,7 +106,15 @@ async function loadIntegration() {
 }
 
 export async function saveGoogleServiceAccount(formData: FormData) {
-  const raw = String(formData.get("service_account_json") ?? "");
+  const file = formData.get("service_account_file");
+  const pasted = String(formData.get("service_account_json") ?? "");
+  let raw = pasted;
+  if (file && typeof file === "object" && "size" in file && (file as File).size > 0) {
+    raw = await (file as File).text();
+  }
+  if (!raw.trim()) {
+    throw new Error("Upload the service account JSON file or paste its contents.");
+  }
   const parsed = parseServiceAccountKey(raw);
   if (!parsed.ok) {
     throw new Error(parsed.error);

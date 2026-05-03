@@ -72,21 +72,97 @@ export function GoogleConnectionPanel({
           Not connected
         </span>
       </header>
-      <p className="mt-2 text-xs text-zinc-600">
-        GA4, Search Console, and Google Ads all read through one Google service
-        account. Create one in Google Cloud Console (project → Service
-        accounts → Create), download its JSON key, and grant it Viewer access
-        to your GA4 property and User access to your Search Console site.
-        Paste the full JSON below.
+      <p className="mt-2 text-sm text-zinc-700">
+        GA4, Search Console, and Google Ads all read through one Google
+        service account. Set it up once here.
       </p>
-      <form action={saveGoogleServiceAccount} className="mt-3 space-y-2">
-        <textarea
-          name="service_account_json"
-          required
-          rows={6}
-          placeholder='{"type":"service_account","project_id":"...","private_key":"...","client_email":"..."}'
-          className="block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-xs"
-        />
+
+      <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-zinc-700">
+        <li>
+          Open{" "}
+          <a
+            href="https://console.cloud.google.com/iam-admin/serviceaccounts"
+            target="_blank"
+            rel="noreferrer"
+            className="text-blue-600 hover:text-blue-800"
+          >
+            Google Cloud Console → Service accounts
+          </a>{" "}
+          and pick a project (or create one).
+        </li>
+        <li>
+          Click <strong>Create service account</strong>. Give it a name like
+          <code className="ml-1 rounded bg-zinc-100 px-1 py-0.5 text-xs">
+            pectus-reader
+          </code>
+          . Skip the optional permissions step.
+        </li>
+        <li>
+          Open the new account → <strong>Keys</strong> tab → <strong>Add key</strong> →{" "}
+          <strong>Create new key</strong> → <strong>JSON</strong>. A file
+          downloads to your machine.
+        </li>
+        <li>
+          Enable two APIs for the same project:{" "}
+          <a
+            href="https://console.cloud.google.com/apis/library/analyticsdata.googleapis.com"
+            target="_blank"
+            rel="noreferrer"
+            className="text-blue-600 hover:text-blue-800"
+          >
+            Analytics Data API
+          </a>{" "}
+          and{" "}
+          <a
+            href="https://console.cloud.google.com/apis/library/searchconsole.googleapis.com"
+            target="_blank"
+            rel="noreferrer"
+            className="text-blue-600 hover:text-blue-800"
+          >
+            Search Console API
+          </a>
+          . Click each, then <strong>Enable</strong>.
+        </li>
+        <li>
+          In GA4 (Admin → Property access), add the service account email
+          (from the JSON&apos;s <code>client_email</code> field) as a{" "}
+          <strong>Viewer</strong>. In Search Console (Settings → Users &
+          permissions), add the same email as a <strong>User</strong>.
+        </li>
+        <li>Upload the JSON below (or paste its contents).</li>
+      </ol>
+
+      <form action={saveGoogleServiceAccount} className="mt-5 space-y-3">
+        <div>
+          <label className="block text-xs font-medium text-zinc-700">
+            Upload the JSON file
+          </label>
+          <input
+            type="file"
+            name="service_account_file"
+            accept="application/json,.json"
+            className="mt-1 block w-full text-xs file:mr-3 file:rounded-md file:border-0 file:bg-zinc-900 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white hover:file:bg-zinc-800"
+          />
+        </div>
+
+        <div className="relative flex items-center gap-2 text-[11px] uppercase tracking-widest text-zinc-400">
+          <span className="h-px flex-1 bg-zinc-200" />
+          <span>or paste it</span>
+          <span className="h-px flex-1 bg-zinc-200" />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-zinc-700">
+            Paste the JSON contents
+          </label>
+          <textarea
+            name="service_account_json"
+            rows={5}
+            placeholder='{"type":"service_account","project_id":"...","private_key":"...","client_email":"..."}'
+            className="mt-1 block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-xs"
+          />
+        </div>
+
         <p className="text-[11px] text-zinc-500">
           Pectus stores the JSON in the <code>integrations</code> table in
           your Supabase. It never leaves your install.
