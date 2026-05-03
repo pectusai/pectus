@@ -276,25 +276,26 @@ A workspace is one market or audience segment. If the user only sells in one cou
 
 The command creates the workspace row, sets a default review policy, and saves the seed keywords. The dashboard opens at `http://localhost:3000/workspaces/<code>`.
 
-> **What happened to the site shape and GitHub repo questions?** They moved into the Content Hub activation wizard in the CMS (next step). The base workspace just captures identity now; the publish-target details live with the app that uses them.
+> **What happened to the site shape and GitHub repo questions?** They moved into the Content Hub settings page in the CMS (next step). The base workspace just captures identity now; the publish-target details live with the app that uses them.
 
 ## 11. Activate Content Hub for the workspace
 
 If the user wants a public site (most users do — content-hub is the bundled outbound app), walk them through activating it in the CMS:
 
 1. Open `http://localhost:3000/apps` in their browser.
-2. Click **Activate** on the **content-hub** card.
-3. The wizard asks three things:
+2. Click the **content-hub** card. They land on the Content Hub settings page (`/apps/content-hub`). Activation happens by saving a working config from this page; there is no separate Activate button on the card.
+3. Fill in the form:
+   - **Workspace** — pick the workspace they just created in step 10.
    - **Site shape** — Brand new site (Pectus runs the whole site, pages at `/`) or Existing site (Pectus adds a section under their existing site, pages at `/insights/` or similar).
    - **Mount slug** — only shown for Existing site. Default `/insights/`. Must start and end with `/`.
    - **GitHub repo** — where Pectus pushes built pages. The user should:
      1. Open github.com → **New repository** → name it (something like `<their-brand>-pectus`) → don't tick README/license/gitignore → **Create repository**.
      2. Copy the URL from the browser address bar (looks like `https://github.com/yourname/yourrepo`).
-     3. Paste it into the wizard. The form accepts the full URL, the short `github.com/yourname/yourrepo` form, or the bare `yourname/yourrepo` form.
-     4. Or leave blank — they can fill it in later from Workspace Settings → Site URL.
+     3. Paste it into the form. It accepts the full URL, the short `github.com/yourname/yourrepo` form, or the bare `yourname/yourrepo` form.
+     4. Or leave blank — they can fill it in later from Workspace → Content Hub → Site URL.
 
    **Important if the user already has a website on Vercel + GitHub.** If they want Pectus to replace their existing site (most common scenario), tell them: don't reuse the existing site's repo. Use a fresh empty repo. After install, they'll switch their Vercel project's git source to the new repo. Full details at https://pectus.ai/docs/faq/install/replace-or-add-to-existing-site. If they ask why not reuse: because Pectus commits its own Astro app structure into the repo, which would replace whatever's already there. A new repo keeps the cutover clean and the rollback simple.
-4. Click **Activate Content Hub**. The CMS now shows Pages, Articles, and Site URL surfaces inside the workspace.
+4. Click **Save and activate Content Hub**. The CMS sidebar now shows the Content Hub group inside the workspace, with Pages, Articles, Site URL, and Redirects as children.
 
 If the user is installing Pectus for analysis only (no public site), skip this step. They can activate Content Hub later from `/apps` whenever they decide they want to publish.
 
