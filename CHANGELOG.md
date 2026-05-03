@@ -1,5 +1,43 @@
 # Changelog
 
+## v0.3.0 — Apps as plugins (Phase 1)
+
+The CMS becomes a shell. Apps register their own surfaces. Phase 1 ships
+the activation model with content-hub as the first plugin.
+
+- New top-nav entry `Apps` (CMS at `/apps`). Lists every app under
+  `apps/*` with status (Activated / Available), type (inbound /
+  outbound), and version. Tooltips on every badge.
+- New tables `activated_apps` (install-level) and `workspace_app_config`
+  (per-workspace), in migration `0006_activated_apps.sql`. Backfill
+  auto-activates content-hub for any v0.2 install where a workspace has
+  `mount_slug` or `content_hub_repo` set, so upgrading does not hide
+  Articles or Pages surfaces.
+- Workspace tabs Pages and Articles, plus Settings → Site URL and
+  Redirects, are now gated on content-hub activation. Inactive surfaces
+  render an `ActivateAppPointer` linking to `/apps`.
+- New per-workspace activation wizard at
+  `/apps/content-hub/activate`. Captures site shape (Brand new vs
+  Existing site), mount slug, and GitHub repo. Replaces the
+  corresponding prompts in `npx pectus workspace create`.
+- `npx pectus workspace create` now collects only identity (name, code,
+  locale) and seed keywords. Site shape and repo move into the
+  activation wizard.
+- Workspace dashboard checklist makes Activate Content Hub the second
+  item (after Brand). Articles import only renders once content-hub is
+  active.
+- Install runbook (`pectus.md`) reorganized: step 10 collects only
+  workspace identity; new step 11 walks Content Hub activation in the
+  CMS Apps tab.
+- `apps/content-hub/APP.md` added, declaring the `cms_surfaces` it
+  contributes. Phase 1 reads only the basic frontmatter; Phase 2
+  generalizes the manifest format.
+
+Backwards compat: existing v0.2 installs upgrading via
+`npx pectus update` get content-hub auto-activated and the prior
+mount_slug / repo / branch values written into
+`workspace_app_config`. Net effect: nothing disappears.
+
 ## v0.1.0 — Initial scaffold (PR1)
 
 - Repo skeleton: `connectors/`, `apps/`, `skills/`, `knowledge/`, `brand/`, `cms/`, `cli/`.

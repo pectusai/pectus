@@ -4,7 +4,6 @@ import {
   intro,
   outro,
   text,
-  select,
   isCancel,
   cancel,
   spinner,
@@ -19,26 +18,6 @@ function bail(msg = "Cancelled."): never {
 }
 
 const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/u;
-
-// Accepts pasted GitHub URLs in any of:
-//   github.com/owner/repo
-//   https://github.com/owner/repo
-//   http://github.com/owner/repo
-//   github.com/owner/repo.git
-//   https://github.com/owner/repo.git
-//   git@github.com:owner/repo.git
-//   owner/repo (raw, for backwards compat)
-// Returns "owner/repo" or null if it can't parse.
-function parseGithubRepo(input: string): string | null {
-  const t = input.trim().replace(/\.git$/u, "").replace(/\/$/u, "");
-  const sshMatch = t.match(/^git@github\.com:([A-Za-z0-9._-]+)\/([A-Za-z0-9._-]+)$/u);
-  if (sshMatch) return `${sshMatch[1]}/${sshMatch[2]}`;
-  const httpMatch = t.match(/^(?:https?:\/\/)?(?:www\.)?github\.com\/([A-Za-z0-9._-]+)\/([A-Za-z0-9._-]+)$/u);
-  if (httpMatch) return `${httpMatch[1]}/${httpMatch[2]}`;
-  const rawMatch = t.match(/^([A-Za-z0-9._-]+)\/([A-Za-z0-9._-]+)$/u);
-  if (rawMatch) return `${rawMatch[1]}/${rawMatch[2]}`;
-  return null;
-}
 
 export async function create(): Promise<void> {
   loadEnv();
@@ -96,66 +75,9 @@ export async function create(): Promise<void> {
   });
   if (isCancel(locale)) bail();
 
-  const siteShape = await select({
-    message: "What kind of site is this?",
-    options: [
-      {
-        value: "greenfield",
-        label: "Brand new site — Pectus runs the whole site from the root",
-        hint: "pages live at /",
-      },
-      {
-        value: "coexist",
-        label: "Existing site — Pectus only adds a section to a site you already have",
-        hint: "pages live at /insights/ or similar",
-      },
-    ],
-    initialValue: "greenfield",
-  });
-  if (isCancel(siteShape)) bail();
-
-  let mountSlug = "/";
-  if (siteShape === "coexist") {
-    const sub = await text({
-      message: "Sub-path for Pectus pages (you can change this later)",
-      initialValue: "/insights/",
-      validate(v) {
-        if (!v) return "Required.";
-        const t = v.trim();
-        if (!t.startsWith("/")) return "Must start with /";
-        if (!t.endsWith("/")) return "Must end with /";
-        if (!/^\/[a-z0-9/-]+\/$/.test(t)) {
-          return "Use lowercase letters, digits, hyphens, and slashes.";
-        }
-        return undefined;
-      },
-    });
-    if (isCancel(sub)) bail();
-    mountSlug = (sub as string).trim();
-  }
-
-  const repoString = await text({
-    message:
-      "Create a NEW empty repository on github.com (don't reuse your existing site's repo), then paste the link to it here. Looks like 'github.com/yourname/yourrepo' or 'https://github.com/yourname/yourrepo'. Leave blank to set later in Workspace Settings.",
-    placeholder: "github.com/yourname/yourrepo",
-    validate(v) {
-      if (!v || !v.trim()) return undefined;
-      if (!parseGithubRepo(v.trim())) {
-        return "Paste the GitHub URL. Example: github.com/jesperastrom/jesperastrom-pectus.";
-      }
-      return undefined;
-    },
-  });
-  if (isCancel(repoString)) bail();
-  const rawRepo = (repoString as string).trim();
-  const contentHubRepo = rawRepo ? parseGithubRepo(rawRepo) : null;
-
-  const seedHelp =
-    siteShape === "greenfield"
-      ? "Brand new sites have no Search Console traffic data yet. Pectus uses these to plan a sitemap. 5-10 phrases, comma-separated."
-      : "Optional. Existing sites usually have Search Console data, but seeds are still useful as ICP-aligned anchors. 5-10 phrases, comma-separated, or leave blank.";
   const seedKeywordsRaw = await text({
-    message: `Seed keywords (5-10) — ${seedHelp}`,
+    message:
+      "Seed keywords (5-10) — short phrases this workspace plans content around when there's no Search Console traffic yet. Comma-separated, or leave blank if you'll add them later.",
     placeholder:
       "observability for python, structured logging, distributed tracing",
     validate(v) {
@@ -163,8 +85,7 @@ export async function create(): Promise<void> {
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean);
-      if (siteShape === "coexist" && parts.length === 0) return undefined;
-      if (parts.length === 0) return "At least one keyword for brand new sites.";
+      if (parts.length === 0) return undefined;
       if (parts.length > 10) return "Cap is 10. Pick the most representative.";
       return undefined;
     },
@@ -187,8 +108,6 @@ export async function create(): Promise<void> {
       locale: localeStr,
       default_locale: localeStr,
       enabled_locales: [localeStr],
-      mount_slug: mountSlug,
-      content_hub_repo: contentHubRepo,
     })
     .select("id, code")
     .single();
@@ -228,7 +147,8 @@ export async function create(): Promise<void> {
 
   outro(
     kleur.green(
-      `Workspace ready. Open http://localhost:3000/workspaces/${created.code} to see it.`,
+      `Workspace ready. Open http://localhost:3000/workspaces/${created.code} to see it. ` +
+        `To turn on the public site (Pages, Articles, Publish), open http://localhost:3000/apps and activate Content Hub.`,
     ),
   );
 }

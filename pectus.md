@@ -267,28 +267,38 @@ cd <install path> && npx pectus workspace create
 
 (For the default install location: `cd ~/pectus && npx pectus workspace create`.)
 
-A workspace is one market or audience segment. If the user only sells in one country, one workspace is enough. If they have separate sites for the UK, US, and Sweden, that's three workspaces. The wizard asks six questions:
+A workspace is one market or audience segment. If the user only sells in one country, one workspace is enough. If they have separate sites for the UK, US, and Sweden, that's three workspaces. The wizard asks four questions:
 
 1. **Market name** — a human label, e.g. "United Kingdom" or "DTC US". For single-market users, anything descriptive like "Main", "Primary", or the brand name works.
 2. **Code** — a short identifier for this workspace, used in URLs and as the workspace's handle. Lowercase letters, digits, and dashes only. Pick `uk` for the United Kingdom market, `dtc-us` for direct-to-consumer US. **For a single-market install (most common), `main` is the standard pick. The brand name (e.g. `jesperastrom`) also works.**
 3. **Locale** — language and country, e.g. `en-GB` for British English, `en-US` for American English, `sv-SE` for Swedish.
-4. **Site shape** — pick one:
-    - **Brand new site**: Pectus runs the whole site. Pages live at `/`. Pick this for new sites or when Pectus is replacing an existing site.
-    - **Existing site**: Pectus only adds a section (default `/insights/`) to a site the user is keeping intact. Pick this when Pectus needs to coexist with the existing site.
-    The user can change this later in the CMS at Workspace Settings → Site URL.
-5. **Content-hub GitHub repo** — the repo where Pectus will commit the pages it generates. The user should:
-   1. Open github.com → **New repository** → name it (something like `<their-brand>-pectus`) → don't tick README/license/gitignore → **Create repository**.
-   2. Copy the URL from the browser address bar (looks like `https://github.com/yourname/yourrepo`).
-   3. Paste it into the wizard prompt. The wizard accepts the full URL, the short `github.com/yourname/yourrepo` form, or the bare `yourname/yourrepo` form.
-
-   They can leave this blank now and set it later in Workspace Settings.
-
-   **Important if the user already has a website on Vercel + GitHub.** If they want Pectus to replace their existing site (most common scenario), tell them: don't reuse the existing site's repo. Use a fresh empty repo. After install, they'll switch their Vercel project's git source to the new repo. Full details at https://pectus.ai/docs/faq/install/replace-or-add-to-existing-site. If they ask why not reuse: because Pectus commits its own Astro app structure into the repo, which would replace whatever's already there. A new repo keeps the cutover clean and the rollback simple.
-6. **Seed keywords** — 5 to 10 short phrases the workspace plans content around when there's no Search Console traffic yet (e.g. "best dtc skincare, retinol myths, sensitive skin routine"). Required for brand new sites, optional for existing sites. The dashboard's first analysis uses these as the starting topic spine.
+4. **Seed keywords** — 5 to 10 short phrases the workspace plans content around when there's no Search Console traffic yet (e.g. "best dtc skincare, retinol myths, sensitive skin routine"). Optional; the user can add them later from Workspace Settings → Seed keywords. The dashboard's first analysis uses these as the starting topic spine.
 
 The command creates the workspace row, sets a default review policy, and saves the seed keywords. The dashboard opens at `http://localhost:3000/workspaces/<code>`.
 
-## 11. Run the first analysis
+> **What happened to the site shape and GitHub repo questions?** They moved into the Content Hub activation wizard in the CMS (next step). The base workspace just captures identity now; the publish-target details live with the app that uses them.
+
+## 11. Activate Content Hub for the workspace
+
+If the user wants a public site (most users do — content-hub is the bundled outbound app), walk them through activating it in the CMS:
+
+1. Open `http://localhost:3000/apps` in their browser.
+2. Click **Activate** on the **content-hub** card.
+3. The wizard asks three things:
+   - **Site shape** — Brand new site (Pectus runs the whole site, pages at `/`) or Existing site (Pectus adds a section under their existing site, pages at `/insights/` or similar).
+   - **Mount slug** — only shown for Existing site. Default `/insights/`. Must start and end with `/`.
+   - **GitHub repo** — where Pectus pushes built pages. The user should:
+     1. Open github.com → **New repository** → name it (something like `<their-brand>-pectus`) → don't tick README/license/gitignore → **Create repository**.
+     2. Copy the URL from the browser address bar (looks like `https://github.com/yourname/yourrepo`).
+     3. Paste it into the wizard. The form accepts the full URL, the short `github.com/yourname/yourrepo` form, or the bare `yourname/yourrepo` form.
+     4. Or leave blank — they can fill it in later from Workspace Settings → Site URL.
+
+   **Important if the user already has a website on Vercel + GitHub.** If they want Pectus to replace their existing site (most common scenario), tell them: don't reuse the existing site's repo. Use a fresh empty repo. After install, they'll switch their Vercel project's git source to the new repo. Full details at https://pectus.ai/docs/faq/install/replace-or-add-to-existing-site. If they ask why not reuse: because Pectus commits its own Astro app structure into the repo, which would replace whatever's already there. A new repo keeps the cutover clean and the rollback simple.
+4. Click **Activate Content Hub**. The CMS now shows Pages, Articles, and Site URL surfaces inside the workspace.
+
+If the user is installing Pectus for analysis only (no public site), skip this step. They can activate Content Hub later from `/apps` whenever they decide they want to publish.
+
+## 12. Run the first analysis
 
 ```
 npx pectus analyze --workspace <code> --skill weekly-analysis
@@ -300,7 +310,7 @@ This runs the `weekly-analysis` skill. It gathers everything Pectus knows about 
 
 Wait for it to finish (typically 30 to 90 seconds). When it returns, summarize the result for the user in plain words: how many post suggestions came back, the top three topics by score, any of their existing posts the analysis flagged as rising. Then point them at the dashboard to read the full output.
 
-## 12. Pectus is awake. Pick a door.
+## 13. Pectus is awake. Pick a door.
 
 The CMS is running at `http://localhost:3000`, signed in as the admin from step 6. The first workspace exists. The first analysis has run. Pectus knows who they are, what they care about, and what data they have.
 
