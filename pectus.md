@@ -188,16 +188,37 @@ The database has the Pectus schema, the user has an admin account. Nothing got c
 
 ## 7. Connect Google (Search Console + Analytics)
 
+This step pulls in Search Console and Google Analytics data. There are two outside-the-terminal pieces:
+
+1. **Create a service account in the user's Google Cloud project** (the same project from step 5). In the Google Cloud Console: IAM & Admin → Service Accounts → Create Service Account. Name it anything (e.g. `pectus-reader`). Skip the "Grant access" role step (no IAM role is needed for GA4/GSC reads). Click Done.
+2. **Create and download a JSON key for the service account.** On the service account's Details page → Keys tab → Add Key → Create new key → JSON → Create. The browser downloads a `.json` file. Tell the user to put it somewhere safe and to give you the absolute path to the file.
+3. **Add the service account email as a Viewer in GA4 and Search Console.** Walk the user through the GA4 add (Admin → Property access management → +Add users → paste service account email → role Viewer → untick "Notify by email" → Add) and the Search Console add (Settings → Users and permissions → Add user → paste email → Restricted permission).
+
+### Heads-up: Google sometimes won't accept the service account immediately
+
+This is a known Google quirk, not a Pectus bug. Even when the project ID is correct, the relevant APIs are enabled (Admin, Data, Search Console), and the email is copied directly from the service account's Details page, GA4 and Search Console will sometimes reject the email with "this user doesn't exist" for 30 to 60 minutes (occasionally longer). Incognito mode, waiting, and re-pasting often don't help. There's no good public explanation for it; it's just Google's principal-lookup edge cache being slow.
+
+If this happens, **don't lose the credentials the user already has**. Ask them for two things in the chat and save them yourself:
+
+1. The full service account email (e.g. `pectus-reader@jesperastromcom.iam.gserviceaccount.com`).
+2. The absolute path to the JSON key file they downloaded (e.g. `/Users/<name>/Downloads/jesperastromcom-abc123.json`).
+
+Once you have both, write them into `.env.local`:
+
 ```
-npx pectus connect google
+GOOGLE_SERVICE_ACCOUNT_EMAIL=<the email>
+GOOGLE_APPLICATION_CREDENTIALS=<the absolute path to the JSON file>
 ```
 
-This pulls in Search Console and Google Analytics data. The user will need to do two things outside the terminal:
+Then tell the user something like:
 
-1. Create a service account in their Google Cloud project (the same project from step 5). Give it viewer access on the Search Console properties and the Analytics 4 properties they want Pectus to read.
-2. Download the service account JSON file. Pectus will ask for the path to it.
+> "Saved. Pectus has your service account ready. Whenever Google decides to accept the email in GA4 and Search Console (often resolves on its own within an hour or two), Pectus will start pulling data automatically. No need to redo this step. If it's still rejecting after a couple of hours, come back to this with `npx pectus connect google` and the existing credentials will be reused."
 
-Then back in the terminal, the command will ask which GSC site URL and which GA4 property to track. Pectus tests both connections before finishing — if either test fails, show the error and stop. The most common cause is the service account not having viewer access on the property; have them double-check the sharing settings in GSC and GA4.
+Then **move on to step 8**. Don't block the rest of the install on Google's mood.
+
+### When it works first try
+
+If GA4 and Search Console accept the email straight away (most users): run `npx pectus connect google`. The command picks up the email and key path from `.env.local`, asks which GSC site and which GA4 property to track, and tests both connections. If either test fails after the user confirms they added the email in both consoles, surface the error and stop. The most common cause is the user adding the service account in GA4 but not Search Console (or vice versa); have them double-check both.
 
 ## 8. Link Vercel and GitHub (optional)
 
