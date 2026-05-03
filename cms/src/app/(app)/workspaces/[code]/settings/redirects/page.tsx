@@ -1,5 +1,7 @@
 import { createServerClient } from "@pectus/supabase";
 import { getWorkspaceByCode } from "@/lib/workspace";
+import { isAppActive } from "@/lib/apps";
+import { ActivateAppPointer } from "@/app/components/ActivateAppPointer";
 import { SubmitButton } from "@/app/components/SubmitButton";
 import { addRedirect, deleteRedirect } from "./actions";
 
@@ -20,6 +22,9 @@ export default async function RedirectsPage({
   searchParams: Promise<{ sort?: string }>;
 }) {
   const { code } = await params;
+  if (!(await isAppActive("content-hub"))) {
+    return <ActivateAppPointer appName="content-hub" surface="Redirects" />;
+  }
   const sp = await searchParams;
   const sortKey = (sp.sort ?? "from_path") as keyof RedirectRecord;
   const workspace = await getWorkspaceByCode(code);

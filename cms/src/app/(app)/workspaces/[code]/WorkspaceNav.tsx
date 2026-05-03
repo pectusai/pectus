@@ -3,7 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export function WorkspaceNav({ code }: { code: string }) {
+export function WorkspaceNav({
+  code,
+  contentHubActive,
+}: {
+  code: string;
+  contentHubActive: boolean;
+}) {
   const pathname = usePathname();
 
   const inactive = "text-zinc-500 hover:text-zinc-900";
@@ -24,18 +30,22 @@ export function WorkspaceNav({ code }: { code: string }) {
       >
         Dashboard
       </Link>
-      <Link
-        href={`/workspaces/${code}/pages`}
-        className={linkClass(`/workspaces/${code}/pages`)}
-      >
-        Pages
-      </Link>
-      <Link
-        href={`/workspaces/${code}/articles`}
-        className={linkClass(`/workspaces/${code}/articles`)}
-      >
-        Articles
-      </Link>
+      {contentHubActive ? (
+        <>
+          <Link
+            href={`/workspaces/${code}/pages`}
+            className={linkClass(`/workspaces/${code}/pages`)}
+          >
+            Pages
+          </Link>
+          <Link
+            href={`/workspaces/${code}/articles`}
+            className={linkClass(`/workspaces/${code}/articles`)}
+          >
+            Articles
+          </Link>
+        </>
+      ) : null}
       <Link
         href={`/workspaces/${code}/keywords`}
         className={linkClass(`/workspaces/${code}/keywords`)}

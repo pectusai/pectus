@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { getWorkspaceByCode } from "@/lib/workspace";
+import { isAppActive } from "@/lib/apps";
+import { ActivateAppPointer } from "@/app/components/ActivateAppPointer";
 import { SubmitButton } from "@/app/components/SubmitButton";
 import { saveSiteUrl } from "./actions";
 
@@ -9,6 +11,9 @@ export default async function SiteUrlSettingsPage({
   params: Promise<{ code: string }>;
 }) {
   const { code } = await params;
+  if (!(await isAppActive("content-hub"))) {
+    return <ActivateAppPointer appName="content-hub" surface="Site URL" />;
+  }
   const workspace = await getWorkspaceByCode(code);
 
   return (

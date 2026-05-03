@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { isAppActive } from "@/lib/apps";
 
 export default async function WorkspaceSettings({
   params,
@@ -6,6 +7,8 @@ export default async function WorkspaceSettings({
   params: Promise<{ code: string }>;
 }) {
   const { code } = await params;
+  const contentHubActive = await isAppActive("content-hub");
+
   return (
     <div className="space-y-6">
       <div>
@@ -20,31 +23,35 @@ export default async function WorkspaceSettings({
       </div>
 
       <ul className="grid gap-3 sm:grid-cols-2">
-        <li>
-          <Link
-            href={`/workspaces/${code}/settings/site-url`}
-            className="block rounded-lg border border-zinc-200 bg-white p-4 transition hover:border-zinc-300"
-          >
-            <p className="text-sm font-semibold">Site URL</p>
-            <p className="mt-1 text-xs text-zinc-600">
-              Mount slug, locale config, and the GitHub repo Publish writes
-              to. Slug or locale changes propose redirects automatically.
-            </p>
-          </Link>
-        </li>
-        <li>
-          <Link
-            href={`/workspaces/${code}/settings/redirects`}
-            className="block rounded-lg border border-zinc-200 bg-white p-4 transition hover:border-zinc-300"
-          >
-            <p className="text-sm font-semibold">Redirects</p>
-            <p className="mt-1 text-xs text-zinc-600">
-              The full redirect table. Mirrored to{" "}
-              <code>content/redirects.json</code> on every publish. Slug
-              renames auto-populate; manual entries kept.
-            </p>
-          </Link>
-        </li>
+        {contentHubActive ? (
+          <>
+            <li>
+              <Link
+                href={`/workspaces/${code}/settings/site-url`}
+                className="block rounded-lg border border-zinc-200 bg-white p-4 transition hover:border-zinc-300"
+              >
+                <p className="text-sm font-semibold">Site URL</p>
+                <p className="mt-1 text-xs text-zinc-600">
+                  Mount slug, locale config, and the GitHub repo Publish writes
+                  to. Slug or locale changes propose redirects automatically.
+                </p>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href={`/workspaces/${code}/settings/redirects`}
+                className="block rounded-lg border border-zinc-200 bg-white p-4 transition hover:border-zinc-300"
+              >
+                <p className="text-sm font-semibold">Redirects</p>
+                <p className="mt-1 text-xs text-zinc-600">
+                  The full redirect table. Mirrored to{" "}
+                  <code>content/redirects.json</code> on every publish. Slug
+                  renames auto-populate; manual entries kept.
+                </p>
+              </Link>
+            </li>
+          </>
+        ) : null}
         <li>
           <Link
             href={`/workspaces/${code}/settings/seed-keywords`}
@@ -70,6 +77,18 @@ export default async function WorkspaceSettings({
           </Link>
         </li>
       </ul>
+
+      {!contentHubActive ? (
+        <p className="rounded-lg border border-dashed border-zinc-300 bg-white p-4 text-xs text-zinc-600">
+          Site URL and Redirects are part of the{" "}
+          <code className="rounded bg-zinc-100 px-1 py-0.5">content-hub</code>{" "}
+          app. Activate it from the{" "}
+          <Link href="/apps" className="underline">
+            Apps page
+          </Link>{" "}
+          to publish a public site for this workspace.
+        </p>
+      ) : null}
     </div>
   );
 }

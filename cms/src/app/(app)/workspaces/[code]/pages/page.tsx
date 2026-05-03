@@ -1,5 +1,7 @@
 import { requireUser } from "@/lib/auth";
 import { getWorkspaceByCode } from "@/lib/workspace";
+import { isAppActive } from "@/lib/apps";
+import { ActivateAppPointer } from "@/app/components/ActivateAppPointer";
 import {
   buildTree,
   annotateWithPages,
@@ -15,6 +17,9 @@ export default async function PagesScreen({
   params: Promise<{ code: string }>;
 }) {
   const { code } = await params;
+  if (!(await isAppActive("content-hub"))) {
+    return <ActivateAppPointer appName="content-hub" surface="Pages" />;
+  }
   const { supabase } = await requireUser();
   const ws = await getWorkspaceByCode(code);
 

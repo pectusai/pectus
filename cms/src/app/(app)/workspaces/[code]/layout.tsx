@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getWorkspaceByCode } from "@/lib/workspace";
+import { isAppActive } from "@/lib/apps";
 import { WorkspaceNav } from "./WorkspaceNav";
 
 export default async function WorkspaceLayout({
@@ -11,6 +12,7 @@ export default async function WorkspaceLayout({
 }) {
   const { code } = await params;
   const workspace = await getWorkspaceByCode(code);
+  const contentHubActive = await isAppActive("content-hub");
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
@@ -28,7 +30,7 @@ export default async function WorkspaceLayout({
         </Link>
       </div>
 
-      <WorkspaceNav code={workspace.code} />
+      <WorkspaceNav code={workspace.code} contentHubActive={contentHubActive} />
 
       {children}
     </div>
