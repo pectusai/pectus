@@ -41,7 +41,7 @@ Run:
 which node npm npx git
 ```
 
-You need Node.js 20+, npm 10+, and git. If any are missing, walk the user through installing them. macOS path: install Homebrew (`https://brew.sh`), then `brew install node git`. Verify with `node --version`.
+You need Node.js 20.19 or later, npm 10+, and git. The 20.19 floor is set by Vite (used inside the CMS build) and several other deps that need ≥20.18.1. If `node --version` reports anything below 20.19, install a newer Node before continuing — `npm install` will warn loudly otherwise and parts of the dev server can fail in non-obvious ways. macOS path: install Homebrew (`https://brew.sh`), then `brew install node git`. To pin a specific version, use `nvm install 20` and `nvm use 20`.
 
 ## 2. Clone the upstream repo (or confirm an existing clone)
 

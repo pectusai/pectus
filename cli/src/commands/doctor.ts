@@ -36,12 +36,15 @@ export async function run(): Promise<void> {
   loadEnv();
   const checks: Check[] = [];
 
-  // 1. Node 20+
+  // 1. Node 20.19+ (Vite floor; some deps need >=20.18.1)
   const nodeVer = process.versions.node;
   const nodeParsed = parseSemver(nodeVer);
+  const nodeOk =
+    !!nodeParsed &&
+    (nodeParsed.major > 20 || (nodeParsed.major === 20 && nodeParsed.minor >= 19));
   checks.push({
-    label: "Node.js >= 20",
-    ok: !!nodeParsed && nodeParsed.major >= 20,
+    label: "Node.js >= 20.19",
+    ok: nodeOk,
     detail: `node ${nodeVer}`,
     critical: true,
   });
