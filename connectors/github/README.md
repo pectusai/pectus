@@ -17,7 +17,7 @@ A personal access token with `repo` scope. Generate at https://github.com/settin
 Each workspace declares its target repo:
 
 ```
-workspaces.content_hub_repo    -- "<owner>/<repo>", e.g. "jesperastrom/jesperastrom-content"
+workspaces.content_hub_repo    -- "<owner>/<repo>", e.g. "acme-corp/acme-content"
 workspaces.content_hub_branch  -- defaults to "main"
 ```
 

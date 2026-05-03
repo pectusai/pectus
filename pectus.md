@@ -61,7 +61,7 @@ Otherwise, you need to download Pectus. Before picking a folder, check whether t
 ls ~/pectus 2>/dev/null && ls ~/pectus/cms 2>/dev/null
 ```
 
-If `~/pectus` exists and contains a `cms/` folder, the user already has a Pectus install for a different brand. One Pectus install holds one brand's data, so this new install needs its own folder. Ask the user something like: "Looks like you already have Pectus set up at `~/pectus`. Each Pectus install holds one brand, so this one needs its own folder. What's the brand called? A short word like `acme` or `jesperastrom` works." Use what they give you as the folder name: `~/pectus-<their-word>`. Remember the path you land on; later steps reference it.
+If `~/pectus` exists and contains a `cms/` folder, the user already has a Pectus install for a different brand. One Pectus install holds one brand's data, so this new install needs its own folder. Ask the user something like: "Looks like you already have Pectus set up at `~/pectus`. Each Pectus install holds one brand, so this one needs its own folder. What's the brand called? A short word like `acme` or `your-brand` works." Use what they give you as the folder name: `~/pectus-<their-word>`. Remember the path you land on; later steps reference it.
 
 If `~/pectus` is empty or doesn't exist, the default `~/pectus` is fine. Either way, confirm the chosen path with the user. Explain in plain words what `~` means: it's their user folder (on a Mac, that's the folder named after them inside `Users/`), so `~/pectus` is a folder called `pectus` inside their user folder. Tell them they can change the folder name at the end of the line if they want.
 
@@ -125,7 +125,7 @@ Three services are required to boot Pectus. Two more are optional. Walk the user
   Write all three into `.env.local` as `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`. Pectus never asks for the user's Supabase account-level access token; project setup stays on their side.
 - **Anthropic** — https://console.anthropic.com. This is what powers Claude inside Pectus. After signup, click "API keys" in the sidebar, then "Create key". The value starts with `sk-ant-`. Paste it here.
 - **Google Cloud** — https://console.cloud.google.com. This unlocks Google Analytics and Google Search Console data. There are four sub-steps inside the Google Cloud console; walk the user through them one at a time:
-  1. Create a new project (top bar dropdown → "New Project"). Any name is fine. Note that Google generates the project ID with a numeric or random suffix (e.g. project named `jesperastrom-com` becomes ID `jesperastrom-com-412345`). The user can't change this; it's what shows up in service-account emails later.
+  1. Create a new project (top bar dropdown → "New Project"). Any name is fine. Note that Google generates the project ID with a numeric or random suffix (e.g. a project named `acme-corp` becomes ID `acme-corp-412345`). The user can't change this; it's what shows up in service-account emails later.
   2. Enable **three** APIs. For each: APIs & Services → Library, search the name, click **Enable**, wait until the page flips to "API enabled". Don't skip any of these; missing the Admin API is what makes GA4 reject the service account with "this user doesn't exist" errors when the user later tries to add it under Property access management.
      - **Google Analytics Admin API** (lets the service account be recognized as a valid principal in GA4's user management UI)
      - **Google Analytics Data API** (lets Pectus read the actual GA4 report data)
@@ -270,7 +270,7 @@ cd <install path> && npx pectus workspace create
 A workspace is one market or audience segment. If the user only sells in one country, one workspace is enough. If they have separate sites for the UK, US, and Sweden, that's three workspaces. The wizard asks four questions:
 
 1. **Market name** — a human label, e.g. "United Kingdom" or "DTC US". For single-market users, anything descriptive like "Main", "Primary", or the brand name works.
-2. **Code** — a short identifier for this workspace, used in URLs and as the workspace's handle. Lowercase letters, digits, and dashes only. Pick `uk` for the United Kingdom market, `dtc-us` for direct-to-consumer US. **For a single-market install (most common), `main` is the standard pick. The brand name (e.g. `jesperastrom`) also works.**
+2. **Code** — a short identifier for this workspace, used in URLs and as the workspace's handle. Lowercase letters, digits, and dashes only. Pick `uk` for the United Kingdom market, `dtc-us` for direct-to-consumer US. **For a single-market install (most common), `main` is the standard pick. The brand name (e.g. `acme`) also works.**
 3. **Locale** — language and country, e.g. `en-GB` for British English, `en-US` for American English, `sv-SE` for Swedish.
 4. **Seed keywords** — 5 to 10 short phrases the workspace plans content around when there's no Search Console traffic yet (e.g. "best dtc skincare, retinol myths, sensitive skin routine"). Optional; the user can add them later from Workspace Settings → Seed keywords. The dashboard's first analysis uses these as the starting topic spine.
 
