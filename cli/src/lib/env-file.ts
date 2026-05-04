@@ -1,4 +1,9 @@
-// Read and merge-write .env.local at the repo root.
+// Read and merge-write .env.local. The canonical location is cms/.env.local
+// — that is what Next.js reads when the dev server boots. The CLI follows
+// suit so both consumers see the same file. For backward compat with older
+// installs that wrote to the repo root, fall back to <root>/.env.local on
+// read; on write always target cms/.env.local.
+//
 // Preserves existing keys, comments, and ordering; appends new keys at the end.
 
 import fs from "node:fs";
@@ -6,11 +11,21 @@ import path from "node:path";
 import { findRepoRoot } from "./repo-root.js";
 
 function envPath(): string {
+  return path.join(findRepoRoot(), "cms", ".env.local");
+}
+
+function legacyEnvPath(): string {
   return path.join(findRepoRoot(), ".env.local");
 }
 
 export function readEnvLocal(): Record<string, string> {
-  const file = envPath();
+  const primary = envPath();
+  const legacy = legacyEnvPath();
+  const file = fs.existsSync(primary)
+    ? primary
+    : fs.existsSync(legacy)
+      ? legacy
+      : primary;
   if (!fs.existsSync(file)) return {};
   const raw = fs.readFileSync(file, "utf8");
   const out: Record<string, string> = {};
@@ -35,6 +50,14 @@ export function readEnvLocal(): Record<string, string> {
 
 export function writeEnvLocal(updates: Record<string, string>): void {
   const file = envPath();
+  // Make sure cms/ exists before writing into it.
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  // If a legacy <root>/.env.local exists and the canonical cms/.env.local
+  // does not, migrate the legacy file's contents over before merging updates.
+  const legacy = legacyEnvPath();
+  if (!fs.existsSync(file) && fs.existsSync(legacy)) {
+    fs.copyFileSync(legacy, file);
+  }
   let lines: string[] = [];
   if (fs.existsSync(file)) {
     lines = fs.readFileSync(file, "utf8").split(/\r?\n/u);

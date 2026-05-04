@@ -163,9 +163,9 @@ Then check in:
 
 Wait for a yes before listing the Supabase steps.
 
-Three services are required to boot Pectus. Two more are optional. Walk the user through each one in order. For each, give them the link, wait for them to sign up, then ask for the specific value Pectus needs. Write each value into `.env.local` as you receive it (use `.env.example` as the field reference).
+Three services are required to boot Pectus. Two more are optional. Walk the user through each one in order. For each, give them the link, wait for them to sign up, then ask for the specific value Pectus needs. Write each value into `cms/.env.local` as you receive it (use `.env.example` at the install root as the field reference). **The env file lives at `cms/.env.local`, not at the install root** — Next.js reads it from the CMS folder. The Pectus CLI also reads from `cms/.env.local` (with a fallback to legacy root `.env.local` for upgraded installs).
 
-**Before you start asking, read `.env.local` if it exists.** For every variable that's already set to a non-empty value, do *not* ask the user to provide it again. Print one line per found variable, e.g. `Found NEXT_PUBLIC_SUPABASE_URL in .env.local — keeping.` (Mask secret-shaped values — show only the first 4 and last 4 characters, e.g. `eyJh…X9Yz`.) Then ask only for the values that are still missing. The user has likely been through the install before, or pasted the file directly; respect that. If a saved value turns out to be wrong later (verify step fails), tell the user which variable is suspect and ask for a replacement, but don't pre-emptively re-prompt for things that are already there.
+**Before you start asking, read `cms/.env.local` if it exists** (and the legacy `.env.local` at the install root if it exists from an older install — copy any values from there into `cms/.env.local` and tell the user you've done so). For every variable that's already set to a non-empty value, do *not* ask the user to provide it again. Print one line per found variable, e.g. `Found NEXT_PUBLIC_SUPABASE_URL in .env.local — keeping.` (Mask secret-shaped values — show only the first 4 and last 4 characters, e.g. `eyJh…X9Yz`.) Then ask only for the values that are still missing. The user has likely been through the install before, or pasted the file directly; respect that. If a saved value turns out to be wrong later (verify step fails), tell the user which variable is suspect and ask for a replacement, but don't pre-emptively re-prompt for things that are already there.
 
 **Required**
 
@@ -177,7 +177,7 @@ Three services are required to boot Pectus. Two more are optional. Walk the user
      - **anon (public) key** (a long string starting with `eyJ...`). Important: in the current Supabase UI the first page of API settings shows new "publishable" / "secret" keys that Pectus does not use. The `anon` and `service_role` keys live on a second tab (look for "Legacy API keys", "JWT-based keys", or similar). Tell the user explicitly: do not paste the first two keys they see on the landing tab; switch tabs first and look for the keys named `anon` and `service_role`.
      - **service_role (secret) key** (also starts with `eyJ...`, on the same second tab as `anon`, keep this one private).
   4. Open https://supabase.com/dashboard/account/tokens (a separate page from the project — it lives on the user's account, not inside the project). Click **Generate new token**, name it anything (e.g. `pectus`), copy the value (starts with `sbp_`). Pectus needs this to apply schema migrations and other Management-API operations on the user's behalf.
-  Write all four into `.env.local` as `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ACCESS_TOKEN`. The first three are project-scoped; the access token is account-scoped and authenticates Pectus to the Supabase Management API.
+  Write all four into `cms/.env.local` as `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ACCESS_TOKEN`. The first three are project-scoped; the access token is account-scoped and authenticates Pectus to the Supabase Management API.
 - **Anthropic** — https://console.anthropic.com. This is what powers Claude inside Pectus. After signup, click "API keys" in the sidebar, then "Create key". The value starts with `sk-ant-`. Paste it here.
 - **Google Cloud** — https://console.cloud.google.com. This unlocks Google Analytics and Google Search Console data. There are four sub-steps inside the Google Cloud console; walk the user through them one at a time:
   1. Create a new project (top bar dropdown → "New Project"). Any name is fine. Note that Google generates the project ID with a numeric or random suffix (e.g. a project named `acme-corp` becomes ID `acme-corp-412345`). The user can't change this; it's what shows up in service-account emails later.
@@ -325,11 +325,11 @@ Print to the user verbatim:
 
 > **Step 9 of 13: turning Pectus on.** Booting the admin app on your laptop so you can sign in and start using it. About 30 seconds.
 
-### 9a. Verify `.env.local` before starting the dev server
+### 9a. Verify `cms/.env.local` before starting the dev server
 
-Before running `npm run dev`, confirm that `.env.local` has the values the CMS needs. The Next.js dev server reads env at startup; if env is missing or named wrong, the CMS crashes at first request with `Your project's URL and Key are required to create a Supabase client!` (or similar).
+Before running `npm run dev`, confirm that `cms/.env.local` (not the install root) has the values the CMS needs. The Next.js dev server reads env at startup; if env is missing, named wrong, or written to the wrong path, the CMS crashes at first request with `Your project's URL and Key are required to create a Supabase client!` (or similar).
 
-Read `.env.example` at the install root. It is the canonical list of variable names. Then read `.env.local` and confirm:
+Read `.env.example` at the install root. It is the canonical list of variable names. Then read `cms/.env.local` and confirm:
 
 - All three Supabase entries exist with non-empty values and the **exact** names from `.env.example`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
 - `ANTHROPIC_API_KEY` exists with a value starting with `sk-ant-`.
