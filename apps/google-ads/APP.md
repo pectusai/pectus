@@ -2,6 +2,7 @@
 name: google-ads
 description: Pull paid search performance from Google Ads into the ad_metrics table.
 type: inbound
+stub: true
 version: 1.0.0
 needs:
   project: [locale, market]

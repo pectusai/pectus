@@ -91,6 +91,10 @@ async function readAppManifest(name: string): Promise<AppManifest | null> {
     const raw = await readFile(path.join(APPS_DIR, name, "APP.md"), "utf8");
     const fm = parseFrontmatter(raw);
     if (!fm.name) return null;
+    // Skip apps marked as stubs in their APP.md frontmatter — they ship as
+    // documentation only and don't function. Hides them from the activation
+    // list so the user sees only apps that actually do something.
+    if (fm.stub === "true") return null;
     const type: AppType =
       fm.type === "inbound" || fm.type === "outbound" ? fm.type : "unknown";
     return {

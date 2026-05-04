@@ -13,49 +13,46 @@ export default async function BrandProjectsPage({
   const { supabase } = await requireUser();
   const brand = await getBrandBySlug(slug);
 
-  const [{ data: projects }, { data: freshnessRows }] = await Promise.all([
-    supabase
-      .from("projects")
-      .select("*")
-      .eq("brand_id", brand.id)
-      .order("name"),
-    supabase
+  const { data: projects } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("brand_id", brand.id)
+    .order("name");
+
+  const projectIds = (projects ?? []).map((p) => p.id as string);
+  let freshnessRows: Freshness[] = [];
+  if (projectIds.length > 0) {
+    const { data } = await supabase
       .from("project_data_freshness")
-      .select("*")
-      .eq("brand_id", brand.id),
-  ]);
+      .select("project_id, surface, last_updated_at")
+      .in("project_id", projectIds);
+    freshnessRows = (data ?? []) as Freshness[];
+  }
 
   const freshnessByProject = new Map<string, Record<string, string>>();
-  ((freshnessRows ?? []) as Freshness[]).forEach((row) => {
+  freshnessRows.forEach((row) => {
     const current = freshnessByProject.get(row.project_id) ?? {};
     current[row.surface] = row.last_updated_at;
     freshnessByProject.set(row.project_id, current);
   });
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-10">
+    <div className="mx-auto max-w-3xl px-6 py-10">
       <div className="mb-8">
         <h1 className="text-2xl font-semibold tracking-tight">
           {brand.name ?? brand.slug}
         </h1>
-        <p className="mt-1 text-sm text-zinc-600">
-          One project per market or property. Pick one to manage its ICP,
-          keywords, and content.
-        </p>
       </div>
 
       {!projects || projects.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-zinc-300 p-10 text-center text-sm text-zinc-500">
-          <p>No projects yet. Create your first from the terminal:</p>
-          <pre className="mt-3 inline-block rounded bg-zinc-100 px-3 py-2 text-left text-xs text-zinc-700">
-            npx pectus project create
-          </pre>
-          <p className="mt-3 text-xs text-zinc-500">
-            The command is interactive. It will ask you for the market name, a
-            short code (like <code className="rounded bg-zinc-100 px-1">uk</code>{" "}
-            or <code className="rounded bg-zinc-100 px-1">dtc-us</code>), the
-            locale, site shape, content-hub repo, and seed keywords. Run it from
-            the install root.
+        <div className="rounded-lg border border-zinc-200 bg-white p-6">
+          <p className="text-sm text-zinc-700">
+            Pectus is awake. Open your terminal and run{" "}
+            <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs">
+              pectus project create
+            </code>{" "}
+            from your install folder to add your first project. A project is
+            one audience or market — most installs only ever have one.
           </p>
         </div>
       ) : (

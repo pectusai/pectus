@@ -2,6 +2,7 @@
 name: linkedin
 description: Pull paid social performance from the LinkedIn Marketing API into the ad_metrics table.
 type: inbound
+stub: true
 version: 1.0.0
 needs:
   project: [locale, market]

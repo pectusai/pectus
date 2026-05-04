@@ -1,4 +1,9 @@
-import { getBrandBySlug, writeLastBrandSlug } from "@/lib/active-brand";
+import { getBrandBySlug } from "@/lib/active-brand";
+
+// Next.js 16 forbids cookie writes from Server Components. The
+// LAST_BRAND_COOKIE write that used to live here is duplicated by the
+// middleware which already sets it on every /brands/<slug>/... request.
+// See cms/src/middleware.ts for the cookie-set logic.
 
 export default async function BrandLayout({
   params,
@@ -9,6 +14,5 @@ export default async function BrandLayout({
 }) {
   const { slug } = await params;
   await getBrandBySlug(slug);
-  await writeLastBrandSlug(slug);
   return <>{children}</>;
 }
