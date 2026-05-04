@@ -42,6 +42,7 @@ export async function NavBar() {
           ) : (
             <Link href="/brands">Brands</Link>
           )}
+          <Link href="/apps">Apps</Link>
           <Link href="/settings">Settings</Link>
         </nav>
 

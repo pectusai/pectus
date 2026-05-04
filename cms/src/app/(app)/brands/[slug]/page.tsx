@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { FreshnessBadge } from "@/app/components/FreshnessBadge";
 import type { Freshness, Project } from "@/lib/project";
 import { getBrandBySlug } from "@/lib/active-brand";
+import { AddProjectForm } from "./AddProjectForm";
 
 export default async function BrandProjectsPage({
   params,
@@ -38,21 +39,19 @@ export default async function BrandProjectsPage({
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
-      <div className="mb-8">
+      <div className="mb-8 flex flex-wrap items-baseline justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight">
           {brand.name ?? brand.slug}
         </h1>
+        <AddProjectForm brandSlug={slug} />
       </div>
 
       {!projects || projects.length === 0 ? (
         <div className="rounded-lg border border-zinc-200 bg-white p-6">
           <p className="text-sm text-zinc-700">
-            Pectus is awake. Open your terminal and run{" "}
-            <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs">
-              pectus project create
-            </code>{" "}
-            from your install folder to add your first project. A project is
-            one audience or market — most installs only ever have one.
+            No projects yet. Click <strong>Add project</strong> above to create
+            one. A project is one audience or market — most installs only ever
+            have one.
           </p>
         </div>
       ) : (
