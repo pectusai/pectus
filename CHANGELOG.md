@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.3.9 — Collect Supabase access token at install
+
+- Install agent (`pectus.md` step 5) now asks the user to generate a Supabase access token at https://supabase.com/dashboard/account/tokens and paste it back. Saved to `.env.local` as `SUPABASE_ACCESS_TOKEN`. Pectus needs this token to apply schema migrations and other Management-API operations on the user's behalf; previously the install flow declared "Pectus never asks for the access token" and the env var was silently missing, so any command path that needed it bailed.
+- `.env.example` documents `SUPABASE_ACCESS_TOKEN` with the token-page URL.
+
 ## v0.3.8 — Fix stale `/brand` credential pointers
 
 - GSC sync error messages now point users to `/apps/gsc` instead of `/brand` for Google service account and Search Console site URL configuration. Credentials moved out of the brand page in earlier work; the error strings were left behind.
