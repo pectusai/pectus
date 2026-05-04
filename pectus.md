@@ -151,7 +151,11 @@ If the user wants to analyze ad spend later (Google Ads, Meta, LinkedIn), the Li
 
 ## 6. Provision Supabase
 
-The user already created the project themselves in step 5 and the URL plus keys are in `.env.local`. Now we add the schema and create the admin login. **Do not run `npx pectus connect supabase`.** That command was built for an older flow that called the Supabase Management API. The supported flow now: you generate a SQL file the user pastes into Supabase's own SQL editor. The user keeps full control of their project.
+Print this to the user verbatim before doing anything else in this step:
+
+> Provision Supabase. This adds the Pectus database to your project and creates your admin login. Generating the SQL file now.
+
+The user already created the project themselves in step 5 and the URL plus keys are in `.env.local`. Now we add the schema and create the admin login. **Do not run `npx pectus connect supabase`.** That command was built for an older flow that called the Supabase Management API. The supported flow now: you hand the user a SQL file they paste into Supabase's own SQL editor. The user keeps full control of their project.
 
 ### 6a. Confirm the migration file is on disk
 
@@ -177,7 +181,9 @@ create schema public;
 grant all on schema public to postgres, anon, authenticated, service_role;
 ```
 
-> "It should say 'Success. No rows returned.' Now click **New query** again, open `connectors/supabase/migrations/0001_pectus_v04.sql` in your install folder, copy everything in it, and paste it into the empty editor. Click **Run**. Should finish in a few seconds. If it errors, paste the error message back to me."
+> "Supabase will pop up a warning that says the query contains destructive operations and asks you to confirm. That's expected — `drop schema` is destructive by design, and on a fresh install there's nothing in there worth keeping. Click **Run destructive query** (or whatever the confirm button says) to proceed. It should then say 'Success. No rows returned.'
+>
+> Now click **New query** again, open `connectors/supabase/migrations/0001_pectus_v04.sql` in your install folder, copy everything in it, and paste it into the empty editor. Click **Run**. You may see the same destructive-operations warning again because the migration also drops a few existing triggers and policies as it sets things up. Confirm and proceed. The query should finish in a few seconds. If it errors, paste the error message back to me."
 
 Wait for confirmation. If they paste an error, diagnose it. Most failures are an extension prerequisite (`uuid-ossp`, `pgcrypto`, `unaccent`) that the user can enable from the same editor with a one-liner you give them.
 
@@ -233,14 +239,29 @@ Make sure the user has the JSON key file saved somewhere safe (note the path in 
 
 If GA4 and Search Console accept the email straight away (most users): run `npx pectus connect google`. It's interactive: it asks the user to paste the full service-account JSON, asks for a GA4 property ID and a Search Console site URL, then tests both connections live. If either test fails, surface the error and stop. The most common cause is the user adding the service account in GA4 but not Search Console (or vice versa); have them double-check both. On success the command writes the JSON, property ID, and site URL into the `integrations` table in Supabase.
 
-## 8. Link Vercel and GitHub (optional)
+## 8. Vercel and GitHub (optional, deferred)
 
-```
-npx pectus connect vercel
-npx pectus connect github
-```
+The Vercel and GitHub connectors that ship with the CLI today are stubs — they print "coming in v2" and exit. Do **not** offer to run them. The tokens the user pasted in step 5 still live in `.env.local`; the publish flow inside Content Hub (step 11) reads them directly when it commits a page.
 
-Both are optional and can be done later. Skip Vercel if the user isn't ready to deploy a public hub yet. Skip GitHub if they don't have a content-hub repo set up — they can run `npx pectus connect github` from `~/pectus` any time later. The publish flow needs GitHub configured before pages can be committed; the rest of Pectus works fine without it.
+Walk the user through this step one item at a time, in this order. Don't bundle them into one prompt with multiple options.
+
+### 8a. GitHub
+
+Tell the user, in plain words:
+
+> GitHub is where Pectus pushes the static pages it generates. When you publish an article from inside Pectus, it commits the page's JSON to a content-hub repo on GitHub, and Vercel auto-deploys it from there. The GitHub token you pasted in step 5 is already in `.env.local`, so there's nothing to set up here. We'll point Pectus at the actual repo from inside the CMS during step 11 (Content Hub setup).
+
+Then move on. Don't ask anything; this step is just framing so the user knows GitHub is wired up and what it does.
+
+### 8b. Vercel
+
+Tell the user, in plain words:
+
+> Vercel is where the public site lives once Pectus pushes pages to GitHub. Vercel watches your content-hub repo and rebuilds the site every time Pectus commits to it. The Vercel token you pasted in step 5 is already in `.env.local`. You'll connect Vercel to the GitHub repo when you set up Content Hub in step 11; nothing to do here right now.
+
+Then move on. Same shape: framing only, no prompt.
+
+If the user explicitly asks to verify the tokens or test the connections, tell them the connectors aren't wired yet and the verification happens implicitly the first time Pectus tries to publish (step 11+). Don't invent a CLI command to run.
 
 ## 9. Start the CMS
 
