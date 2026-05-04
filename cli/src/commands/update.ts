@@ -3,6 +3,7 @@
 import { execSync, spawn } from "node:child_process";
 import kleur from "kleur";
 import { findRepoRoot } from "../lib/repo-root.js";
+import { reportV04Migration, runV04DiskMigration } from "../lib/disk-migration.js";
 
 function exec(cmd: string, args: string[], cwd: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -102,6 +103,8 @@ export async function run(): Promise<void> {
 
   console.log(kleur.bold("Running npm install..."));
   await exec("npm", ["install"], repo);
+
+  reportV04Migration(runV04DiskMigration(repo));
 
   console.log("");
   console.log(kleur.green("Update complete."));

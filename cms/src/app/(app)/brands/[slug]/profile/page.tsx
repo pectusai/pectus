@@ -3,7 +3,12 @@ import { requireUser } from "@/lib/auth";
 import { BrandForm } from "./BrandForm";
 import { loadBrand } from "./actions";
 
-export default async function BrandPage() {
+export default async function BrandPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
   const { user } = await requireUser();
   const supabase = await createServerClient();
 
@@ -14,14 +19,14 @@ export default async function BrandPage() {
       .eq("id", user.id)
       .single(),
     supabase
-      .from("brand_profile")
+      .from("brands")
       .select("*")
-      .eq("singleton", true)
+      .eq("slug", slug)
       .maybeSingle(),
   ]);
 
   const canEdit = Boolean(profile?.is_admin);
-  const fileBrand = await loadBrand();
+  const fileBrand = await loadBrand(slug);
 
   /* DB is the source of truth for fields the CMS edits, but fall back to the
    * brand.json mirror for fields not yet persisted (or before first save). */
@@ -68,7 +73,7 @@ export default async function BrandPage() {
         ) : null}
       </div>
 
-      <BrandForm initial={initial} canEdit={canEdit} />
+      <BrandForm initial={initial} canEdit={canEdit} brandSlug={slug} />
     </div>
   );
 }

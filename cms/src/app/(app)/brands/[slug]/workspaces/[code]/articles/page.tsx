@@ -1,20 +1,29 @@
 import { requireUser } from "@/lib/auth";
-import { getWorkspaceByCode } from "@/lib/workspace";
+import { getBrandBySlug } from "@/lib/active-brand";
 import { isAppActive } from "@/lib/apps";
 import { ActivateAppPointer } from "@/app/components/ActivateAppPointer";
+import { notFound } from "next/navigation";
 import { ImportForm } from "./ImportForm";
 
 export default async function Page({
   params,
 }: {
-  params: Promise<{ code: string }>;
+  params: Promise<{ slug: string; code: string }>;
 }) {
-  const { code } = await params;
+  const { slug, code } = await params;
   if (!(await isAppActive("content-hub"))) {
     return <ActivateAppPointer appName="content-hub" surface="Articles" />;
   }
   const { supabase } = await requireUser();
-  const ws = await getWorkspaceByCode(code);
+  const brand = await getBrandBySlug(slug);
+
+  const { data: ws } = await supabase
+    .from("workspaces")
+    .select("*")
+    .eq("brand_id", brand.id)
+    .eq("code", code)
+    .maybeSingle();
+  if (!ws) notFound();
 
   const { data: articles } = await supabase
     .from("articles")
@@ -24,13 +33,13 @@ export default async function Page({
     .limit(200);
 
   /* Pre-fill the sitemap field with the brand's configured sitemap_url. */
-  const { data: brand } = await supabase
-    .from("brand_profile")
+  const { data: brandRow } = await supabase
+    .from("brands")
     .select("sitemap_url")
-    .eq("singleton", true)
+    .eq("slug", slug)
     .maybeSingle();
 
-  const defaultSitemap = brand?.sitemap_url ?? "";
+  const defaultSitemap = brandRow?.sitemap_url ?? "";
   const list = articles ?? [];
 
   return (

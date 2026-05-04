@@ -1,5 +1,30 @@
 # Changelog
 
+## v0.4.0 — Multi-brand alpha
+
+Pectus now hosts multiple brands inside a single install. Every brand gets its own row, its own disk directory, its own slug-prefixed URL space, and its own scoped DB rows. Switching brands is a one-click action in the top nav. The intended persona for this is small agencies running several client brands from one Pectus, but it works the same for solo operators who want to keep their personal site, side project, and client work out of each other's way.
+
+This is an alpha. The migration is destructive on schema (it renames `brand_profile` → `brands`, drops the singleton constraint, and re-scopes uniqueness on `workspaces.code` and `integrations.provider` per-brand), so re-run on a fresh project or take a backup first. After upgrade: run `npx pectus update` (which executes the disk migration), then paste the freshly generated SQL bundle from `pectus.md` step 6 into Supabase's SQL editor.
+
+- **Schema (`0007_v0_4_multi_brand.sql`):** rename `brand_profile` → `brands`, drop singleton, add `slug` (NOT NULL UNIQUE) + `created_at`. Add `brand_id` FK with `ON DELETE CASCADE` on 19 child tables (workspaces, integrations, workspace_app_config, articles, icp_profiles, keywords, content_sources, answer_public_entries, workspace_data_freshness, weekly_analyses, skill_runs, review_policy, review_queue_items, topics, site_plan_nodes, redirects, pages, seed_keywords, insights). Backfill, then NOT NULL + index. Re-scope `workspaces.code` and `integrations.provider` uniqueness per-brand. Idempotent and safe to re-run.
+- **Disk migration (`cli/src/lib/disk-migration.ts`):** moves `brand/` → `brands/<slug>/` and `knowledge/` → `brands/<slug>/knowledge/`. Wired into `pectus update` and `pectus connect supabase`.
+- **Brand-prefixed routes:** `(app)/{brand,apps,reviews,performance,workspaces}` physically moved under `(app)/brands/[slug]/`. New `/brands` index page lists every brand. `/brands/<slug>` is the workspace list (brand-scoped via `brand_id`). `/brands/<slug>/profile` is the brand profile editor (was `/brand`). `/brands/<slug>/settings` is a new rename-and-delete page (type-to-confirm delete cascades through 19 child tables and removes the disk directory).
+- **Brand resolver (`cms/src/lib/active-brand.ts`):** `getBrandBySlug`, `listBrands`, `readLastBrandSlug`, `writeLastBrandSlug`, `LAST_BRAND_COOKIE = "pectus.lastBrand"`. The `[slug]` layout writes the cookie on every visit; root `page.tsx` redirects to `/brands/<lastUsedSlug>` when set, else `/brands/<onlyBrand>` if there's exactly one, else `/brands`.
+- **BrandSwitcher (top nav):** select element in NavBar, cascade-fallback server action that walks the URL, swaps the slug, and lands on the deepest path that resolves under the new brand. For `/brands/<X>/workspaces/<code>/...` it DB-checks the workspace code; for stable tops (profile, apps, reviews, performance, settings) it preserves; otherwise falls back to `/brands/<targetSlug>`.
+- **Middleware redirects:** every legacy path (`/brand`, `/apps`, `/reviews`, `/performance`, `/workspaces/...`) resolves to the brand-prefixed equivalent based on the `pectus.lastBrand` cookie. Old bookmarks and any internal `<Link>` or `revalidatePath` call that still references a flat path keeps working at runtime.
+- **Skill runner brand-aware:** workspace lookup includes `brand_id`; brand row resolved once per run; `gatherKnowledgeInsights(brandSlug)` reads from `brands/<slug>/knowledge/insights.md`. The `KNOWLEDGE_ROOT` constant is gone.
+- **CLI:** `npx pectus brand add` is now slug-parameterized (writes `brands/<slug>/brand.json`, prompts to confirm the derived slug). `npx pectus connect supabase` walks `brands/<slug>/` directories and upserts each row into the `brands` table.
+- **CLI install side-fixes** (rode along with the brand-sync rewrite): `pectus connect supabase` now silently reuses any saved value in `.env.local` (access token, anon key, service-role key) instead of re-prompting on every re-run. If `auth.admin.createUser` fails because the email already exists, the CLI falls back to `listUsers` + `updateUserById` so re-running against an already-bootstrapped project no longer bails.
+- **Install agent idempotency (`pectus.md` step 5):** before asking for any service credential, the agent reads `.env.local` and skips every variable already set to a non-empty value. It prints one line per found variable (masking secret-shaped values to the first 4 + last 4 characters) so the user knows what was kept. Replaces the previous behavior of re-asking for everything every install.
+
+### Known v0.4.1 follow-ups
+
+- CMS Add-brand modal (CLI works via `npx pectus brand add` today).
+- Export/import bundles (zip a brand's disk dir + DB rows, strip credentials).
+- `getWorkspaceByCode(code)` doesn't yet filter by `brand_id`. Manifests only when two brands share a workspace code.
+- Server actions still call `revalidatePath("/workspaces/<code>/...")` instead of the brand-prefixed equivalent. Middleware redirects keep the user-facing flow working but Next.js cache keys are slightly off.
+- Agency persona spec doc (`pectus.ai/docs/multi-brand-as-cms-intermediary.md`).
+
 ## v0.3.9 — Collect Supabase access token at install
 
 - Install agent (`pectus.md` step 5) now asks the user to generate a Supabase access token at https://supabase.com/dashboard/account/tokens and paste it back. Saved to `.env.local` as `SUPABASE_ACCESS_TOKEN`. Pectus needs this token to apply schema migrations and other Management-API operations on the user's behalf; previously the install flow declared "Pectus never asks for the access token" and the env var was silently missing, so any command path that needed it bailed.

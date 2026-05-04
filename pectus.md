@@ -113,6 +113,8 @@ Once they're happy, mention briefly: "If you want a richer design system later (
 
 Three services are required to boot Pectus. Two more are optional. Walk the user through each one in order. For each, give them the link, wait for them to sign up, then ask for the specific value Pectus needs. Write each value into `.env.local` as you receive it (use `.env.example` as the field reference).
 
+**Before you start asking, read `.env.local` if it exists.** For every variable that's already set to a non-empty value, do *not* ask the user to provide it again. Print one line per found variable, e.g. `Found NEXT_PUBLIC_SUPABASE_URL in .env.local — keeping.` (Mask secret-shaped values — show only the first 4 and last 4 characters, e.g. `eyJh…X9Yz`.) Then ask only for the values that are still missing. The user has likely been through the install before, or pasted the file directly; respect that. If a saved value turns out to be wrong later (verify step fails), tell the user which variable is suspect and ask for a replacement, but don't pre-emptively re-prompt for things that are already there.
+
 **Required**
 
 - **Supabase** — https://supabase.com. This is the database. The user creates the project themselves so they stay in control of the account. After signup, walk them through this:

@@ -5,11 +5,15 @@ export default async function WorkspaceLayout({
   params,
   children,
 }: {
-  params: Promise<{ code: string }>;
+  params: Promise<{ slug: string; code: string }>;
   children: React.ReactNode;
 }) {
-  const { code } = await params;
+  const { slug, code } = await params;
   const workspace = await getWorkspaceByCode(code);
 
-  return <WorkspaceShell workspace={workspace}>{children}</WorkspaceShell>;
+  return (
+    <WorkspaceShell workspace={workspace} brandSlug={slug}>
+      {children}
+    </WorkspaceShell>
+  );
 }

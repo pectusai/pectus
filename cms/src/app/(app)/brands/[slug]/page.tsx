@@ -2,12 +2,27 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { FreshnessBadge } from "@/app/components/FreshnessBadge";
 import type { Freshness, Workspace } from "@/lib/workspace";
+import { getBrandBySlug } from "@/lib/active-brand";
 
-export default async function WorkspacesListPage() {
+export default async function BrandWorkspacesPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
   const { supabase } = await requireUser();
+  const brand = await getBrandBySlug(slug);
+
   const [{ data: workspaces }, { data: freshnessRows }] = await Promise.all([
-    supabase.from("workspaces").select("*").order("name"),
-    supabase.from("workspace_data_freshness").select("*"),
+    supabase
+      .from("workspaces")
+      .select("*")
+      .eq("brand_id", brand.id)
+      .order("name"),
+    supabase
+      .from("workspace_data_freshness")
+      .select("*")
+      .eq("brand_id", brand.id),
   ]);
 
   const freshnessByWorkspace = new Map<string, Record<string, string>>();
@@ -20,7 +35,9 @@ export default async function WorkspacesListPage() {
   return (
     <div className="mx-auto max-w-5xl px-6 py-10">
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold tracking-tight">Workspaces</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {brand.name ?? brand.slug}
+        </h1>
         <p className="mt-1 text-sm text-zinc-600">
           One workspace per market or property. Pick one to manage its ICP,
           keywords, and content.
@@ -48,7 +65,7 @@ export default async function WorkspacesListPage() {
             return (
               <li key={w.id}>
                 <Link
-                  href={`/workspaces/${w.code}`}
+                  href={`/brands/${slug}/workspaces/${w.code}`}
                   className="block rounded-lg border border-zinc-200 bg-white p-5 transition hover:border-zinc-300"
                 >
                   <div className="flex items-start justify-between gap-3">

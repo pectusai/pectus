@@ -32,6 +32,7 @@ type InitialBrand = {
 type Props = {
   initial: InitialBrand;
   canEdit: boolean;
+  brandSlug: string;
 };
 
 type PendingImport = {
@@ -50,7 +51,7 @@ const ADVANCED_COLOR_KEYS: (keyof BrandColors)[] = [
   "err",
 ];
 
-export function BrandForm({ initial: initialFromServer, canEdit }: Props) {
+export function BrandForm({ initial: initialFromServer, canEdit, brandSlug }: Props) {
   const [initial, setInitial] = useState<InitialBrand>(initialFromServer);
   const [pendingImport, setPendingImport] = useState<PendingImport | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -96,6 +97,7 @@ export function BrandForm({ initial: initialFromServer, canEdit }: Props) {
         />
         <ImportButton
           disabled={!canEdit}
+          brandSlug={brandSlug}
           onImported={(draft, from, missing) =>
             applyImport(draft, from, missing)
           }
@@ -106,6 +108,7 @@ export function BrandForm({ initial: initialFromServer, canEdit }: Props) {
         key={formKey}
         initial={initial}
         canEdit={canEdit}
+        brandSlug={brandSlug}
         priorInitial={pendingImport?.baseline ?? null}
         pendingImport={pendingImport}
         advancedOpen={advancedOpen}
@@ -151,6 +154,7 @@ function ImportStatus({
 function BrandFormBody({
   initial,
   canEdit,
+  brandSlug,
   priorInitial,
   pendingImport,
   advancedOpen,
@@ -160,6 +164,7 @@ function BrandFormBody({
 }: {
   initial: InitialBrand;
   canEdit: boolean;
+  brandSlug: string;
   priorInitial: InitialBrand | null;
   pendingImport: PendingImport | null;
   advancedOpen: boolean;
@@ -208,6 +213,7 @@ function BrandFormBody({
           });
         }}
       >
+        <input type="hidden" name="brand_slug" value={brandSlug} />
         {importedFromJson ? (
           <input type="hidden" name="imported_from" value={importedFromJson} />
         ) : null}

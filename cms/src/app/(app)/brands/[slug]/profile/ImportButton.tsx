@@ -10,6 +10,7 @@ import {
 
 type Props = {
   disabled?: boolean;
+  brandSlug: string;
   onImported: (
     draft: ImportDraft,
     importedFrom: ImportedFrom,
@@ -17,7 +18,7 @@ type Props = {
   ) => void;
 };
 
-export function ImportButton({ disabled, onImported }: Props) {
+export function ImportButton({ disabled, brandSlug, onImported }: Props) {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +34,7 @@ export function ImportButton({ disabled, onImported }: Props) {
     setError(null);
     const formData = new FormData();
     formData.set("input", input);
+    formData.set("brand_slug", brandSlug);
     startTransition(async () => {
       const result: ImportBrandResult = await importBrandFromUrl(formData);
       if (!result.ok) {

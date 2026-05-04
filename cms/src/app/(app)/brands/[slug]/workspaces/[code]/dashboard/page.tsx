@@ -1,6 +1,7 @@
 import { createServerClient } from "@pectus/supabase";
-import { getWorkspaceByCode } from "@/lib/workspace";
+import { getBrandBySlug } from "@/lib/active-brand";
 import { isAppActive } from "@/lib/apps";
+import { notFound } from "next/navigation";
 import { RunAnalysisButton } from "./RunAnalysisButton";
 import { RefreshInsightsButton } from "./RefreshInsightsButton";
 import { SetupChecklist, type ChecklistItem } from "./SetupChecklist";
@@ -36,11 +37,20 @@ type LatestRow = {
 export default async function DashboardPage({
   params,
 }: {
-  params: Promise<{ code: string }>;
+  params: Promise<{ slug: string; code: string }>;
 }) {
-  const { code } = await params;
-  const workspace = await getWorkspaceByCode(code);
+  const { slug, code } = await params;
+  const brand = await getBrandBySlug(slug);
   const supabase = await createServerClient();
+
+  const { data: workspace } = await supabase
+    .from("workspaces")
+    .select("id, name, code, locale")
+    .eq("brand_id", brand.id)
+    .eq("code", code)
+    .maybeSingle();
+
+  if (!workspace) notFound();
 
   const currentWeek = isoWeekStart();
 
@@ -51,7 +61,7 @@ export default async function DashboardPage({
     { count: analysisCount },
     { data: icp },
     { data: googleIntegration },
-    { data: brand },
+    { data: brandRow },
   ] = await Promise.all([
     supabase
       .from("weekly_analyses")
@@ -80,12 +90,17 @@ export default async function DashboardPage({
     supabase
       .from("integrations")
       .select("provider")
+      .eq("brand_id", brand.id)
       .eq("provider", "google")
       .maybeSingle(),
-    supabase.from("brand_profile").select("website_url, name").maybeSingle(),
+    supabase
+      .from("brands")
+      .select("website_url, name")
+      .eq("slug", slug)
+      .maybeSingle(),
   ]);
 
-  const websiteUrl = (brand?.website_url as string | null) ?? "";
+  const websiteUrl = (brandRow?.website_url as string | null) ?? "";
   const robotsTxtUrl = websiteUrl
     ? `${websiteUrl.replace(/\/$/, "")}/robots.txt`
     : "your-site.com/robots.txt";
@@ -96,7 +111,7 @@ export default async function DashboardPage({
   const articlesDone = (articleCount ?? 0) > 0;
   const keywordsDone = (keywordCount ?? 0) > 0;
   const analysisDone = (analysisCount ?? 0) > 0;
-  const brandDone = !!(brand?.name && (brand.name as string).trim().length > 0);
+  const brandDone = !!(brandRow?.name && (brandRow.name as string).trim().length > 0);
   const contentHubActive = await isAppActive("content-hub");
 
   const checklist: ChecklistItem[] = [
@@ -106,7 +121,7 @@ export default async function DashboardPage({
       description:
         "Voice, colors, fonts, website URL. Every skill and app reads from this. If it's empty, your first content will sound generic.",
       done: brandDone,
-      href: "/brand",
+      href: `/brands/${slug}/profile`,
       cta: "Open Brand page",
     },
     {
@@ -115,7 +130,7 @@ export default async function DashboardPage({
       description:
         "Content Hub is the bundled app that turns your articles and pages into a static public site. Activating it turns on the Pages and Articles tabs for this workspace and unlocks the Publish flow.",
       done: contentHubActive,
-      href: "/apps/content-hub",
+      href: `/brands/${slug}/apps/content-hub`,
       cta: contentHubActive ? "Re-configure for this workspace" : "Open Content Hub",
     },
     ...(contentHubActive
@@ -127,7 +142,7 @@ export default async function DashboardPage({
               ? `Pulls your existing pages into Pectus so it knows what you've already written. Find your sitemap link in ${robotsTxtUrl} (look for the line starting with "Sitemap:").`
               : "Pulls your existing pages into Pectus so it knows what you've already written. Find your sitemap link in your-site.com/robots.txt (look for the line starting with \"Sitemap:\"). Set your website URL on the Brand page first if it's blank.",
             done: articlesDone,
-            href: `/workspaces/${code}/articles`,
+            href: `/brands/${slug}/workspaces/${code}/articles`,
             cta: "Open Articles page",
           } satisfies ChecklistItem,
         ]
@@ -138,7 +153,7 @@ export default async function DashboardPage({
       description:
         "5 to 10 short phrases the workspace plans content around. Already populated from the install wizard, but you can refine them now.",
       done: keywordsDone,
-      href: `/workspaces/${code}/keywords`,
+      href: `/brands/${slug}/workspaces/${code}/keywords`,
       cta: "Open Keywords page",
     },
     {
@@ -147,7 +162,7 @@ export default async function DashboardPage({
       description:
         "Personas, pain points, and notes about who you're writing for. The analysis skill uses this to score and rank suggestions.",
       done: icpDone,
-      href: `/workspaces/${code}/icp`,
+      href: `/brands/${slug}/workspaces/${code}/icp`,
       cta: "Open ICP page",
     },
     {

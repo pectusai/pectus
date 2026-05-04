@@ -8,19 +8,19 @@ import { SidebarLink } from "./SidebarLink";
 
 export async function WorkspaceShell({
   workspace,
+  brandSlug,
   children,
 }: {
   workspace: Workspace;
+  brandSlug: string;
   children: React.ReactNode;
 }) {
   const contentHubActive = await isAppActive("content-hub");
   const code = workspace.code;
+  const base = `/brands/${brandSlug}/workspaces/${code}`;
 
   const header = (
-    <Link
-      href={`/workspaces/${code}/dashboard`}
-      className="group block"
-    >
+    <Link href={`${base}/dashboard`} className="group block">
       <h1 className="text-base font-semibold tracking-tight text-zinc-900 group-hover:underline">
         {workspace.name}
       </h1>
@@ -35,9 +35,7 @@ export async function WorkspaceShell({
 
   const nav = (
     <>
-      <SidebarLink href={`/workspaces/${code}/dashboard`}>
-        Dashboard
-      </SidebarLink>
+      <SidebarLink href={`${base}/dashboard`}>Dashboard</SidebarLink>
 
       {contentHubActive ? (
         <SidebarGroup
@@ -45,14 +43,10 @@ export async function WorkspaceShell({
           label="Content Hub"
           tooltip="An app that publishes pages to a public site you control. Pages, Articles, Site URL, and Redirects are all part of it."
         >
-          <SidebarLink href={`/workspaces/${code}/pages`}>Pages</SidebarLink>
-          <SidebarLink href={`/workspaces/${code}/articles`}>
-            Articles
-          </SidebarLink>
-          <SidebarLink href={`/workspaces/${code}/settings/site-url`}>
-            Site URL
-          </SidebarLink>
-          <SidebarLink href={`/workspaces/${code}/settings/redirects`}>
+          <SidebarLink href={`${base}/pages`}>Pages</SidebarLink>
+          <SidebarLink href={`${base}/articles`}>Articles</SidebarLink>
+          <SidebarLink href={`${base}/settings/site-url`}>Site URL</SidebarLink>
+          <SidebarLink href={`${base}/settings/redirects`}>
             Redirects
           </SidebarLink>
         </SidebarGroup>
@@ -63,15 +57,13 @@ export async function WorkspaceShell({
         label="Settings"
         tooltip="Per-workspace configuration. ICP, seed keywords, traffic data, sources Pectus reads from, and the review-policy roles."
       >
-        <SidebarLink href={`/workspaces/${code}/icp`}>ICP</SidebarLink>
-        <SidebarLink href={`/workspaces/${code}/settings/seed-keywords`}>
+        <SidebarLink href={`${base}/icp`}>ICP</SidebarLink>
+        <SidebarLink href={`${base}/settings/seed-keywords`}>
           Seed keywords
         </SidebarLink>
-        <SidebarLink href={`/workspaces/${code}/keywords`}>
-          Keyword traffic
-        </SidebarLink>
-        <SidebarLink href={`/workspaces/${code}/sources`}>Sources</SidebarLink>
-        <SidebarLink href={`/workspaces/${code}/settings/review-policy`}>
+        <SidebarLink href={`${base}/keywords`}>Keyword traffic</SidebarLink>
+        <SidebarLink href={`${base}/sources`}>Sources</SidebarLink>
+        <SidebarLink href={`${base}/settings/review-policy`}>
           Review policy
         </SidebarLink>
       </SidebarGroup>

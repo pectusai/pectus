@@ -1,7 +1,14 @@
 import { redirect } from "next/navigation";
+import { listBrands, readLastBrandSlug } from "@/lib/active-brand";
 
-export default function RootPage() {
-  /* Authenticated users want /workspaces. The middleware bounces unauth'd
-   * traffic to /login. */
-  redirect("/workspaces");
+export default async function RootPage() {
+  const last = await readLastBrandSlug();
+  if (last) {
+    const brands = await listBrands();
+    if (brands.some((b) => b.slug === last)) redirect(`/brands/${last}`);
+  }
+
+  const brands = await listBrands();
+  if (brands.length === 1) redirect(`/brands/${brands[0].slug}`);
+  redirect("/brands");
 }

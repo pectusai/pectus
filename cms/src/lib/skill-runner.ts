@@ -10,6 +10,7 @@ import {
   type BrandProfile,
   type IcpProfile,
 } from "@/lib/format-icp-context";
+import { knowledgeInsightsPath } from "@/lib/brand-paths";
 import { skillSchemas } from "@/lib/skill-schemas";
 import { InsightBatch, type InsightBatchOutput } from "@/lib/types/insight";
 
@@ -94,7 +95,6 @@ export type SkillRunResult<T = unknown> =
 
 const SKILLS_ROOT = path.resolve(process.cwd(), "..", "skills");
 const APPS_ROOT = path.resolve(process.cwd(), "..", "apps");
-const KNOWLEDGE_ROOT = path.resolve(process.cwd(), "..", "knowledge");
 
 /* Resolve a skill name to its folder.
  *
@@ -251,12 +251,13 @@ async function gatherIcpProfile(
 
 async function gatherBrandProfile(
   supabase: Supabase,
+  brandId: string,
   workspaceName: string,
 ): Promise<GatheredInput> {
   const { data } = await supabase
-    .from("brand_profile")
+    .from("brands")
     .select("name, tagline, voice, tonality, guidelines_md")
-    .limit(1)
+    .eq("id", brandId)
     .maybeSingle();
   return {
     label: "BRAND",
@@ -265,33 +266,26 @@ async function gatherBrandProfile(
   };
 }
 
-/* Knowledge insights live as files at knowledge/insights.md (project root) or
- * knowledge/<workspace_code>/insights.md (workspace-scoped). Per the design:
- * the knowledge-digest skill writes these. We just read whichever exists. */
+/* Knowledge insights live at brands/<slug>/knowledge/insights.md, written by
+ * the knowledge-digest skill from raw files in brands/<slug>/knowledge/raw/. */
 async function gatherKnowledgeInsights(
-  workspaceCode: string,
+  brandSlug: string,
 ): Promise<GatheredInput> {
-  const candidates = [
-    path.join(KNOWLEDGE_ROOT, workspaceCode, "insights.md"),
-    path.join(KNOWLEDGE_ROOT, "insights.md"),
-  ];
-  for (const p of candidates) {
-    try {
-      const text = await fs.readFile(p, "utf8");
-      if (text.trim()) {
-        return {
-          label: "KNOWLEDGE INSIGHTS",
-          text: text.trim(),
-          count: 1,
-        };
-      }
-    } catch {
-      /* keep trying next path */
+  try {
+    const text = await fs.readFile(knowledgeInsightsPath(brandSlug), "utf8");
+    if (text.trim()) {
+      return {
+        label: "KNOWLEDGE INSIGHTS",
+        text: text.trim(),
+        count: 1,
+      };
     }
+  } catch {
+    /* fall through to empty state */
   }
   return {
     label: "KNOWLEDGE INSIGHTS",
-    text: "(no knowledge insights — run knowledge-digest after dropping files into knowledge/raw/)",
+    text: `(no knowledge insights — run knowledge-digest after dropping files into brands/${brandSlug}/knowledge/raw/)`,
     count: 0,
   };
 }
@@ -547,12 +541,26 @@ export async function runSkill<T = unknown>(
 
     const { data: workspace } = await supabase
       .from("workspaces")
-      .select("id, name, code, locale")
+      .select("id, name, code, locale, brand_id")
       .eq("id", workspaceId)
       .maybeSingle();
 
     if (!workspace) {
       return { ok: false, error: `Workspace ${workspaceId} not found.`, runId };
+    }
+
+    const { data: brand } = await supabase
+      .from("brands")
+      .select("id, slug")
+      .eq("id", workspace.brand_id)
+      .maybeSingle();
+
+    if (!brand) {
+      return {
+        ok: false,
+        error: `Brand ${workspace.brand_id} not found for workspace ${workspaceId}.`,
+        runId,
+      };
     }
 
     const declared = meta.inputs ?? [];
@@ -576,10 +584,10 @@ export async function runSkill<T = unknown>(
           gathered.push(await gatherIcpProfile(supabase, workspace.id));
           break;
         case "brand_profile":
-          gathered.push(await gatherBrandProfile(supabase, workspace.name));
+          gathered.push(await gatherBrandProfile(supabase, brand.id, workspace.name));
           break;
         case "knowledge_insights":
-          gathered.push(await gatherKnowledgeInsights(workspace.code));
+          gathered.push(await gatherKnowledgeInsights(brand.slug));
           break;
         case "answer_public_entries":
           gathered.push(await gatherAnswerPublic(supabase, workspace.id));

@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
+import { brandJsonPath, importsDir } from "@/lib/brand-paths";
 import {
   importDesign,
   timestampDir,
@@ -108,13 +109,9 @@ const DEFAULT_BRAND: BrandJson = {
   imported_from: null,
 };
 
-const REPO_ROOT = path.resolve(process.cwd(), "..");
-const BRAND_DIR = path.join(REPO_ROOT, "brand");
-const BRAND_JSON_PATH = path.join(BRAND_DIR, "brand.json");
-
-async function readBrandJson(): Promise<BrandJson> {
+async function readBrandJson(slug: string): Promise<BrandJson> {
   try {
-    const raw = await fs.readFile(BRAND_JSON_PATH, "utf8");
+    const raw = await fs.readFile(brandJsonPath(slug), "utf8");
     const parsed = JSON.parse(raw);
     /* Merge nested shape so older brand.json files (pre-Advanced) still
      * surface every required key with a sensible default. */
@@ -133,17 +130,14 @@ async function readBrandJson(): Promise<BrandJson> {
   }
 }
 
-async function writeBrandJson(next: BrandJson): Promise<void> {
-  await fs.mkdir(path.dirname(BRAND_JSON_PATH), { recursive: true });
-  await fs.writeFile(
-    BRAND_JSON_PATH,
-    JSON.stringify(next, null, 2) + "\n",
-    "utf8",
-  );
+async function writeBrandJson(slug: string, next: BrandJson): Promise<void> {
+  const target = brandJsonPath(slug);
+  await fs.mkdir(path.dirname(target), { recursive: true });
+  await fs.writeFile(target, JSON.stringify(next, null, 2) + "\n", "utf8");
 }
 
-export async function loadBrand(): Promise<BrandJson> {
-  return readBrandJson();
+export async function loadBrand(slug: string): Promise<BrandJson> {
+  return readBrandJson(slug);
 }
 
 export type SaveBrandResult =
@@ -152,6 +146,21 @@ export type SaveBrandResult =
 
 export async function saveBrand(formData: FormData): Promise<SaveBrandResult> {
   const { supabase, user } = await requireAdmin();
+
+  const slug = String(formData.get("brand_slug") ?? "").trim();
+  if (!slug) {
+    return { ok: false, error: "Missing brand_slug." };
+  }
+
+  const { data: existing } = await supabase
+    .from("brands")
+    .select("id")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (!existing) {
+    return { ok: false, error: `No brand found for slug "${slug}".` };
+  }
 
   const name = String(formData.get("name") ?? "").trim();
   const tagline = String(formData.get("tagline") ?? "").trim();
@@ -188,7 +197,7 @@ export async function saveBrand(formData: FormData): Promise<SaveBrandResult> {
   const importedFromRaw = String(formData.get("imported_from") ?? "").trim();
   const importedFrom = parseImportedFrom(importedFromRaw);
 
-  const current = await readBrandJson();
+  const current = await readBrandJson(slug);
   const next: BrandJson = {
     ...current,
     name: name || current.name,
@@ -204,15 +213,7 @@ export async function saveBrand(formData: FormData): Promise<SaveBrandResult> {
     imported_from: importedFrom ?? current.imported_from,
   };
 
-  /* The brand_profile table has a partial unique index on `singleton` (WHERE
-   * singleton = true). Postgres ON CONFLICT cannot target a partial index, so
-   * the upsert path errors with "no unique or exclusion constraint matching
-   * the ON CONFLICT specification." Resolve via explicit select-then-update-or-
-   * insert. The 0001 migration also seeds a singleton row at install time, so
-   * the update branch is the steady-state path; the insert branch covers the
-   * edge case where the seed got removed. */
   const payload = {
-    singleton: true,
     name,
     tagline: tagline || null,
     website_url: website_url || null,
@@ -236,34 +237,26 @@ export async function saveBrand(formData: FormData): Promise<SaveBrandResult> {
     updated_by: user.id,
   };
 
-  const { data: existing } = await supabase
-    .from("brand_profile")
-    .select("id")
-    .eq("singleton", true)
-    .maybeSingle();
-
-  const { error } = existing
-    ? await supabase
-        .from("brand_profile")
-        .update(payload)
-        .eq("id", existing.id)
-    : await supabase.from("brand_profile").insert(payload);
+  const { error } = await supabase
+    .from("brands")
+    .update(payload)
+    .eq("id", existing.id);
 
   if (error) {
     return { ok: false, error: `Database save failed: ${error.message}` };
   }
 
   try {
-    await writeBrandJson(next);
+    await writeBrandJson(slug, next);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return {
       ok: false,
-      error: `Saved to database, but writing brand/brand.json failed: ${msg}`,
+      error: `Saved to database, but writing brand.json failed: ${msg}`,
     };
   }
 
-  revalidatePath("/brand");
+  revalidatePath(`/brands/${slug}/profile`);
   return { ok: true, brand: next };
 }
 
@@ -294,13 +287,18 @@ export async function importBrandFromUrl(
 ): Promise<ImportBrandResult> {
   await requireAdmin();
 
+  const slug = String(formData.get("brand_slug") ?? "").trim();
+  if (!slug) {
+    return { ok: false, error: "Missing brand_slug." };
+  }
+
   const input = String(formData.get("input") ?? "").trim();
   if (!input) {
     return { ok: false, error: "Paste a Claude Design URL to continue." };
   }
 
   const stamp = timestampDir();
-  const bundleDestDir = path.join(BRAND_DIR, "imports", stamp);
+  const bundleDestDir = path.join(importsDir(slug), stamp);
 
   const result = await importDesign(input, { bundleDestDir });
   if (!result.ok) {
@@ -318,7 +316,7 @@ export async function importBrandFromUrl(
     return { ok: false, error: message };
   }
 
-  const current = await readBrandJson();
+  const current = await readBrandJson(slug);
   const draft = mergeDraftForForm(result.draft, current);
   const importedFrom: ImportedFrom = {
     source: "claude-design",

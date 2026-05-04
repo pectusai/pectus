@@ -19,12 +19,35 @@ import { findRepoRoot } from "../lib/repo-root.js";
 import { readEnvLocal, writeEnvLocal } from "../lib/env-file.js";
 import { loadEnv } from "../lib/load-env.js";
 import { getServiceClient } from "../lib/supabase.js";
+import { brandsRoot, brandJsonPath } from "../lib/brand-paths.js";
+import { runV04DiskMigration, reportV04Migration } from "../lib/disk-migration.js";
 
 type Service = "supabase" | "google" | "vercel" | "github";
 
 function bail(msg = "Cancelled."): never {
   cancel(msg);
   process.exit(1);
+}
+
+function maskSecret(value: string): string {
+  if (value.length <= 8) return "•".repeat(value.length);
+  return `${value.slice(0, 4)}…${value.slice(-4)}`;
+}
+
+async function reuseOrPromptSecret(
+  label: string,
+  saved: string | undefined,
+): Promise<string> {
+  const trimmed = saved?.trim() ?? "";
+  if (trimmed) {
+    console.log(kleur.dim(`${label}: using saved value (${maskSecret(trimmed)}).`));
+    return trimmed;
+  }
+  const next = await password({ message: label, mask: "*" });
+  if (isCancel(next)) bail();
+  const v = (next as string).trim();
+  if (!v) bail(`${label} is required.`);
+  return v;
 }
 
 export async function run(service: Service): Promise<void> {
@@ -55,7 +78,7 @@ async function connectSupabase(): Promise<void> {
   note(
     [
       "1. Create a Supabase project at https://supabase.com/dashboard.",
-      "2. Generate an access token at https://supabase.com/dashboard/account/tokens.",
+      "2. On https://supabase.com/dashboard/account/tokens click Generate new token; copy the value.",
       "3. Open the project's API settings to grab the URL, anon key, service-role key.",
     ].join("\n"),
     "Before we start",
@@ -63,14 +86,10 @@ async function connectSupabase(): Promise<void> {
 
   const existing = readEnvLocal();
 
-  const accessToken = await password({
-    message: "Supabase personal access token",
-    mask: "*",
-  });
-  if (isCancel(accessToken)) bail();
-  if (!accessToken || !(accessToken as string).trim()) {
-    bail("Access token is required.");
-  }
+  const accessToken = await reuseOrPromptSecret(
+    "Supabase access token",
+    existing.SUPABASE_ACCESS_TOKEN,
+  );
 
   const projectUrl = await text({
     message: "Supabase project URL (https://<ref>.supabase.co)",
@@ -88,21 +107,15 @@ async function connectSupabase(): Promise<void> {
   });
   if (isCancel(projectUrl)) bail();
 
-  const anonKey = await password({
-    message: "Supabase anon (public) key",
-    mask: "*",
-  });
-  if (isCancel(anonKey)) bail();
-  if (!anonKey || !(anonKey as string).trim()) bail("Anon key is required.");
+  const anonKey = await reuseOrPromptSecret(
+    "Supabase anon (public) key",
+    existing.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  );
 
-  const serviceRoleKey = await password({
-    message: "Supabase service-role (secret) key",
-    mask: "*",
-  });
-  if (isCancel(serviceRoleKey)) bail();
-  if (!serviceRoleKey || !(serviceRoleKey as string).trim()) {
-    bail("Service-role key is required.");
-  }
+  const serviceRoleKey = await reuseOrPromptSecret(
+    "Supabase service-role (secret) key",
+    existing.SUPABASE_SERVICE_ROLE_KEY,
+  );
 
   // Extract project ref from URL.
   let projectRef = "";
@@ -114,7 +127,7 @@ async function connectSupabase(): Promise<void> {
   }
 
   writeEnvLocal({
-    SUPABASE_ACCESS_TOKEN: accessToken as string,
+    SUPABASE_ACCESS_TOKEN: accessToken,
     NEXT_PUBLIC_SUPABASE_URL: projectUrl as string,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: anonKey as string,
     SUPABASE_SERVICE_ROLE_KEY: serviceRoleKey as string,
@@ -126,7 +139,7 @@ async function connectSupabase(): Promise<void> {
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = anonKey as string;
   process.env.SUPABASE_SERVICE_ROLE_KEY = serviceRoleKey as string;
   process.env.SUPABASE_PROJECT_REF = projectRef;
-  process.env.SUPABASE_ACCESS_TOKEN = accessToken as string;
+  process.env.SUPABASE_ACCESS_TOKEN = accessToken;
 
   // Verify connectivity.
   const s = spinner();
@@ -209,17 +222,50 @@ async function connectSupabase(): Promise<void> {
   const s2 = spinner();
   s2.start("Creating admin user");
   try {
+    let userId: string | undefined;
+    let existed = false;
+
     const { data, error } = await supabase.auth.admin.createUser({
       email: adminEmail as string,
       password: adminPass as string,
       email_confirm: true,
     });
-    if (error) throw new Error(error.message);
-    const userId = data.user?.id;
-    if (!userId) throw new Error("No user id returned from createUser.");
 
-    // Upsert profiles row with admin flag. Tolerate either schema flavour
-    // (is_admin boolean or role text or both).
+    if (error) {
+      const isDuplicate = /already (registered|been registered|exists)|duplicate/iu.test(
+        error.message,
+      );
+      if (!isDuplicate) throw new Error(error.message);
+
+      // User exists from a prior run. Look up the id and update the password
+      // to the value the user just typed (matches their expectation).
+      const { data: list, error: listErr } = await supabase.auth.admin.listUsers({
+        page: 1,
+        perPage: 200,
+      });
+      if (listErr) throw new Error(listErr.message);
+      const match = list?.users?.find(
+        (u) => u.email?.toLowerCase() === (adminEmail as string).toLowerCase(),
+      );
+      if (!match) {
+        throw new Error(
+          `Supabase says the user exists but listUsers didn't find ${adminEmail}.`,
+        );
+      }
+      userId = match.id;
+      existed = true;
+
+      const { error: updErr } = await supabase.auth.admin.updateUserById(userId, {
+        password: adminPass as string,
+        email_confirm: true,
+      });
+      if (updErr) throw new Error(updErr.message);
+    } else {
+      userId = data.user?.id;
+    }
+
+    if (!userId) throw new Error("No user id available.");
+
     const profileRow: Record<string, unknown> = {
       id: userId,
       email: adminEmail as string,
@@ -230,38 +276,64 @@ async function connectSupabase(): Promise<void> {
       .from("profiles")
       .upsert(profileRow, { onConflict: "id" });
     if (pErr && !/profiles/i.test(pErr.message)) {
-      // If profiles table doesn't exist yet, surface but don't crash hard —
-      // user can re-run after migrations.
       throw new Error(pErr.message);
     }
-    s2.stop("Admin user created.");
+
+    s2.stop(existed ? "Admin user already existed — password updated, admin flag set." : "Admin user created.");
   } catch (err) {
     s2.stop("Admin user creation failed.");
     console.error(kleur.red(err instanceof Error ? err.message : String(err)));
     process.exit(1);
   }
 
-  // Sync brand profile if available.
-  const brandFile = path.join(repo, "brand/brand.json");
-  if (fs.existsSync(brandFile)) {
-    try {
-      const brand = JSON.parse(fs.readFileSync(brandFile, "utf8"));
-      const { error } = await supabase
-        .from("brand_profile")
-        .upsert({ singleton: true, data: brand }, { onConflict: "singleton" });
-      if (error) {
+  // Sync brand profiles. v0.4: walk brands/<slug>/brand.json for every brand
+  // directory. Convert old singleton brand/ layout first if needed.
+  const brandsDir = brandsRoot(repo);
+  if (!fs.existsSync(brandsDir)) {
+    const result = runV04DiskMigration(repo);
+    reportV04Migration(result);
+  }
+  if (fs.existsSync(brandsDir)) {
+    const slugs = fs
+      .readdirSync(brandsDir, { withFileTypes: true })
+      .filter((e) => e.isDirectory())
+      .map((e) => e.name);
+    for (const slug of slugs) {
+      const brandFile = brandJsonPath(repo, slug);
+      if (!fs.existsSync(brandFile)) continue;
+      try {
+        const brand = JSON.parse(fs.readFileSync(brandFile, "utf8"));
+        const payload: Record<string, unknown> = {
+          slug,
+          name: brand.name ?? null,
+          tagline: brand.tagline ?? null,
+          website_url: brand.website_url ?? null,
+          sitemap_url: brand.sitemap_url ?? null,
+          voice: brand.voice ?? null,
+          tonality: brand.tonality ?? null,
+          image_model: brand.image_model ?? null,
+          colors: brand.colors ?? null,
+          fonts: brand.fonts ?? null,
+          radius: brand.radius ?? null,
+          imported_from: brand.imported_from ?? null,
+        };
+        const { error } = await supabase
+          .from("brands")
+          .upsert(payload, { onConflict: "slug" });
+        if (error) {
+          console.warn(
+            kleur.yellow(`brands sync skipped for ${slug}: ${error.message}`),
+          );
+        } else {
+          console.log(kleur.dim(`brands/${slug}/brand.json synced.`));
+        }
+      } catch (err) {
         console.warn(
-          kleur.yellow(`brand_profile sync skipped: ${error.message}`),
+          kleur.yellow(
+            `brands sync error for ${slug}: ${err instanceof Error ? err.message : String(err)}`,
+          ),
         );
-      } else {
-        console.log(kleur.dim("brand_profile synced from brand/brand.json."));
       }
-    } catch (err) {
-      console.warn(
-        kleur.yellow(
-          `brand_profile sync error: ${err instanceof Error ? err.message : String(err)}`,
-        ),
-      );
     }
   }
 

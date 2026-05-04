@@ -1,7 +1,7 @@
 // pectus brand — interactive brand setup.
 // Two paths: manual (the original wizard) or import-from-Claude-Design (paste a
 // handoff URL, let the importer fill brand.json, edit afterwards). Either path
-// writes <repo-root>/brand/brand.json.
+// writes <repo-root>/brands/<slug>/brand.json.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -18,6 +18,7 @@ import {
 import kleur from "kleur";
 import { findRepoRoot } from "../lib/repo-root.js";
 import { loadEnv } from "../lib/load-env.js";
+import { brandDir, importsDir, slugify } from "../lib/brand-paths.js";
 import {
   importDesign,
   timestampDir,
@@ -181,8 +182,6 @@ async function promptFont(role: "heading" | "body"): Promise<FontDef> {
 export async function run(): Promise<void> {
   loadEnv();
   const repo = findRepoRoot();
-  const brandDir = path.join(repo, "brand");
-  const brandFile = path.join(brandDir, "brand.json");
 
   intro(kleur.bold().bgBlue().white(" Pectus brand setup "));
 
@@ -203,20 +202,33 @@ export async function run(): Promise<void> {
   if (isCancel(mode)) bail();
 
   if (mode === "import") {
-    await runImport({ repo, brandDir, brandFile });
+    await runImport({ repo });
   } else {
-    await runManual({ brandDir, brandFile });
+    await runManual({ repo });
   }
 }
 
-async function runManual(opts: {
-  brandDir: string;
-  brandFile: string;
-}): Promise<void> {
-  const { brandDir, brandFile } = opts;
+async function confirmSlug(suggested: string): Promise<string> {
+  const v = await text({
+    message: "Brand slug (URL-safe id; used for the brands/<slug>/ folder)",
+    initialValue: suggested,
+    validate(value) {
+      if (!value || !value.trim()) return "Slug is required.";
+      if (!/^[a-z0-9-]+$/u.test(value.trim())) {
+        return "Use lowercase letters, digits, and dashes only.";
+      }
+      return undefined;
+    },
+  });
+  if (isCancel(v)) bail();
+  return (v as string).trim();
+}
+
+async function runManual(opts: { repo: string }): Promise<void> {
+  const { repo } = opts;
 
   note(
-    "Answers go to brand/brand.json. The CMS and every installed app (including the pre-installed content-hub) read from there.",
+    "Answers go to brands/<slug>/brand.json. The CMS and every installed app (including the pre-installed content-hub) read from there.",
     "What this does",
   );
 
@@ -229,6 +241,10 @@ async function runManual(opts: {
     },
   });
   if (isCancel(name)) bail();
+
+  const slug = await confirmSlug(slugify(name as string));
+  const targetBrandDir = brandDir(repo, slug);
+  const brandFile = path.join(targetBrandDir, "brand.json");
 
   const tagline = await text({
     message: "Tagline (one line, optional)",
@@ -315,8 +331,8 @@ async function runManual(opts: {
       process.exit(1);
     }
     const ext = path.extname(src) || ".svg";
-    const dest = path.join(brandDir, `logo${ext}`);
-    fs.mkdirSync(brandDir, { recursive: true });
+    const dest = path.join(targetBrandDir, `logo${ext}`);
+    fs.mkdirSync(targetBrandDir, { recursive: true });
     fs.copyFileSync(src, dest);
     logoField = `./logo${ext}`;
   }
@@ -351,20 +367,18 @@ async function runManual(opts: {
     imported_from: null,
   };
 
-  fs.mkdirSync(brandDir, { recursive: true });
+  fs.mkdirSync(targetBrandDir, { recursive: true });
   fs.writeFileSync(brandFile, `${JSON.stringify(brand, null, 2)}\n`, "utf8");
 
   outro(
-    kleur.green("Brand saved to brand/brand.json. Next: npx pectus connect supabase."),
+    kleur.green(
+      `Brand saved to brands/${slug}/brand.json. Next: npx pectus connect supabase.`,
+    ),
   );
 }
 
-async function runImport(opts: {
-  repo: string;
-  brandDir: string;
-  brandFile: string;
-}): Promise<void> {
-  const { repo, brandDir, brandFile } = opts;
+async function runImport(opts: { repo: string }): Promise<void> {
+  const { repo } = opts;
 
   note(
     "Paste a Claude Design URL (or the full handoff prompt — Pectus will pull the URL out). Pectus will fetch the bundle, ask Claude to extract your brand fields, and save the result. You can edit anything afterwards.",
@@ -382,11 +396,12 @@ async function runImport(opts: {
   if (isCancel(input)) bail();
 
   const stamp = timestampDir();
-  const bundleDestDir = path.join(repo, "brand", "imports", stamp);
+  // Stage the bundle in a tmp location until we know the brand slug.
+  const stagingDir = path.join(repo, ".pectus-tmp", "brand-import", stamp);
 
   const sp = spinner();
   sp.start("Fetching bundle and extracting brand fields…");
-  const result = await importDesign(input as string, { bundleDestDir });
+  const result = await importDesign(input as string, { bundleDestDir: stagingDir });
   if (!result.ok) {
     sp.stop("Import failed.");
     const err = result.error;
@@ -405,13 +420,23 @@ async function runImport(opts: {
   }
   sp.stop("Bundle imported.");
 
-  const merged = mergeDraftIntoBrand(result.draft, result.url, result.bundlePath);
-  fs.mkdirSync(brandDir, { recursive: true });
+  const slug = await confirmSlug(slugify(result.draft.name ?? "default"));
+  const targetBrandDir = brandDir(repo, slug);
+  const brandFile = path.join(targetBrandDir, "brand.json");
+
+  // Move the staged bundle under brands/<slug>/imports/<stamp>/.
+  const finalBundleDir = path.join(importsDir(repo, slug), stamp);
+  fs.mkdirSync(path.dirname(finalBundleDir), { recursive: true });
+  fs.renameSync(stagingDir, finalBundleDir);
+  const finalBundlePath = result.bundlePath.replace(stagingDir, finalBundleDir);
+
+  const merged = mergeDraftIntoBrand(result.draft, result.url, finalBundlePath);
+  fs.mkdirSync(targetBrandDir, { recursive: true });
   fs.writeFileSync(brandFile, `${JSON.stringify(merged, null, 2)}\n`, "utf8");
 
   if (result.draft.guidelines_md) {
     fs.writeFileSync(
-      path.join(brandDir, "guidelines.md"),
+      path.join(targetBrandDir, "guidelines.md"),
       result.draft.guidelines_md.trim() + "\n",
       "utf8",
     );
@@ -420,9 +445,10 @@ async function runImport(opts: {
   const filled = collectFilledLabels(result.draft);
   const summaryLines = [
     kleur.green("Imported from Claude Design."),
+    `  Brand: brands/${slug}/`,
     `  Filled: ${filled.length > 0 ? filled.join(", ") : "(no fields)"}`,
     `  Still needed: ${result.missing.join(", ")}`,
-    `  Bundle saved to: ${path.relative(repo, result.bundlePath)}/`,
+    `  Bundle saved to: ${path.relative(repo, finalBundlePath)}`,
   ];
   outro(summaryLines.join("\n"));
 }

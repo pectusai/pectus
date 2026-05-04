@@ -124,8 +124,8 @@ export async function run(opts: AnalyzeOptions): Promise<void> {
     week_start: new Date().toISOString().slice(0, 10),
   };
 
-  // Pull brand_profile + icp_profile if those tables exist; tolerate absence.
-  for (const table of ["brand_profile", "icp_profile"]) {
+  // Pull brands + icp_profile if those tables exist; tolerate absence.
+  for (const table of ["brands", "icp_profile"]) {
     try {
       const { data, error } = await supabase
         .from(table)
