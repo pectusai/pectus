@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.3.8 — Fix stale `/brand` credential pointers
+
+- GSC sync error messages now point users to `/apps/gsc` instead of `/brand` for Google service account and Search Console site URL configuration. Credentials moved out of the brand page in earlier work; the error strings were left behind.
+- `GscSyncButton` UI hint updated for the same reason.
+- Google OAuth init and callback routes redirect to `/apps/ga4` on success/error instead of `/brand`. The OAuth flow itself is currently dead code (no UI button initiates it; service-account JSON upload is the only live path), but the redirect targets were inconsistent with the post-refactor app layout.
+
 ## v0.3.7 — Audit follow-up (auth, prompt caching, sidebar polish)
 
 - Server actions in `cms/src/app/(app)/apps/[name]/actions.ts` now call `requireUser()` before mutating state. Previously RLS was the only line of defence; the middleware only refreshes Supabase cookies.

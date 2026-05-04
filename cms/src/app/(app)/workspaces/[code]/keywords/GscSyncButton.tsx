@@ -16,7 +16,7 @@ export function GscSyncButton({ code }: { code: string }) {
       <p className="mt-1 text-xs text-zinc-600">
         Pulls the last 90 days of queries that landed on{" "}
         <code>/{code}/</code> and upserts them as keywords. Configure the
-        Google connection on <code>/brand</code> first.
+        Google connection on <code>/apps/gsc</code> first.
       </p>
       <button
         type="button"

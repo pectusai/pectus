@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
   if (oauthError) {
     return NextResponse.redirect(
       new URL(
-        `/brand?error=${encodeURIComponent(`Google denied the connection: ${oauthError}`)}`,
+        `/apps/ga4?error=${encodeURIComponent(`Google denied the connection: ${oauthError}`)}`,
         request.url,
       ),
     );
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
   if (!code || !state) {
     return NextResponse.redirect(
       new URL(
-        `/brand?error=${encodeURIComponent("Missing code or state from Google.")}`,
+        `/apps/ga4?error=${encodeURIComponent("Missing code or state from Google.")}`,
         request.url,
       ),
     );
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
   if (!storedState || storedState !== state) {
     return NextResponse.redirect(
       new URL(
-        `/brand?error=${encodeURIComponent("OAuth state mismatch. Try again.")}`,
+        `/apps/ga4?error=${encodeURIComponent("OAuth state mismatch. Try again.")}`,
         request.url,
       ),
     );
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
     if (!tokens.refresh_token) {
       return NextResponse.redirect(
         new URL(
-          `/brand?error=${encodeURIComponent(
+          `/apps/ga4?error=${encodeURIComponent(
             "Google did not return a refresh token. Disconnect any existing authorisations for this app at myaccount.google.com and try again.",
           )}`,
           request.url,
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
     if (error) {
       return NextResponse.redirect(
         new URL(
-          `/brand?error=${encodeURIComponent(`Couldn't save connection: ${error.message}`)}`,
+          `/apps/ga4?error=${encodeURIComponent(`Couldn't save connection: ${error.message}`)}`,
           request.url,
         ),
       );
@@ -103,14 +103,14 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.redirect(
       new URL(
-        `/brand?connected=${encodeURIComponent(userinfo.email)}`,
+        `/apps/ga4?connected=${encodeURIComponent(userinfo.email)}`,
         request.url,
       ),
     );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return NextResponse.redirect(
-      new URL(`/brand?error=${encodeURIComponent(msg)}`, request.url),
+      new URL(`/apps/ga4?error=${encodeURIComponent(msg)}`, request.url),
     );
   }
 }

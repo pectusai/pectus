@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
   ) {
     return NextResponse.redirect(
       new URL(
-        `/brand?error=${encodeURIComponent(
+        `/apps/ga4?error=${encodeURIComponent(
           "GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET are not configured.",
         )}`,
         request.url,

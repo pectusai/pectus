@@ -192,7 +192,7 @@ export async function importKeywordsCsv(
 /* GSC sync. Pulls stored Google service-account credentials from the
  * `integrations` table and calls the Pectus GSC connector. Fails fast and
  * loud if the integration isn't configured — wiring up GSC happens on
- * /brand. */
+ * /apps/gsc. */
 export type GscSyncResult =
   | { ok: true; imported: number; skipped: number }
   | { ok: false; error: string };
@@ -211,13 +211,13 @@ export async function syncFromGsc(code: string): Promise<GscSyncResult> {
     return {
       ok: false,
       error:
-        "Google service account isn't saved yet. Connect Google on /brand first.",
+        "Google service account isn't saved yet. Connect Google on /apps/gsc first.",
     };
   }
   if (!integration.gsc_site_url) {
     return {
       ok: false,
-      error: "Search Console site URL isn't saved yet. Set it on /brand.",
+      error: "Search Console site URL isn't saved yet. Set it on /apps/gsc.",
     };
   }
 
