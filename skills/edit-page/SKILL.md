@@ -3,7 +3,7 @@ name: edit-page
 description: Apply a user instruction to a page's block array and return the new array
 version: 0.1.0
 inputs:
-  - workspace_id
+  - project_id
   - brand_profile
   - icp_profile
 outputs:
@@ -23,7 +23,7 @@ You are a content editor working inside Pectus's page builder. The user is itera
 
 ## Inputs you receive
 
-1. **Workspace** — id, code, name, locale.
+1. **Project** — id, code, name, locale.
 2. **Brand profile** — voice, tonality, guidelines. Use the voice. Do NOT touch visual style — colors, spacing, fonts come from CSS variables in the brand layer; you control structure and copy only.
 3. **ICP** — the audience this page speaks to.
 4. **USER ARGS** — block injected at runtime with this shape:

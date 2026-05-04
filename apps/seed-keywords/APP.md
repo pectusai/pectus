@@ -2,18 +2,18 @@
 name: seed-keywords
 type: inbound
 data_acquisition: manual
-description: 5-10 user-typed seed keywords used as a starting signal when a workspace has no live traffic yet (or as a supplementary signal alongside live data)
+description: 5-10 user-typed seed keywords used as a starting signal when a project has no live traffic yet (or as a supplementary signal alongside live data)
 version: 0.1.0
 ---
 
 # seed-keywords
 
-A minimal inbound app for user-typed seed keywords. Used to bootstrap workspaces that don't yet have GSC / GA4 traffic, and as a supplementary signal for any workspace that wants to nudge analysis toward specific topics the data doesn't yet capture.
+A minimal inbound app for user-typed seed keywords. Used to bootstrap projects that don't yet have GSC / GA4 traffic, and as a supplementary signal for any project that wants to nudge analysis toward specific topics the data doesn't yet capture.
 
 ## What this app provides
 
-- A workspace-scoped table of user-typed keywords (`seed_keywords`, defined in migration `0002_v0_2_pages.sql`).
-- A workspace settings UI for adding / removing seed keywords.
+- A project-scoped table of user-typed keywords (`seed_keywords`, defined in migration `0002_v0_2_pages.sql`).
+- A project settings UI for adding / removing seed keywords.
 - An interpretation skill (`apps/seed-keywords/insights/`) that turns the keyword list into Insights consumed by `weekly-analysis` and `plan-sitemap`.
 
 ## Why "minimal app"

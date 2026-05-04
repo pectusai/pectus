@@ -3,7 +3,7 @@ name: knowledge-digest
 description: Read everything in knowledge/raw/ and produce a single insights.md other skills consume
 version: 1.0.0
 inputs:
-  - workspace_id
+  - project_id
 outputs:
   - insights_md
 schema: ./schema.ts
@@ -18,7 +18,7 @@ Other skills don't read the raw files. They read your output. So your output is 
 
 ## Inputs
 
-Everything in `knowledge/raw/{workspace_code}/` (or `knowledge/raw/` for global knowledge that applies to all workspaces).
+Everything in `knowledge/raw/{project_code}/` (or `knowledge/raw/` for global knowledge that applies to all projects).
 
 File handling:
 
@@ -33,7 +33,7 @@ File handling:
 Structure the output as:
 
 ```markdown
-# Knowledge insights — {workspace_code or "global"}
+# Knowledge insights — {project_code or "global"}
 
 Generated {ISO date}.
 

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const AnalyticsRow = z.object({
-  workspace_id: z.string().uuid(),
+  project_id: z.string().uuid(),
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -34,7 +34,7 @@ export const AnalyticsRow = z.object({
 });
 
 export const Ga4FetchResult = z.object({
-  workspace_id: z.string().uuid(),
+  project_id: z.string().uuid(),
   property_id: z.string().describe("GA4 property ID that was queried."),
   range: z.object({
     since: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

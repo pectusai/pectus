@@ -11,7 +11,7 @@ Each skill is a folder with a `SKILL.md` file at its root, in Anthropic's standa
 | `weekly-analysis/` | Looks at the last week of GSC data + your articles + ICP + brand context, produces 4 to 6 ranked post suggestions with traffic projections | Dashboard payload |
 | `seo-strategy/` | Clusters your keywords by intent, diffs them against your sitemap, identifies gaps | Cluster map + gap report |
 | `jobs-to-be-done/` | Maps your keywords to jobs your ICP is actually trying to do | Per-persona JTBD list with keyword coverage |
-| `internal-linking/` | Crawls your site, recommends inter-page links | `linksculpting.md` written to the workspace |
+| `internal-linking/` | Crawls your site, recommends inter-page links | `linksculpting.md` written to the project |
 | `knowledge-digest/` | Reads everything in `knowledge/raw/` (CSVs, BigQuery exports, images) and writes a single `knowledge/insights.md` other skills consume | `knowledge/insights.md` |
 | `make-it/` | Scaffolds a new skill or app from a brief: manifest, Zod schema, provision skeleton, README. The ecosystem flywheel. | `ScaffoldSpec` consumed by the CLI |
 
@@ -37,7 +37,7 @@ name: my-skill
 description: One-line description shown in the dashboard skill picker
 version: 1.0.0
 inputs:
-  - workspace_id
+  - project_id
 outputs:
   - some_named_output
 schema: ./schema.ts

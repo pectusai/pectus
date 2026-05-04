@@ -7,7 +7,7 @@ Pectus runs locally on your machine. You own your data, your fork, and your stac
 ## What you get
 
 - A dashboard that tells you what content to write next, ranked by projected traffic.
-- A workspace per market (UK, DE, FR or whatever you sell into) with its own ICP, keywords, and analysis.
+- A project per market (UK, DE, FR or whatever you sell into) with its own ICP, keywords, and analysis.
 - A pre-installed Astro `content-hub` app with perfect SEO/AEO/GEO out of the box, ready to publish to.
 - An apps system: installable surfaces for data sources (GA4, Google Ads, Meta, LinkedIn) and publishers (WordPress, Storyblok, content-hub). Anyone can build and share apps.
 - A skills system: portable verbs (write a post, run weekly analysis, audit internal linking) that target any installed app. One skill, many targets.

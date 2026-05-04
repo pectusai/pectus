@@ -1,6 +1,6 @@
 # Sitemap diff methodology
 
-How the `seo-strategy` skill compares a workspace's keyword universe against the user's existing site to identify content gaps.
+How the `seo-strategy` skill compares a project's keyword universe against the user's existing site to identify content gaps.
 
 ## Source of the sitemap
 
@@ -72,6 +72,6 @@ The CMS already does this when the user adds a content_source — URLs land in `
 ## Multi-locale handling
 
 If the sitemap contains locale variants (e.g. `/en/`, `/de/`, `/fr/`), the skill should:
-1. Identify the workspace's locale (`workspaces.locale`).
-2. Filter `content_source_pages` to URLs matching the workspace locale.
-3. Treat other locales as out of scope for the diff — they have their own workspaces.
+1. Identify the project's locale (`projects.locale`).
+2. Filter `content_source_pages` to URLs matching the project locale.
+3. Treat other locales as out of scope for the diff — they have their own projects.

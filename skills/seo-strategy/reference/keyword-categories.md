@@ -2,7 +2,7 @@
 
 The controlled vocabulary the `seo-strategy` skill uses to classify keywords. The framework is generic; the worked example below uses an ATS (applicant tracking system) audience to make the patterns concrete.
 
-The skill should adapt the example sub-categories to the user's actual domain — keep the intent buckets, replace the ATS examples with patterns from the workspace's own keyword list.
+The skill should adapt the example sub-categories to the user's actual domain — keep the intent buckets, replace the ATS examples with patterns from the project's own keyword list.
 
 ---
 

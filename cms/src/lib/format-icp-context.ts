@@ -73,14 +73,14 @@ export function formatIcpContext(icp: IcpProfile | null | undefined): string {
 
 export function formatBrandContext(
   brand: BrandProfile | null | undefined,
-  workspaceName?: string,
+  projectName?: string,
 ): string {
   if (!brand) {
-    return workspaceName ? `Workspace: ${workspaceName}` : "(no brand profile)";
+    return projectName ? `Project: ${projectName}` : "(no brand profile)";
   }
   const lines: string[] = [];
-  if (brand.name || workspaceName)
-    lines.push(`Name: ${brand.name ?? workspaceName ?? ""}`);
+  if (brand.name || projectName)
+    lines.push(`Name: ${brand.name ?? projectName ?? ""}`);
   if (brand.tagline) lines.push(`Tagline: ${brand.tagline}`);
   if (brand.voice) lines.push(`Voice: ${brand.voice}`);
   if (brand.tonality) lines.push(`Tonality: ${brand.tonality}`);

@@ -6,23 +6,23 @@ Pulls web analytics into the `analytics_metrics` table. Skills like `weekly-anal
 
 Reuses the shared Google service account configured via `npx pectus connect google`. No app-specific credentials.
 
-## Per-workspace settings
+## Per-project settings
 
 Stored in the `integrations` table:
 
-- `ga4_property_id` — the GA4 property to track for this workspace.
+- `ga4_property_id` — the GA4 property to track for this project.
 
-Populated via `npx pectus connect ga4 --workspace <code>` or the CMS workspace settings page.
+Populated via `npx pectus connect ga4 --project <code>` or the CMS project settings page.
 
 ## Schedule
 
 Manual via:
 
 ```
-npx pectus app fetch ga4 --workspace <code> --since <YYYY-MM-DD> --until <YYYY-MM-DD>
+npx pectus app fetch ga4 --project <code> --since <YYYY-MM-DD> --until <YYYY-MM-DD>
 ```
 
-Or scheduled by the CMS to run daily for each workspace with a configured property.
+Or scheduled by the CMS to run daily for each project with a configured property.
 
 ## Output
 

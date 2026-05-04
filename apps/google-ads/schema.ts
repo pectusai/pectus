@@ -3,7 +3,7 @@ import { z } from "zod";
 export const AdMetricLevel = z.enum(["campaign", "ad_group", "keyword"]);
 
 export const AdMetricRow = z.object({
-  workspace_id: z.string().uuid(),
+  project_id: z.string().uuid(),
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -38,7 +38,7 @@ export const AdMetricRow = z.object({
 });
 
 export const GoogleAdsFetchResult = z.object({
-  workspace_id: z.string().uuid(),
+  project_id: z.string().uuid(),
   customer_id: z.string(),
   range: z.object({
     since: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

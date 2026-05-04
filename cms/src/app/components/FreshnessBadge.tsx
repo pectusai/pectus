@@ -1,4 +1,4 @@
-import { describeAge } from "@/lib/workspace";
+import { describeAge } from "@/lib/project";
 
 type Props = {
   lastUpdatedAt: string | null | undefined;

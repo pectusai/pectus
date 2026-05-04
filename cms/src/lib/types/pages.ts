@@ -28,14 +28,14 @@ export type PagePurpose =
 
 export type PageTemplate = PagePurpose | "pillar";
 
-export type WorkspaceMode = "seed" | "live";
+export type ProjectMode = "seed" | "live";
 
-export type Workspace = {
+export type Project = {
   id: string;
   name: string;
   code: string;
   locale: string;
-  mode: WorkspaceMode;
+  mode: ProjectMode;
   default_locale: string;
   enabled_locales: string[];
   default_locale_skips_prefix: boolean;
@@ -48,7 +48,7 @@ export type Workspace = {
 
 export type Topic = {
   id: string;
-  workspace_id: string;
+  project_id: string;
   name: string;
   intent: Intent | null;
   source: "analysis-suggested" | "user";
@@ -60,7 +60,7 @@ export type Topic = {
 
 export type SitePlanNode = {
   id: string;
-  workspace_id: string;
+  project_id: string;
   parent_id: string | null;
   topic_id: string | null;
   title: string;
@@ -94,7 +94,7 @@ export type SitePlanNodeWithChildren = SitePlanNode & {
 
 export type Redirect = {
   id: string;
-  workspace_id: string;
+  project_id: string;
   from_path: string;
   to_path: string;
   status: 301 | 302;
@@ -104,7 +104,7 @@ export type Redirect = {
 
 export type Page = {
   id: string;
-  workspace_id: string;
+  project_id: string;
   site_plan_node_id: string | null;
   template_id: PageTemplate;
   purpose: PagePurpose;
@@ -135,7 +135,7 @@ export type PageDraft = {
 
 export type SeedKeyword = {
   id: string;
-  workspace_id: string;
+  project_id: string;
   keyword: string;
   created_at: string;
 };

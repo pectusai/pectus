@@ -4,9 +4,9 @@ description: Pull paid search performance from Google Ads into the ad_metrics ta
 type: inbound
 version: 1.0.0
 needs:
-  workspace: [locale, market]
+  project: [locale, market]
 inputs:
-  - workspace_id
+  - project_id
   - date_range
 outputs:
   - ad_metric_rows
@@ -35,20 +35,20 @@ Two credentials at the global level:
 - `GOOGLE_ADS_DEVELOPER_TOKEN` — Google Ads Developer token. Apply at https://ads.google.com/aw/apicenter.
 - `GOOGLE_ADS_LOGIN_CUSTOMER_ID` — the manager (MCC) account ID Pectus authenticates as. Without it, the API rejects requests on linked customer accounts.
 
-Per-workspace, the `integrations` table holds:
+Per-project, the `integrations` table holds:
 
-- `google_ads_customer_id` — the customer (advertiser) account whose data this workspace pulls.
+- `google_ads_customer_id` — the customer (advertiser) account whose data this project pulls.
 
 OAuth token is shared with `connectors/google/oauth.ts`. The Google Ads scope (`https://www.googleapis.com/auth/adwords`) needs to be in the consent screen at install time.
 
 ## Output table
 
-`ad_metrics`, with `channel = 'google_ads'`. Columns: `workspace_id`, `date`, `channel`, `level` (campaign/ad_group/keyword), `entity_id`, `entity_name`, `metric_name`, `value`, `dimensions` (JSONB).
+`ad_metrics`, with `channel = 'google_ads'`. Columns: `project_id`, `date`, `channel`, `level` (campaign/ad_group/keyword), `entity_id`, `entity_name`, `metric_name`, `value`, `dimensions` (JSONB).
 
 Migrations land at `connectors/supabase/migrations/0003_ad_metrics.sql` (added in PR6).
 
 ## Invoke
 
 ```
-npx pectus app fetch google-ads --workspace <code> --since 2026-04-01 --until 2026-04-30
+npx pectus app fetch google-ads --project <code> --since 2026-04-01 --until 2026-04-30
 ```

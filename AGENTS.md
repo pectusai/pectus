@@ -38,7 +38,7 @@ When the user asks you to install Pectus, follow `pectus.md` step by step. Don't
 
 Skills run through `cms/src/lib/skill-runner.ts`. Never call Claude directly from a CMS route — the runner exists to log every run to the `skill_runs` table for observability.
 
-When a user asks you to "run the weekly analysis," call `npx pectus analyze --workspace <code> --skill weekly-analysis`. Same for any other skill.
+When a user asks you to "run the weekly analysis," call `npx pectus analyze --project <code> --skill weekly-analysis`. Same for any other skill.
 
 ## Editing rails
 
@@ -113,9 +113,9 @@ Every inbound app's interpretation skill produces an `InsightBatch` matching `cm
 }
 ```
 
-The skill-runner auto-persists this output to the `insights` table when the skill name ends in `/insights`. Replace-on-rerun strategy: the table is wiped for that (workspace, app) pair before fresh rows are inserted. History lives in `skill_runs.output`.
+The skill-runner auto-persists this output to the `insights` table when the skill name ends in `/insights`. Replace-on-rerun strategy: the table is wiped for that (project, app) pair before fresh rows are inserted. History lives in `skill_runs.output`.
 
-Consumer skills (`weekly-analysis`, `plan-sitemap`, future) call `runInterpretationsIfStale(workspaceId)` from `cms/src/lib/skill-runner` BEFORE their own gather phase. Stale insights are detected per app by comparing the latest `insights.created_at` to the app's `last_fetched_at` in `workspace_data_freshness`. Stale interpretations run in parallel.
+Consumer skills (`weekly-analysis`, `plan-sitemap`, future) call `runInterpretationsIfStale(projectId)` from `cms/src/lib/skill-runner` BEFORE their own gather phase. Stale insights are detected per app by comparing the latest `insights.created_at` to the app's `last_fetched_at` in `project_data_freshness`. Stale interpretations run in parallel.
 
 Reference example: `apps/seed-keywords/insights/` (the minimal-inbound case).
 

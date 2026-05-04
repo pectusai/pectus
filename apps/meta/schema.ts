@@ -3,7 +3,7 @@ import { z } from "zod";
 export const MetaAdMetricLevel = z.enum(["campaign", "ad_set", "ad"]);
 
 export const MetaAdMetricRow = z.object({
-  workspace_id: z.string().uuid(),
+  project_id: z.string().uuid(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   channel: z.literal("meta"),
   level: MetaAdMetricLevel,
@@ -36,7 +36,7 @@ export const MetaAdMetricRow = z.object({
 });
 
 export const MetaFetchResult = z.object({
-  workspace_id: z.string().uuid(),
+  project_id: z.string().uuid(),
   ad_account_id: z.string(),
   range: z.object({
     since: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

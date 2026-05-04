@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { FreshnessBadge } from "@/app/components/FreshnessBadge";
-import type { Freshness, Workspace } from "@/lib/workspace";
+import type { Freshness, Project } from "@/lib/project";
 import { getBrandBySlug } from "@/lib/active-brand";
 
-export default async function BrandWorkspacesPage({
+export default async function BrandProjectsPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
@@ -13,23 +13,23 @@ export default async function BrandWorkspacesPage({
   const { supabase } = await requireUser();
   const brand = await getBrandBySlug(slug);
 
-  const [{ data: workspaces }, { data: freshnessRows }] = await Promise.all([
+  const [{ data: projects }, { data: freshnessRows }] = await Promise.all([
     supabase
-      .from("workspaces")
+      .from("projects")
       .select("*")
       .eq("brand_id", brand.id)
       .order("name"),
     supabase
-      .from("workspace_data_freshness")
+      .from("project_data_freshness")
       .select("*")
       .eq("brand_id", brand.id),
   ]);
 
-  const freshnessByWorkspace = new Map<string, Record<string, string>>();
+  const freshnessByProject = new Map<string, Record<string, string>>();
   ((freshnessRows ?? []) as Freshness[]).forEach((row) => {
-    const current = freshnessByWorkspace.get(row.workspace_id) ?? {};
+    const current = freshnessByProject.get(row.project_id) ?? {};
     current[row.surface] = row.last_updated_at;
-    freshnessByWorkspace.set(row.workspace_id, current);
+    freshnessByProject.set(row.project_id, current);
   });
 
   return (
@@ -39,16 +39,16 @@ export default async function BrandWorkspacesPage({
           {brand.name ?? brand.slug}
         </h1>
         <p className="mt-1 text-sm text-zinc-600">
-          One workspace per market or property. Pick one to manage its ICP,
+          One project per market or property. Pick one to manage its ICP,
           keywords, and content.
         </p>
       </div>
 
-      {!workspaces || workspaces.length === 0 ? (
+      {!projects || projects.length === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 p-10 text-center text-sm text-zinc-500">
-          <p>No workspaces yet. Create your first from the terminal:</p>
+          <p>No projects yet. Create your first from the terminal:</p>
           <pre className="mt-3 inline-block rounded bg-zinc-100 px-3 py-2 text-left text-xs text-zinc-700">
-            npx pectus workspace create
+            npx pectus project create
           </pre>
           <p className="mt-3 text-xs text-zinc-500">
             The command is interactive. It will ask you for the market name, a
@@ -60,12 +60,12 @@ export default async function BrandWorkspacesPage({
         </div>
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2">
-          {(workspaces as Workspace[]).map((w) => {
-            const freshness = freshnessByWorkspace.get(w.id) ?? {};
+          {(projects as Project[]).map((w) => {
+            const freshness = freshnessByProject.get(w.id) ?? {};
             return (
               <li key={w.id}>
                 <Link
-                  href={`/brands/${slug}/workspaces/${w.code}`}
+                  href={`/brands/${slug}/projects/${w.code}`}
                   className="block rounded-lg border border-zinc-200 bg-white p-5 transition hover:border-zinc-300"
                 >
                   <div className="flex items-start justify-between gap-3">

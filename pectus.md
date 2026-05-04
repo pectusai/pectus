@@ -27,7 +27,7 @@ Wait for them to say yes. Then walk them through the steps below in order. Don't
 
 **Critical rule: never advance to the next step unless EITHER (a) the current step is verifiably complete, with every sub-action done and every expected output confirmed, OR (b) the user has explicitly told you it's OK to move on.** Both paths are valid; one of them must hold. Don't decide on the user's behalf that something "can be dealt with later". Don't infer completion from context. If a step has multiple sub-actions, all of them have to land before you treat (a) as satisfied. If you're tempted to "circle back later" to anything in the current step, stop and ask the user instead. Optional sub-steps still need an explicit user call to skip; that call is theirs to make, not yours.
 
-**Critical rule: every shell command you ask the user to run in their own terminal must `cd` into the install path first.** When you give the user a `!`-prefixed command (or otherwise tell them to type something into their own terminal), wrap it with `cd <install path> && ...`. Don't assume the user's terminal is already in the right folder; they may have opened a fresh shell, switched directories, or never been there. Use the install path the user picked in step 2 (default `~/pectus`, sometimes a brand-suffixed folder). Example: `cd ~/pectus && npx pectus workspace create`, not `npx pectus workspace create`.
+**Critical rule: every shell command you ask the user to run in their own terminal must `cd` into the install path first.** When you give the user a `!`-prefixed command (or otherwise tell them to type something into their own terminal), wrap it with `cd <install path> && ...`. Don't assume the user's terminal is already in the right folder; they may have opened a fresh shell, switched directories, or never been there. Use the install path the user picked in step 2 (default `~/pectus`, sometimes a brand-suffixed folder). Example: `cd ~/pectus && npx pectus project create`, not `npx pectus project create`.
 
 Speak to the user like a person who has installed maybe one or two dev tools before. Define jargon the first time it shows up. When you ask for a value, say what it looks like (e.g. "starts with `sk-ant-`"). When you point them at a console, tell them what they'll click once they're there.
 
@@ -81,7 +81,7 @@ If the target path already exists but is not a Pectus clone (no `apps/`, `cms/`,
 npm install
 ```
 
-This installs across all workspaces (connectors, apps, cli, cms). Should complete in under 90 seconds on a normal connection.
+This installs across all projects (connectors, apps, cli, cms). Should complete in under 90 seconds on a normal connection.
 
 ## 4. Brand setup
 
@@ -250,7 +250,7 @@ If a `npm run dev` is already running from earlier, tell the user to stop it (Ct
 npm run dev
 ```
 
-This boots the Next.js admin app at `http://localhost:3000`. The user signs in with the admin email and password they set in step 6. They'll land on an empty Workspaces view — that's expected; they create their first workspace in the next step.
+This boots the Next.js admin app at `http://localhost:3000`. The user signs in with the admin email and password they set in step 6. They'll land on an empty Projects view — that's expected; they create their first project in the next step.
 
 If another Pectus is already running on port 3000 (the user has a different brand's install open), start this one on a different port:
 
@@ -260,63 +260,63 @@ PORT=3001 npm run dev
 
 Then load `http://localhost:3001`. Tell the user which port their CMS is on so they can re-open the right one later.
 
-## 10. Create the first workspace
+## 10. Create the first project
 
 The user runs this in their own terminal (not the Claude session). Always include the `cd` prefix using the install path from step 2:
 
 ```
-cd <install path> && npx pectus workspace create
+cd <install path> && npx pectus project create
 ```
 
-(For the default install location: `cd ~/pectus && npx pectus workspace create`.)
+(For the default install location: `cd ~/pectus && npx pectus project create`.)
 
-A workspace is one market or audience segment. If the user only sells in one country, one workspace is enough. If they have separate sites for the UK, US, and Sweden, that's three workspaces. The wizard asks four questions:
+A project is one market or audience segment. If the user only sells in one country, one project is enough. If they have separate sites for the UK, US, and Sweden, that's three projects. The wizard asks four questions:
 
 1. **Market name** — a human label, e.g. "United Kingdom" or "DTC US". For single-market users, anything descriptive like "Main", "Primary", or the brand name works.
-2. **Code** — a short identifier for this workspace, used in URLs and as the workspace's handle. Lowercase letters, digits, and dashes only. Pick `uk` for the United Kingdom market, `dtc-us` for direct-to-consumer US. **For a single-market install (most common), `main` is the standard pick. The brand name (e.g. `acme`) also works.**
+2. **Code** — a short identifier for this project, used in URLs and as the project's handle. Lowercase letters, digits, and dashes only. Pick `uk` for the United Kingdom market, `dtc-us` for direct-to-consumer US. **For a single-market install (most common), `main` is the standard pick. The brand name (e.g. `acme`) also works.**
 3. **Locale** — language and country, e.g. `en-GB` for British English, `en-US` for American English, `sv-SE` for Swedish.
-4. **Seed keywords** — 5 to 10 short phrases the workspace plans content around when there's no Search Console traffic yet (e.g. "best dtc skincare, retinol myths, sensitive skin routine"). Optional; the user can add them later from Workspace Settings → Seed keywords. The dashboard's first analysis uses these as the starting topic spine.
+4. **Seed keywords** — 5 to 10 short phrases the project plans content around when there's no Search Console traffic yet (e.g. "best dtc skincare, retinol myths, sensitive skin routine"). Optional; the user can add them later from Project Settings → Seed keywords. The dashboard's first analysis uses these as the starting topic spine.
 
-The command creates the workspace row, sets a default review policy, and saves the seed keywords. The dashboard opens at `http://localhost:3000/workspaces/<code>`.
+The command creates the project row, sets a default review policy, and saves the seed keywords. The dashboard opens at `http://localhost:3000/projects/<code>`.
 
-> **What happened to the site shape and GitHub repo questions?** They moved into the Content Hub settings page in the CMS (next step). The base workspace just captures identity now; the publish-target details live with the app that uses them.
+> **What happened to the site shape and GitHub repo questions?** They moved into the Content Hub settings page in the CMS (next step). The base project just captures identity now; the publish-target details live with the app that uses them.
 
-## 11. Activate Content Hub for the workspace
+## 11. Activate Content Hub for the project
 
 If the user wants a public site (most users do — content-hub is the bundled outbound app), walk them through activating it in the CMS:
 
 1. Open `http://localhost:3000/apps` in their browser.
 2. Click the **content-hub** card. They land on the Content Hub settings page (`/apps/content-hub`). Activation happens by saving a working config from this page; there is no separate Activate button on the card.
 3. Fill in the form:
-   - **Workspace** — pick the workspace they just created in step 10.
+   - **Project** — pick the project they just created in step 10.
    - **Site shape** — Brand new site (Pectus runs the whole site, pages at `/`) or Existing site (Pectus adds a section under their existing site, pages at `/insights/` or similar).
    - **Mount slug** — only shown for Existing site. Default `/insights/`. Must start and end with `/`.
    - **GitHub repo** — where Pectus pushes built pages. The user should:
      1. Open github.com → **New repository** → name it (something like `<their-brand>-pectus`) → don't tick README/license/gitignore → **Create repository**.
      2. Copy the URL from the browser address bar (looks like `https://github.com/yourname/yourrepo`).
      3. Paste it into the form. It accepts the full URL, the short `github.com/yourname/yourrepo` form, or the bare `yourname/yourrepo` form.
-     4. Or leave blank — they can fill it in later from Workspace → Content Hub → Site URL.
+     4. Or leave blank — they can fill it in later from Project → Content Hub → Site URL.
 
    **Important if the user already has a website on Vercel + GitHub.** If they want Pectus to replace their existing site (most common scenario), tell them: don't reuse the existing site's repo. Use a fresh empty repo. After install, they'll switch their Vercel project's git source to the new repo. Full details at https://pectus.ai/docs/faq/install/replace-or-add-to-existing-site. If they ask why not reuse: because Pectus commits its own Astro app structure into the repo, which would replace whatever's already there. A new repo keeps the cutover clean and the rollback simple.
-4. Click **Save and activate Content Hub**. The CMS sidebar now shows the Content Hub group inside the workspace, with Pages, Articles, Site URL, and Redirects as children.
+4. Click **Save and activate Content Hub**. The CMS sidebar now shows the Content Hub group inside the project, with Pages, Articles, Site URL, and Redirects as children.
 
 If the user is installing Pectus for analysis only (no public site), skip this step. They can activate Content Hub later from `/apps` whenever they decide they want to publish.
 
 ## 12. Run the first analysis
 
 ```
-npx pectus analyze --workspace <code> --skill weekly-analysis
+npx pectus analyze --project <code> --skill weekly-analysis
 ```
 
 (Or have the user click "Run weekly analysis" on the dashboard — same effect.)
 
-This runs the `weekly-analysis` skill. It gathers everything Pectus knows about the workspace (keywords, existing articles, the ICP, brand voice, knowledge insights) and asks Claude to produce a content plan: what to write next, ranked by projected traffic.
+This runs the `weekly-analysis` skill. It gathers everything Pectus knows about the project (keywords, existing articles, the ICP, brand voice, knowledge insights) and asks Claude to produce a content plan: what to write next, ranked by projected traffic.
 
 Wait for it to finish (typically 30 to 90 seconds). When it returns, summarize the result for the user in plain words: how many post suggestions came back, the top three topics by score, any of their existing posts the analysis flagged as rising. Then point them at the dashboard to read the full output.
 
 ## 13. Pectus is awake. Pick a door.
 
-The CMS is running at `http://localhost:3000`, signed in as the admin from step 6. The first workspace exists. The first analysis has run. Pectus knows who they are, what they care about, and what data they have.
+The CMS is running at `http://localhost:3000`, signed in as the admin from step 6. The first project exists. The first analysis has run. Pectus knows who they are, what they care about, and what data they have.
 
 Now they choose what to do first. Present both doors clearly, then let them pick:
 

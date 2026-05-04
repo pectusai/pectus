@@ -1,4 +1,4 @@
-// pectus analyze --workspace <code> --skill <name>
+// pectus analyze --project <code> --skill <name>
 // Minimal in-CLI skill runner for v1: reads SKILL.md, gathers a small input
 // payload from Supabase, calls Claude with the body as system prompt and the
 // inputs as user message, writes a skill_runs row.
@@ -12,7 +12,7 @@ import { loadEnv } from "../lib/load-env.js";
 import { getServiceClient } from "../lib/supabase.js";
 
 interface AnalyzeOptions {
-  workspace: string;
+  project: string;
   skill: string;
 }
 
@@ -60,9 +60,9 @@ function parseFrontmatter(src: string): { fm: Frontmatter; body: string } {
 export async function run(opts: AnalyzeOptions): Promise<void> {
   loadEnv();
 
-  if (!opts.workspace || !opts.skill) {
+  if (!opts.project || !opts.skill) {
     console.error(
-      kleur.red("Both --workspace and --skill are required."),
+      kleur.red("Both --project and --skill are required."),
     );
     process.exit(1);
   }
@@ -88,25 +88,25 @@ export async function run(opts: AnalyzeOptions): Promise<void> {
 
   const supabase = await getServiceClient();
 
-  // Look up workspace (allow "global" as a sentinel for cross-workspace skills).
-  let workspaceId: string | null = null;
-  if (opts.workspace !== "global") {
+  // Look up project (allow "global" as a sentinel for cross-project skills).
+  let projectId: string | null = null;
+  if (opts.project !== "global") {
     const { data: ws, error: wsErr } = await supabase
-      .from("workspaces")
+      .from("projects")
       .select("id, code")
-      .eq("code", opts.workspace)
+      .eq("code", opts.project)
       .maybeSingle();
     if (wsErr) {
-      console.error(kleur.red(`workspace lookup failed: ${wsErr.message}`));
+      console.error(kleur.red(`project lookup failed: ${wsErr.message}`));
       process.exit(1);
     }
     if (!ws) {
       console.error(
-        kleur.red(`No workspace with code "${opts.workspace}". Run \`pectus workspace create\` first.`),
+        kleur.red(`No project with code "${opts.project}". Run \`pectus project create\` first.`),
       );
       process.exit(1);
     }
-    workspaceId = ws.id;
+    projectId = ws.id;
   }
 
   const raw = fs.readFileSync(skillFile, "utf8");
@@ -119,8 +119,8 @@ export async function run(opts: AnalyzeOptions): Promise<void> {
   // canonical, richer per-skill input gathering will live in
   // cms/src/lib/skill-runner.ts later.
   const inputs: Record<string, unknown> = {
-    workspace_id: workspaceId,
-    workspace_code: opts.workspace,
+    project_id: projectId,
+    project_code: opts.project,
     week_start: new Date().toISOString().slice(0, 10),
   };
 
@@ -176,7 +176,7 @@ export async function run(opts: AnalyzeOptions): Promise<void> {
   // Write skill_runs row. Tolerate schema variations.
   try {
     const { error } = await supabase.from("skill_runs").insert({
-      workspace_id: workspaceId,
+      project_id: projectId,
       skill_name: opts.skill,
       model,
       inputs,
@@ -202,9 +202,9 @@ export async function run(opts: AnalyzeOptions): Promise<void> {
   console.log("");
   console.log(
     kleur.dim(
-      opts.workspace === "global"
+      opts.project === "global"
         ? "Global skill complete."
-        : `See dashboard at http://localhost:3000/workspaces/${opts.workspace}/dashboard.`,
+        : `See dashboard at http://localhost:3000/projects/${opts.project}/dashboard.`,
     ),
   );
 }

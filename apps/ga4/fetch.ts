@@ -1,5 +1,5 @@
 /**
- * fetch.ts — GA4 Data API fetch for one workspace, one date range.
+ * fetch.ts — GA4 Data API fetch for one project, one date range.
  *
  * Stub in v1. Real implementation lands in PR6.
  *
@@ -13,7 +13,7 @@
 import type { Ga4FetchResultOutput } from "./schema.js";
 
 export async function fetch(_args: {
-  workspaceId: string;
+  projectId: string;
   propertyId: string;
   since: string;
   until: string;

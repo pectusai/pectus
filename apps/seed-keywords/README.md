@@ -1,13 +1,13 @@
 # apps/seed-keywords
 
-A minimal inbound app for **user-typed seed keywords** (5-10 of them). Bootstraps workspaces that don't yet have GSC/GA4 traffic, and acts as a supplementary signal for any workspace that wants to nudge analysis toward specific topics.
+A minimal inbound app for **user-typed seed keywords** (5-10 of them). Bootstraps projects that don't yet have GSC/GA4 traffic, and acts as a supplementary signal for any project that wants to nudge analysis toward specific topics.
 
 ## Why "minimal"
 
 Most inbound apps have a five-file shape: `APP.md`, `schema.ts`, `provision.ts`, `fetch.ts`, `README.md`. seed-keywords is the **manual-data variant** of the inbound app pattern:
 
 - No `provision.ts` — table is created by migration `0002_v0_2_pages.sql`.
-- No `fetch.ts` — there's no external API to fetch from. Data is user-typed via the workspace settings UI.
+- No `fetch.ts` — there's no external API to fetch from. Data is user-typed via the project settings UI.
 - No `schema.ts` at the app root — the only data shape is `{ keyword: string }`, defined inline in the migration.
 
 The app folder therefore has just `APP.md`, `insights/`, and this README. Future "user-typed data" apps (CSV competitor lists, manual content audits) follow the same shape.
@@ -27,7 +27,7 @@ See `insights/SKILL.md` for the full prompt and `insights/schema.ts` for the per
 
 ## Where users add seed keywords
 
-Workspace settings page (lands in the PR16 finish). Until that UI ships, seeds can be inserted directly into the `seed_keywords` table for testing.
+Project settings page (lands in the PR16 finish). Until that UI ships, seeds can be inserted directly into the `seed_keywords` table for testing.
 
 ## Recommended count
 

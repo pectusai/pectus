@@ -3,12 +3,12 @@
  *
  * Stub in v1. Real implementation lands in PR6.
  *
- * Called by `npx pectus connect linkedin --workspace <code>` to:
+ * Called by `npx pectus connect linkedin --project <code>` to:
  *   1. Prompt for LINKEDIN_CLIENT_ID and LINKEDIN_CLIENT_SECRET (one-time, install-level).
  *   2. Run an OAuth flow with scopes r_ads, r_ads_reporting, r_organization_social,
  *      capture the refresh token, write it to .env.local as LINKEDIN_REFRESH_TOKEN.
  *   3. List sponsored accounts the token has access to and prompt the user
- *      to pick one for this workspace.
+ *      to pick one for this project.
  *   4. Write ad_account_id to the integrations table.
  *   5. Run a test analytics query to confirm read access.
  *
@@ -18,6 +18,6 @@
  *     by fetch.ts to mint fresh access tokens on demand.
  */
 
-export async function provision(_args: { workspaceCode: string }): Promise<void> {
+export async function provision(_args: { projectCode: string }): Promise<void> {
   throw new Error("apps/linkedin/provision.ts is stubbed in v1. Implementation in PR6.");
 }

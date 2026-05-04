@@ -13,11 +13,9 @@ export async function NavBar() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("is_admin, role, email, full_name")
+    .select("email, full_name")
     .eq("id", user.id)
     .single();
-
-  const isAdmin = Boolean(profile?.is_admin);
 
   const brands = await listBrands();
   const cookieSlug = await readLastBrandSlug();
@@ -38,16 +36,13 @@ export async function NavBar() {
         <nav className="pectus-nav-links">
           {activeSlug ? (
             <>
-              <Link href={base}>Workspaces</Link>
+              <Link href={base}>Projects</Link>
               <Link href={`${base}/profile`}>Brand</Link>
-              <Link href={`${base}/apps`}>Apps</Link>
-              <Link href={`${base}/reviews`}>Reviews</Link>
             </>
           ) : (
             <Link href="/brands">Brands</Link>
           )}
-          <Link href="/system/updates">Updates</Link>
-          {isAdmin ? <Link href="/admin">Admin</Link> : null}
+          <Link href="/settings">Settings</Link>
         </nav>
 
         <div className="pectus-nav-actions">

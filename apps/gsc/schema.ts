@@ -5,7 +5,7 @@ import { z } from "zod";
  * configured aggregation window (default last 28 days).
  */
 export const KeywordAggregateRow = z.object({
-  workspace_id: z.string().uuid(),
+  project_id: z.string().uuid(),
   query: z.string().describe("The search query (keyword) the row aggregates."),
   impressions: z.number().int().nonnegative(),
   clicks: z.number().int().nonnegative(),
@@ -24,7 +24,7 @@ export const KeywordAggregateRow = z.object({
  * Daily-grain row for the gsc_daily time-series table.
  */
 export const GscDailyRow = z.object({
-  workspace_id: z.string().uuid(),
+  project_id: z.string().uuid(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   query: z.string(),
   page: z.string().nullable().describe("URL of the landing page, when available."),
@@ -34,7 +34,7 @@ export const GscDailyRow = z.object({
 });
 
 export const GscFetchResult = z.object({
-  workspace_id: z.string().uuid(),
+  project_id: z.string().uuid(),
   site_url: z.string().describe("The GSC property that was queried (URL-prefix or sc-domain form)."),
   range: z.object({
     since: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

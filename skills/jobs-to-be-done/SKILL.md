@@ -3,7 +3,7 @@ name: jobs-to-be-done
 description: Map keywords to jobs your ICP is trying to do
 version: 1.0.0
 inputs:
-  - workspace_id
+  - project_id
 outputs:
   - jtbd_per_persona
   - keyword_to_job_map
@@ -22,7 +22,7 @@ Reframe the keyword universe through the lens of what your audience is actually 
 ## Inputs
 
 1. ICP profile (personas + painpoints).
-2. All keywords for the workspace.
+2. All keywords for the project.
 3. The JTBD framework reference in `reference/jobs-to-be-done.md`.
 
 ## What to produce

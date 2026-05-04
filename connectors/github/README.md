@@ -12,16 +12,16 @@ GITHUB_TOKEN
 
 A personal access token with `repo` scope. Generate at https://github.com/settings/tokens. Required for any publish.
 
-## Workspace fields used
+## Project fields used
 
-Each workspace declares its target repo:
+Each project declares its target repo:
 
 ```
-workspaces.content_hub_repo    -- "<owner>/<repo>", e.g. "acme-corp/acme-content"
-workspaces.content_hub_branch  -- defaults to "main"
+projects.content_hub_repo    -- "<owner>/<repo>", e.g. "acme-corp/acme-content"
+projects.content_hub_branch  -- defaults to "main"
 ```
 
-The workspace can also have a different repo per workspace if a user has multiple sites.
+The project can also have a different repo per project if a user has multiple sites.
 
 ## Public surface
 

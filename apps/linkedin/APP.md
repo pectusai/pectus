@@ -4,9 +4,9 @@ description: Pull paid social performance from the LinkedIn Marketing API into t
 type: inbound
 version: 1.0.0
 needs:
-  workspace: [locale, market]
+  project: [locale, market]
 inputs:
-  - workspace_id
+  - project_id
   - date_range
 outputs:
   - ad_metric_rows
@@ -37,9 +37,9 @@ LinkedIn requires Marketing Developer Platform approval and OAuth with refresh t
 
 Required scopes: `r_ads`, `r_ads_reporting`, `r_organization_social`.
 
-Per-workspace, the `integrations` table holds:
+Per-project, the `integrations` table holds:
 
-- `linkedin_ad_account_id` — the sponsored account ID this workspace pulls.
+- `linkedin_ad_account_id` — the sponsored account ID this project pulls.
 
 ## Output table
 
@@ -48,5 +48,5 @@ Per-workspace, the `integrations` table holds:
 ## Invoke
 
 ```
-npx pectus app fetch linkedin --workspace <code> --since 2026-04-01 --until 2026-04-30
+npx pectus app fetch linkedin --project <code> --since 2026-04-01 --until 2026-04-30
 ```

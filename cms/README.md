@@ -1,6 +1,6 @@
 # cms — Pectus admin app
 
-The Next.js 16 admin UI you run at `localhost:3000`. Workspaces, Brand, Performance, Reviews, Admin.
+The Next.js 16 admin UI you run at `localhost:3000`. Projects, Brand, Performance, Reviews, Admin.
 
 ## Run
 
@@ -24,16 +24,16 @@ Either way, the app comes up at `http://localhost:3000`.
 cms/src/
 ├── app/
 │   ├── (app)/                       authenticated routes
-│   │   ├── workspaces/[code]/       per-market views (dashboard, articles, keywords, icp)
+│   │   ├── projects/[code]/       per-market views (dashboard, articles, keywords, icp)
 │   │   ├── brand/                   global brand config (with font upload UI)
 │   │   ├── performance/             SEO performance dashboard
 │   │   ├── reviews/                 compliance approval queue
-│   │   └── admin/                   users, workspaces, usage
+│   │   └── admin/                   users, projects, usage
 │   ├── login/                       Supabase Auth
 │   └── api/                         analysis + integration endpoints
 └── lib/
     ├── auth.ts                      requireUser, requireAdmin
-    ├── workspace.ts                 workspace lookup helpers
+    ├── project.ts                 project lookup helpers
     ├── skill-runner.ts              loads SKILL.md and runs Claude
     └── format-icp-context.ts        ICP → prompt context
 ```

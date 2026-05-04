@@ -1,5 +1,5 @@
 /**
- * fetch.ts — Google Ads API fetch for one workspace, one date range.
+ * fetch.ts — Google Ads API fetch for one project, one date range.
  *
  * Stub in v1. Real implementation lands in PR6.
  *
@@ -12,7 +12,7 @@
 import type { GoogleAdsFetchResultOutput } from "./schema.js";
 
 export async function fetch(_args: {
-  workspaceId: string;
+  projectId: string;
   customerId: string;
   since: string;
   until: string;

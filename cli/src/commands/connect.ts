@@ -447,7 +447,7 @@ async function connectGoogle(): Promise<void> {
     process.exit(1);
   }
 
-  outro(kleur.green("Google connected. Next: npx pectus workspace create."));
+  outro(kleur.green("Google connected. Next: npx pectus project create."));
 }
 
 // Dynamically load connectors/google/* by absolute file URL. Works under tsx (which

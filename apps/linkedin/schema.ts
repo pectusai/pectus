@@ -7,7 +7,7 @@ export const LinkedInAdMetricLevel = z.enum([
 ]);
 
 export const LinkedInAdMetricRow = z.object({
-  workspace_id: z.string().uuid(),
+  project_id: z.string().uuid(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   channel: z.literal("linkedin"),
   level: LinkedInAdMetricLevel,
@@ -39,7 +39,7 @@ export const LinkedInAdMetricRow = z.object({
 });
 
 export const LinkedInFetchResult = z.object({
-  workspace_id: z.string().uuid(),
+  project_id: z.string().uuid(),
   ad_account_id: z.string(),
   range: z.object({
     since: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

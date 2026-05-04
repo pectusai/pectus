@@ -6,7 +6,7 @@ The scaffolder skill. Generates a new skill or app from a brief.
 
 Takes a structured brief (gathered by the CLI) and emits a `ScaffoldSpec`: every file the user needs, fully populated. The CLI writes the files; this skill does no I/O.
 
-For apps specifically, validates that the generated prompt body does not set tone, voice, colors, or copy. Those belong to the core (brand, workspace), not the app.
+For apps specifically, validates that the generated prompt body does not set tone, voice, colors, or copy. Those belong to the core (brand, project), not the app.
 
 ## Invoke
 

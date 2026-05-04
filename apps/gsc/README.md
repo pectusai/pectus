@@ -6,9 +6,9 @@ Pulls organic search performance into the `keywords` table (aggregated) and the 
 
 Reuses the shared Google service account configured via `npx pectus connect google`. No app-specific credentials.
 
-The service account must have viewer access on the GSC property. Pectus can verify a domain on the user's behalf if they're not already an owner; that flow is exposed in the CMS workspace settings page.
+The service account must have viewer access on the GSC property. Pectus can verify a domain on the user's behalf if they're not already an owner; that flow is exposed in the CMS project settings page.
 
-## Per-workspace settings
+## Per-project settings
 
 Stored in the `integrations` table:
 
@@ -17,20 +17,20 @@ Stored in the `integrations` table:
 ## Setup
 
 ```
-npx pectus connect gsc --workspace <code>
+npx pectus connect gsc --project <code>
 ```
 
 ## Schedule
 
 ```
-npx pectus app fetch gsc --workspace <code> --since <YYYY-MM-DD> --until <YYYY-MM-DD>
+npx pectus app fetch gsc --project <code> --since <YYYY-MM-DD> --until <YYYY-MM-DD>
 ```
 
-Default invocation (no args) fetches the last 28 days at the aggregated grain plus the last 7 days at the daily grain. The CMS schedules a daily refresh per workspace.
+Default invocation (no args) fetches the last 28 days at the aggregated grain plus the last 7 days at the daily grain. The CMS schedules a daily refresh per project.
 
 ## Output
 
-- Updates `keywords.gsc_impressions`, `keywords.gsc_clicks`, `keywords.gsc_position` for matching workspace + query rows.
+- Updates `keywords.gsc_impressions`, `keywords.gsc_clicks`, `keywords.gsc_position` for matching project + query rows.
 - Inserts daily rows into `gsc_daily` for trend analysis (rising queries, position shifts, page-level moves).
 
 ## Service docs

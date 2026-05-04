@@ -15,11 +15,11 @@ export function ActivateAppPointer({
         app.
       </p>
       <p className="mx-auto mt-2 max-w-md text-sm text-zinc-600">
-        Activate the app from the Apps page to turn this surface on for every
-        workspace.
+        Activate the app from the project&apos;s Apps page to turn this surface
+        on.
       </p>
       <Link
-        href="/apps"
+        href="../../apps"
         className="mt-4 inline-block rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800"
       >
         Open Apps →

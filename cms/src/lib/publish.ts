@@ -3,12 +3,12 @@
  *
  * Responsibilities:
  *   - Build the page JSON committed to the user's repo.
- *   - Build the per-locale site-plan JSON from the workspace's adopted nodes.
- *   - Build the redirects JSON from the workspace's redirects rows.
+ *   - Build the per-locale site-plan JSON from the project's adopted nodes.
+ *   - Build the redirects JSON from the project's redirects rows.
  *   - Compute the redirect-chain-collapsed list when adding a new redirect.
  */
 
-import type { WorkspaceUrlConfig } from "./page-url";
+import type { ProjectUrlConfig } from "./page-url";
 import { resolvePageUrl } from "./page-url";
 
 export type PageJsonBlock = {
@@ -107,7 +107,7 @@ export function collapseRedirects(
 /* Convenience: resolve and return the URL for a variant given its node
  * ancestor slugs. Pure function delegating to page-url. */
 export function variantUrl(args: {
-  workspace: WorkspaceUrlConfig;
+  project: ProjectUrlConfig;
   locale: string;
   slug: string;
   ancestorSlugs: string[];

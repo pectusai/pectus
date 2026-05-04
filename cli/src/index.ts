@@ -37,26 +37,44 @@ for (const service of ["supabase", "google", "vercel", "github"] as const) {
     });
 }
 
-const workspace = program.command("workspace").description("Workspace management");
-workspace
+const project = program.command("project").description("Project management");
+project
   .command("create")
-  .description("Create a workspace")
+  .description("Create a project")
   .action(async () => {
-    const { create } = await import("./commands/workspace.js");
+    const { create } = await import("./commands/project.js");
     await create();
   });
-workspace
+project
   .command("list")
-  .description("List workspaces")
+  .description("List projects")
   .action(async () => {
-    const { list } = await import("./commands/workspace.js");
+    const { list } = await import("./commands/project.js");
+    await list();
+  });
+
+const workspaceAlias = program
+  .command("workspace")
+  .description("Alias for `pectus project` (deprecated, removed in v0.5)");
+workspaceAlias
+  .command("create")
+  .description("Create a project (alias)")
+  .action(async () => {
+    const { create } = await import("./commands/project.js");
+    await create();
+  });
+workspaceAlias
+  .command("list")
+  .description("List projects (alias)")
+  .action(async () => {
+    const { list } = await import("./commands/project.js");
     await list();
   });
 
 program
   .command("analyze")
-  .description("Run a skill against a workspace")
-  .requiredOption("--workspace <code>", "Workspace code")
+  .description("Run a skill against a project")
+  .requiredOption("--project <code>", "Project code")
   .requiredOption("--skill <name>", "Skill name")
   .action(async (opts) => {
     const { run } = await import("./commands/analyze.js");
@@ -69,7 +87,7 @@ knowledge
   .description("Run the knowledge-digest skill")
   .action(async () => {
     const { run } = await import("./commands/analyze.js");
-    await run({ skill: "knowledge-digest", workspace: "global" });
+    await run({ skill: "knowledge-digest", project: "global" });
   });
 
 program

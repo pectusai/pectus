@@ -9,22 +9,22 @@ Two install-level credentials:
 - `GOOGLE_ADS_DEVELOPER_TOKEN` — apply at https://ads.google.com/aw/apicenter
 - `GOOGLE_ADS_LOGIN_CUSTOMER_ID` — manager (MCC) account ID
 
-Plus per-workspace `google_ads_customer_id` in the `integrations` table.
+Plus per-project `google_ads_customer_id` in the `integrations` table.
 
 OAuth is shared with the Google connector. The Google Ads scope (`https://www.googleapis.com/auth/adwords`) must be in the install-time consent screen.
 
 ## Setup
 
 ```
-npx pectus connect google-ads --workspace <code>
+npx pectus connect google-ads --project <code>
 ```
 
-Walks the user through getting the developer token, picking the MCC, picking the customer to track for this workspace, and running a test query.
+Walks the user through getting the developer token, picking the MCC, picking the customer to track for this project, and running a test query.
 
 ## Schedule
 
 ```
-npx pectus app fetch google-ads --workspace <code> --since <YYYY-MM-DD> --until <YYYY-MM-DD>
+npx pectus app fetch google-ads --project <code> --since <YYYY-MM-DD> --until <YYYY-MM-DD>
 ```
 
 ## Service docs

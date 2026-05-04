@@ -24,7 +24,7 @@ export async function signInWithPassword(
     return { ok: false, error: error.message };
   }
 
-  redirect("/workspaces");
+  redirect("/projects");
 }
 
 export async function signUpWithPassword(

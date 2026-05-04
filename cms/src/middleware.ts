@@ -4,19 +4,26 @@ import { LAST_BRAND_COOKIE } from "@/lib/active-brand";
 
 const LEGACY_PREFIXES = [
   "/brand",
-  "/apps",
-  "/reviews",
-  "/performance",
   "/workspaces",
+  "/projects",
 ];
 
 const LEGACY_REDIRECT_MAP: Record<string, string> = {
   "/brand": "/profile",
-  "/apps": "/apps",
-  "/reviews": "/reviews",
-  "/performance": "/performance",
-  "/workspaces": "",
+  "/workspaces": "/projects",
+  "/projects": "/projects",
 };
+
+function rewriteWorkspacesToProjects(pathname: string): string | null {
+  // Old bookmarks under /brands/<slug>/workspaces/<code>/... still 200 by
+  // redirecting to /brands/<slug>/projects/<code>/... for one release cycle.
+  if (!pathname.startsWith("/brands/")) return null;
+  const replaced = pathname.replace(
+    /^(\/brands\/[^/]+)\/workspaces(\/|$)/,
+    "$1/projects$2",
+  );
+  return replaced === pathname ? null : replaced;
+}
 
 function legacyTarget(pathname: string, slug: string): string | null {
   for (const prefix of LEGACY_PREFIXES) {
@@ -35,6 +42,13 @@ function legacyTarget(pathname: string, slug: string): string | null {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const cookieSlug = request.cookies.get(LAST_BRAND_COOKIE)?.value;
+
+  const inBrandWorkspaceRewrite = rewriteWorkspacesToProjects(pathname);
+  if (inBrandWorkspaceRewrite) {
+    const url = request.nextUrl.clone();
+    url.pathname = inBrandWorkspaceRewrite;
+    return NextResponse.redirect(url);
+  }
 
   if (cookieSlug) {
     const target = legacyTarget(pathname, cookieSlug);

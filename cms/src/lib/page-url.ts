@@ -5,7 +5,7 @@
  *
  * URL stack: <mount-slug?>/<locale-prefix?>/<materialized-path?>/<slug>/
  *
- * - Mount slug omitted when the workspace is mounted at root ('/').
+ * - Mount slug omitted when the project is mounted at root ('/').
  * - Locale prefix omitted when default_locale_skips_prefix is true and the
  *   variant locale matches default_locale.
  * - Materialized path is empty for top-level nodes, otherwise '/' joined.
@@ -13,7 +13,7 @@
  * Trailing slash is always present (matches the content-hub Astro config).
  */
 
-export type WorkspaceUrlConfig = {
+export type ProjectUrlConfig = {
   mount_slug: string;
   default_locale: string;
   default_locale_skips_prefix: boolean;
@@ -25,7 +25,7 @@ export type NodeAncestor = {
 };
 
 export type ResolvePageUrlArgs = {
-  workspace: WorkspaceUrlConfig;
+  project: ProjectUrlConfig;
   locale: string;
   /** Variant slug — the leaf segment of the URL. */
   slug: string;
@@ -41,12 +41,12 @@ function trim(s: string): string {
 export function resolvePageUrl(args: ResolvePageUrlArgs): string {
   const segments: string[] = [];
 
-  const mount = trim(args.workspace.mount_slug);
+  const mount = trim(args.project.mount_slug);
   if (mount) segments.push(mount);
 
   const skipPrefix =
-    args.workspace.default_locale_skips_prefix &&
-    args.locale === args.workspace.default_locale;
+    args.project.default_locale_skips_prefix &&
+    args.locale === args.project.default_locale;
   if (!skipPrefix) segments.push(args.locale);
 
   for (const seg of args.ancestorSlugs) {

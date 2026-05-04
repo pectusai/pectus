@@ -12,7 +12,7 @@ Each job follows the format:
 
 > **When** [situation], **I want to** [motivation], **so I can** [expected outcome].
 
-Jobs are grouped by the persona behind them. Personas come from the workspace's `icp_profiles` row.
+Jobs are grouped by the persona behind them. Personas come from the project's `icp_profiles` row.
 
 For each job, capture:
 - **Statement** — the When/want/so-can sentence
@@ -119,7 +119,7 @@ A keyword maps to a job when its phrasing implies the situation or motivation:
 - "applicant tracking system migration" → situation = implementing → maps to Job 1.3.
 - "applicant tracking system resume" → situation = applying as a candidate → maps to Job 3.1.
 
-When a keyword is ambiguous (e.g. "applicant tracking system" alone), map it to the most likely job based on the workspace's primary ICP. Don't force every keyword to map — some are noise.
+When a keyword is ambiguous (e.g. "applicant tracking system" alone), map it to the most likely job based on the project's primary ICP. Don't force every keyword to map — some are noise.
 
 ---
 

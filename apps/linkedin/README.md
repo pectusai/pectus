@@ -9,7 +9,7 @@ Three install-level credentials, all collected by `provision.ts`:
 - `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET` — register at https://www.linkedin.com/developers
 - `LINKEDIN_REFRESH_TOKEN` — issued via OAuth. Long-lived; used to mint short-lived access tokens.
 
-Plus per-workspace `linkedin_ad_account_id` in the `integrations` table.
+Plus per-project `linkedin_ad_account_id` in the `integrations` table.
 
 ## Required scopes
 
@@ -18,13 +18,13 @@ Plus per-workspace `linkedin_ad_account_id` in the `integrations` table.
 ## Setup
 
 ```
-npx pectus connect linkedin --workspace <code>
+npx pectus connect linkedin --project <code>
 ```
 
 ## Schedule
 
 ```
-npx pectus app fetch linkedin --workspace <code> --since <YYYY-MM-DD> --until <YYYY-MM-DD>
+npx pectus app fetch linkedin --project <code> --since <YYYY-MM-DD> --until <YYYY-MM-DD>
 ```
 
 ## Service docs

@@ -23,11 +23,11 @@ export async function switchBrand(
 
   const head = tail[0];
 
-  if (head === "workspaces" && tail[1]) {
+  if (head === "projects" && tail[1]) {
     const code = tail[1];
     const supabase = await createServerClient();
     const { data } = await supabase
-      .from("workspaces")
+      .from("projects")
       .select("id")
       .eq("brand_id", target.id)
       .eq("code", code)

@@ -19,15 +19,58 @@ export type AppListing = AppManifest & {
 
 const APPS_DIR = path.join(process.cwd(), "..", "apps");
 
-export const CONTENT_HUB_WORKSPACE_TABS = [
-  { label: "Pages", segment: "pages" },
-  { label: "Articles", segment: "articles" },
-] as const;
+export type AppSidebarItem = {
+  label: string;
+  href: (base: string) => string;
+};
 
-export const CONTENT_HUB_WORKSPACE_SETTINGS = [
-  { label: "Site URL", segment: "site-url" },
-  { label: "Redirects", segment: "redirects" },
-] as const;
+export type AppSidebarManifest = {
+  label: string;
+  tooltip: string;
+  items: AppSidebarItem[];
+};
+
+export const APP_SIDEBAR_MANIFESTS: Record<string, AppSidebarManifest> = {
+  "content-hub": {
+    label: "Content Hub",
+    tooltip:
+      "Publish pages and articles to a public site you control. Includes plan, gap analysis, sources, and reviews.",
+    items: [
+      { label: "Pages", href: (b) => `${b}/apps/content-hub/pages` },
+      { label: "Articles", href: (b) => `${b}/apps/content-hub/articles` },
+      { label: "Plan", href: (b) => `${b}/apps/content-hub/plan` },
+      { label: "Gap", href: (b) => `${b}/apps/content-hub/gap` },
+      { label: "Sources", href: (b) => `${b}/apps/content-hub/sources` },
+      { label: "Reviews", href: (b) => `${b}/apps/content-hub/reviews` },
+      {
+        label: "Site URL",
+        href: (b) => `${b}/apps/content-hub/settings/site-url`,
+      },
+      {
+        label: "Redirects",
+        href: (b) => `${b}/apps/content-hub/settings/redirects`,
+      },
+      {
+        label: "Review policy",
+        href: (b) => `${b}/apps/content-hub/settings/review-policy`,
+      },
+    ],
+  },
+  "seed-keywords": {
+    label: "Seed keywords",
+    tooltip: "Manual seed keyword list per project.",
+    items: [
+      { label: "Settings", href: (b) => `${b}/apps/seed-keywords/settings` },
+    ],
+  },
+  ga4: {
+    label: "GA4",
+    tooltip: "Google Analytics 4 traffic data.",
+    items: [
+      { label: "Performance", href: (b) => `${b}/apps/ga4/performance` },
+    ],
+  },
+};
 
 function parseFrontmatter(raw: string): Record<string, string> {
   const match = raw.match(/^---\n([\s\S]*?)\n---/);
@@ -73,11 +116,16 @@ export type ListAppsResult = {
   schemaMissing: boolean;
 };
 
-export async function listApps(): Promise<ListAppsResult> {
+export async function listAppsForProject(
+  projectId: string,
+): Promise<ListAppsResult> {
   const supabase = await createServerClient();
   const [manifests, { data: rows, error }] = await Promise.all([
     listAppManifests(),
-    supabase.from("activated_apps").select("app_name, activated_at, status"),
+    supabase
+      .from("activated_apps")
+      .select("app_name, activated_at, status")
+      .eq("project_id", projectId),
   ]);
 
   const schemaMissing = isMissingTableError(error);
@@ -116,62 +164,83 @@ function isMissingTableError(err: unknown): boolean {
   return false;
 }
 
-export async function isAppActive(appName: string): Promise<boolean> {
+export async function isAppActiveForProject(
+  projectId: string,
+  appName: string,
+): Promise<boolean> {
   const supabase = await createServerClient();
   const { data } = await supabase
     .from("activated_apps")
     .select("status")
+    .eq("project_id", projectId)
     .eq("app_name", appName)
     .maybeSingle();
   return data?.status === "active";
 }
 
-export async function getWorkspaceAppConfig<T = Record<string, unknown>>(
-  workspaceId: string,
+export async function listActivatedAppsForProject(
+  projectId: string,
+): Promise<string[]> {
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("activated_apps")
+    .select("app_name")
+    .eq("project_id", projectId)
+    .eq("status", "active");
+  return (data ?? []).map((r) => r.app_name as string);
+}
+
+export async function getAppConfig<T = Record<string, unknown>>(
+  projectId: string,
   appName: string,
 ): Promise<T | null> {
   const supabase = await createServerClient();
   const { data } = await supabase
-    .from("workspace_app_config")
+    .from("app_config")
     .select("config")
-    .eq("workspace_id", workspaceId)
+    .eq("project_id", projectId)
     .eq("app_name", appName)
     .maybeSingle();
   return (data?.config as T | undefined) ?? null;
 }
 
-export async function setWorkspaceAppConfig(
-  workspaceId: string,
+export async function setAppConfig(
+  projectId: string,
   appName: string,
   config: Record<string, unknown>,
 ) {
   const supabase = await createServerClient();
-  await supabase.from("workspace_app_config").upsert(
+  await supabase.from("app_config").upsert(
     {
-      workspace_id: workspaceId,
+      project_id: projectId,
       app_name: appName,
       config,
       updated_at: new Date().toISOString(),
     },
-    { onConflict: "workspace_id,app_name" },
+    { onConflict: "project_id,app_name" },
   );
 }
 
-export async function activateApp(
+export async function activateAppForProject(
+  projectId: string,
   appName: string,
   config: Record<string, unknown> = {},
 ) {
   const supabase = await createServerClient();
   await supabase.from("activated_apps").upsert(
-    { app_name: appName, status: "active", config },
-    { onConflict: "app_name" },
+    { project_id: projectId, app_name: appName, status: "active", config },
+    { onConflict: "project_id,app_name" },
   );
 }
 
-export async function deactivateApp(appName: string) {
+export async function deactivateAppForProject(
+  projectId: string,
+  appName: string,
+) {
   const supabase = await createServerClient();
   await supabase
     .from("activated_apps")
     .update({ status: "paused" })
+    .eq("project_id", projectId)
     .eq("app_name", appName);
 }

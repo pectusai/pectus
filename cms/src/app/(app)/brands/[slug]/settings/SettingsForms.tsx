@@ -99,7 +99,7 @@ function DeleteForm({ brand }: { brand: Brand }) {
       </h2>
       <p className="mt-1 text-xs text-red-700">
         Deleting <span className="font-mono">{brand.slug}</span> drops every
-        workspace, integration, article, page, insight, and review attached to
+        project, integration, article, page, insight, and review attached to
         it, plus the disk folder <span className="font-mono">brands/{brand.slug}/</span>.
         This cannot be undone.
       </p>

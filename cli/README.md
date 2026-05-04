@@ -11,8 +11,8 @@ pectus connect supabase             create project, run migrations, seed admin
 pectus connect google               OAuth + service account setup
 pectus connect vercel               link project, push env
 pectus connect github               set upstream + origin
-pectus workspace create             create a workspace
-pectus workspace list               list workspaces
+pectus project create             create a project
+pectus project list               list projects
 pectus analyze                      run a skill
 pectus skills list                  list installed skills + versions
 pectus knowledge digest             run knowledge-digest skill
@@ -32,7 +32,7 @@ All commands are stubbed in v1. Implementation lands in PR5 alongside the `conte
 npx pectus <command>
 ```
 
-This uses the workspace-resolved CLI rather than a globally installed one — keeps the user's CLI version in lockstep with their fork's expected version.
+This uses the project-resolved CLI rather than a globally installed one — keeps the user's CLI version in lockstep with their fork's expected version.
 
 ## Updating
 

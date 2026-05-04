@@ -2,7 +2,7 @@
   "name": "@pectus/cms",
   "version": "0.1.0",
   "private": true,
-  "description": "Pectus CMS — the Next.js admin app for managing workspaces, brand, ICP, and analyses",
+  "description": "Pectus CMS — the Next.js admin app for managing projects, brand, ICP, and analyses",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -17,6 +17,7 @@
     "next": "^16.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "xlsx": "^0.18.5",
     "zod": "^3.23.0",
     "zod-to-json-schema": "^3.25.2"
   },

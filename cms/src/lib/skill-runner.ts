@@ -29,7 +29,7 @@ import { InsightBatch, type InsightBatchOutput } from "@/lib/types/insight";
  * ------------------------------------------------------------------------- */
 
 export type SkillInput =
-  | "workspace_id"
+  | "project_id"
   | "top_keywords"
   | "recent_articles"
   | "icp_profile"
@@ -59,7 +59,7 @@ export type SkillFrontmatter = {
 
 export type SkillRunOptions = {
   skill: string;
-  workspaceId: string;
+  projectId: string;
   userId?: string;
   /* Override the model declared in frontmatter. */
   model?: string;
@@ -98,7 +98,7 @@ const APPS_ROOT = path.resolve(process.cwd(), "..", "apps");
 
 /* Resolve a skill name to its folder.
  *
- * Names without a "/" → workspace-level skill at skills/<name>/.
+ * Names without a "/" → project-level skill at skills/<name>/.
  * Names with a "/" → inbound app interpretation skill at apps/<app>/<sub>/.
  *   E.g. "seed-keywords/insights" → apps/seed-keywords/insights/.
  *
@@ -188,12 +188,12 @@ type Supabase = Awaited<ReturnType<typeof createServerClient>>;
 
 async function gatherTopKeywords(
   supabase: Supabase,
-  workspaceId: string,
+  projectId: string,
 ): Promise<GatheredInput> {
   const { data } = await supabase
     .from("keywords")
     .select("keyword, search_volume, current_rank, intent, metadata")
-    .eq("workspace_id", workspaceId)
+    .eq("project_id", projectId)
     .order("search_volume", { ascending: false, nullsFirst: false })
     .limit(200);
 
@@ -213,12 +213,12 @@ async function gatherTopKeywords(
 
 async function gatherRecentArticles(
   supabase: Supabase,
-  workspaceId: string,
+  projectId: string,
 ): Promise<GatheredInput> {
   const { data } = await supabase
     .from("articles")
     .select("slug, title, description, category, date_published, word_count, status")
-    .eq("workspace_id", workspaceId)
+    .eq("project_id", projectId)
     .order("date_published", { ascending: false, nullsFirst: false })
     .limit(500);
 
@@ -235,12 +235,12 @@ async function gatherRecentArticles(
 
 async function gatherIcpProfile(
   supabase: Supabase,
-  workspaceId: string,
+  projectId: string,
 ): Promise<GatheredInput> {
   const { data } = await supabase
     .from("icp_profiles")
     .select("personas, painpoints, notes")
-    .eq("workspace_id", workspaceId)
+    .eq("project_id", projectId)
     .maybeSingle();
   return {
     label: "ICP",
@@ -252,7 +252,7 @@ async function gatherIcpProfile(
 async function gatherBrandProfile(
   supabase: Supabase,
   brandId: string,
-  workspaceName: string,
+  projectName: string,
 ): Promise<GatheredInput> {
   const { data } = await supabase
     .from("brands")
@@ -261,7 +261,7 @@ async function gatherBrandProfile(
     .maybeSingle();
   return {
     label: "BRAND",
-    text: formatBrandContext(data as BrandProfile | null, workspaceName),
+    text: formatBrandContext(data as BrandProfile | null, projectName),
     count: data ? 1 : 0,
   };
 }
@@ -292,12 +292,12 @@ async function gatherKnowledgeInsights(
 
 async function gatherAnswerPublic(
   supabase: Supabase,
-  workspaceId: string,
+  projectId: string,
 ): Promise<GatheredInput> {
   const { data } = await supabase
     .from("answer_public_entries")
     .select("seed_keyword, tab, bucket, text")
-    .eq("workspace_id", workspaceId)
+    .eq("project_id", projectId)
     .limit(2000);
 
   const lines = (data ?? []).map(
@@ -312,13 +312,13 @@ async function gatherAnswerPublic(
 
 async function gatherLastRun(
   supabase: Supabase,
-  workspaceId: string,
+  projectId: string,
   skillName: string,
 ): Promise<GatheredInput> {
   const { data } = await supabase
     .from("skill_runs")
     .select("output, model, started_at")
-    .eq("workspace_id", workspaceId)
+    .eq("project_id", projectId)
     .eq("skill_name", skillName)
     .eq("status", "completed")
     .order("started_at", { ascending: false })
@@ -355,12 +355,12 @@ async function gatherSitemap(
 /* Articles have `blocks jsonb`, not body_markdown. Derive a plaintext approximation. */
 async function gatherArticleBodies(
   supabase: Supabase,
-  workspaceId: string,
+  projectId: string,
 ): Promise<GatheredInput> {
   const { data } = await supabase
     .from("articles")
     .select("title, blocks")
-    .eq("workspace_id", workspaceId)
+    .eq("project_id", projectId)
     .limit(20);
   const lines = (data ?? []).map((a) => {
     const blocks = Array.isArray(a.blocks) ? (a.blocks as Array<Record<string, unknown>>) : [];
@@ -384,12 +384,12 @@ async function gatherArticleBodies(
 
 async function gatherTopicClusters(
   supabase: Supabase,
-  workspaceId: string,
+  projectId: string,
 ): Promise<GatheredInput> {
   const { data } = await supabase
     .from("weekly_analyses")
     .select("analysis, week_start")
-    .eq("workspace_id", workspaceId)
+    .eq("project_id", projectId)
     .eq("status", "done")
     .order("week_start", { ascending: false })
     .limit(1)
@@ -409,12 +409,12 @@ async function gatherTopicClusters(
 
 async function gatherSitePlanTree(
   supabase: Supabase,
-  workspaceId: string,
+  projectId: string,
 ): Promise<GatheredInput> {
   const { data } = await supabase
     .from("site_plan_nodes")
     .select("id, parent_id, title, intent, suggested_template, suggested_purpose, materialized_path, status")
-    .eq("workspace_id", workspaceId)
+    .eq("project_id", projectId)
     .order("materialized_path", { ascending: true });
   return {
     label: "EXISTING SITE PLAN",
@@ -427,12 +427,12 @@ async function gatherSitePlanTree(
 
 async function gatherSeedKeywords(
   supabase: Supabase,
-  workspaceId: string,
+  projectId: string,
 ): Promise<GatheredInput> {
   const { data } = await supabase
     .from("seed_keywords")
     .select("keyword")
-    .eq("workspace_id", workspaceId);
+    .eq("project_id", projectId);
   const lines = (data ?? []).map((k) => `- ${k.keyword}`);
   return {
     label: "SEED KEYWORDS",
@@ -443,12 +443,12 @@ async function gatherSeedKeywords(
 
 async function gatherTopics(
   supabase: Supabase,
-  workspaceId: string,
+  projectId: string,
 ): Promise<GatheredInput> {
   const { data } = await supabase
     .from("topics")
     .select("id, name, intent, source, status")
-    .eq("workspace_id", workspaceId);
+    .eq("project_id", projectId);
   return {
     label: "TOPICS",
     text: data && data.length
@@ -462,14 +462,14 @@ async function gatherTopics(
  * consumer's prompt readability. Filters out expired insights. */
 async function gatherInsights(
   supabase: Supabase,
-  workspaceId: string,
+  projectId: string,
 ): Promise<GatheredInput> {
   const { data } = await supabase
     .from("insights")
     .select(
       "app_id, source, type, title, opportunity, evidence, confidence, topic_hint, related_keywords, related_urls, created_at",
     )
-    .eq("workspace_id", workspaceId)
+    .eq("project_id", projectId)
     .or("expires_at.is.null,expires_at.gt." + new Date().toISOString())
     .order("created_at", { ascending: false });
 
@@ -516,7 +516,7 @@ async function gatherInsights(
 export async function runSkill<T = unknown>(
   options: SkillRunOptions,
 ): Promise<SkillRunResult<T>> {
-  const { skill, workspaceId, userId, args } = options;
+  const { skill, projectId, userId, args } = options;
 
   let runId: string | null = null;
   const supabase = await createServerClient();
@@ -539,26 +539,26 @@ export async function runSkill<T = unknown>(
     const { meta, body } = parseFrontmatter(raw);
     const expandedBody = await expandReferences(body, skillDir);
 
-    const { data: workspace } = await supabase
-      .from("workspaces")
+    const { data: project } = await supabase
+      .from("projects")
       .select("id, name, code, locale, brand_id")
-      .eq("id", workspaceId)
+      .eq("id", projectId)
       .maybeSingle();
 
-    if (!workspace) {
-      return { ok: false, error: `Workspace ${workspaceId} not found.`, runId };
+    if (!project) {
+      return { ok: false, error: `Project ${projectId} not found.`, runId };
     }
 
     const { data: brand } = await supabase
       .from("brands")
       .select("id, slug")
-      .eq("id", workspace.brand_id)
+      .eq("id", project.brand_id)
       .maybeSingle();
 
     if (!brand) {
       return {
         ok: false,
-        error: `Brand ${workspace.brand_id} not found for workspace ${workspaceId}.`,
+        error: `Brand ${project.brand_id} not found for project ${projectId}.`,
         runId,
       };
     }
@@ -567,54 +567,54 @@ export async function runSkill<T = unknown>(
     const gathered: GatheredInput[] = [];
     for (const input of declared) {
       switch (input) {
-        case "workspace_id":
+        case "project_id":
           gathered.push({
-            label: "WORKSPACE",
-            text: `id=${workspace.id}\ncode=${workspace.code}\nname=${workspace.name}\nlocale=${workspace.locale}`,
+            label: "PROJECT",
+            text: `id=${project.id}\ncode=${project.code}\nname=${project.name}\nlocale=${project.locale}`,
             count: 1,
           });
           break;
         case "top_keywords":
-          gathered.push(await gatherTopKeywords(supabase, workspace.id));
+          gathered.push(await gatherTopKeywords(supabase, project.id));
           break;
         case "recent_articles":
-          gathered.push(await gatherRecentArticles(supabase, workspace.id));
+          gathered.push(await gatherRecentArticles(supabase, project.id));
           break;
         case "icp_profile":
-          gathered.push(await gatherIcpProfile(supabase, workspace.id));
+          gathered.push(await gatherIcpProfile(supabase, project.id));
           break;
         case "brand_profile":
-          gathered.push(await gatherBrandProfile(supabase, brand.id, workspace.name));
+          gathered.push(await gatherBrandProfile(supabase, brand.id, project.name));
           break;
         case "knowledge_insights":
           gathered.push(await gatherKnowledgeInsights(brand.slug));
           break;
         case "answer_public_entries":
-          gathered.push(await gatherAnswerPublic(supabase, workspace.id));
+          gathered.push(await gatherAnswerPublic(supabase, project.id));
           break;
         case "last_run":
-          gathered.push(await gatherLastRun(supabase, workspace.id, skill));
+          gathered.push(await gatherLastRun(supabase, project.id, skill));
           break;
         case "sitemap":
           gathered.push(await gatherSitemap(supabase));
           break;
         case "article_bodies":
-          gathered.push(await gatherArticleBodies(supabase, workspace.id));
+          gathered.push(await gatherArticleBodies(supabase, project.id));
           break;
         case "topic_clusters":
-          gathered.push(await gatherTopicClusters(supabase, workspace.id));
+          gathered.push(await gatherTopicClusters(supabase, project.id));
           break;
         case "site_plan_tree":
-          gathered.push(await gatherSitePlanTree(supabase, workspace.id));
+          gathered.push(await gatherSitePlanTree(supabase, project.id));
           break;
         case "seed_keywords":
-          gathered.push(await gatherSeedKeywords(supabase, workspace.id));
+          gathered.push(await gatherSeedKeywords(supabase, project.id));
           break;
         case "topics":
-          gathered.push(await gatherTopics(supabase, workspace.id));
+          gathered.push(await gatherTopics(supabase, project.id));
           break;
         case "insights":
-          gathered.push(await gatherInsights(supabase, workspace.id));
+          gathered.push(await gatherInsights(supabase, project.id));
           break;
         default:
           gathered.push({
@@ -659,7 +659,7 @@ export async function runSkill<T = unknown>(
       .from("skill_runs")
       .insert({
         skill_name: skill,
-        workspace_id: workspace.id,
+        project_id: project.id,
         generated_by: userId ?? null,
         status: "running",
         model,
@@ -746,17 +746,25 @@ export async function runSkill<T = unknown>(
 
       /* If this is an app interpretation skill (apps/<X>/insights/), persist
        * the produced Insight rows to the insights table. The skill's schema
-       * extends InsightBatch; runtime parse via the shared schema confirms. */
+       * extends InsightBatch; runtime parse via the shared schema confirms.
+       * If the parse fails, log loudly — silent zero-output here was the
+       * v0.4.1 seed-keywords bug. */
       if (skill.endsWith("/insights")) {
         const appId = skill.slice(0, -"/insights".length);
         const batchParse = InsightBatch.safeParse(structuredOutput);
         if (batchParse.success) {
           await persistInsights(
             supabase,
-            workspace.id,
+            project.id,
             appId,
             batchParse.data,
             runId,
+          );
+        } else {
+          console.error(
+            `[skill-runner] ${skill}: structured output did not match InsightBatch shape. Insights NOT persisted.`,
+            batchParse.error.flatten(),
+            structuredOutput,
           );
         }
       }
@@ -854,15 +862,15 @@ async function listAppsWithInsights(): Promise<string[]> {
   }
 }
 
-/** Run any stale app interpretations for the workspace, in parallel.
+/** Run any stale app interpretations for the project, in parallel.
  *
- * Staleness rule: if there's no insight for this (workspace, app) pair, OR if
- * the app's last_fetched_at in workspace_data_freshness is newer than the
+ * Staleness rule: if there's no insight for this (project, app) pair, OR if
+ * the app's last_fetched_at in project_data_freshness is newer than the
  * most recent insight, the app needs re-interpretation.
  *
  * Returns the apps that were re-interpreted. */
 export async function runInterpretationsIfStale(
-  workspaceId: string,
+  projectId: string,
   options: { force?: boolean } = {},
 ): Promise<{ reinterpreted: string[]; skipped: string[]; failed: string[] }> {
   const supabase = await createServerClient();
@@ -875,12 +883,12 @@ export async function runInterpretationsIfStale(
     supabase
       .from("insights")
       .select("app_id, created_at")
-      .eq("workspace_id", workspaceId)
+      .eq("project_id", projectId)
       .order("created_at", { ascending: false }),
     supabase
-      .from("workspace_data_freshness")
+      .from("project_data_freshness")
       .select("surface, last_updated_at")
-      .eq("workspace_id", workspaceId),
+      .eq("project_id", projectId),
   ]);
 
   /* Latest insight per app. */
@@ -908,7 +916,7 @@ export async function runInterpretationsIfStale(
       const { data: seeds } = await supabase
         .from("seed_keywords")
         .select("created_at")
-        .eq("workspace_id", workspaceId)
+        .eq("project_id", projectId)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -932,7 +940,7 @@ export async function runInterpretationsIfStale(
     stale.map((app) =>
       runSkill({
         skill: `${app}/insights`,
-        workspaceId,
+        projectId,
       }),
     ),
   );
@@ -952,12 +960,12 @@ export async function runInterpretationsIfStale(
 }
 
 /* Persist a fresh batch of insights from an app interpretation skill.
- * Strategy: replace-on-rerun. Delete existing insights for (workspace, app)
+ * Strategy: replace-on-rerun. Delete existing insights for (project, app)
  * before inserting the new set. Avoids stale insights piling up across
  * reruns. The previous batch lives in skill_runs.output for history. */
 async function persistInsights(
   supabase: Supabase,
-  workspaceId: string,
+  projectId: string,
   appId: string,
   batch: InsightBatchOutput,
   runId: string | null,
@@ -965,13 +973,18 @@ async function persistInsights(
   await supabase
     .from("insights")
     .delete()
-    .eq("workspace_id", workspaceId)
+    .eq("project_id", projectId)
     .eq("app_id", appId);
 
-  if (batch.insights.length === 0) return;
+  if (batch.insights.length === 0) {
+    console.warn(
+      `[skill-runner] ${appId}: skill returned zero insights. Existing rows were cleared and nothing replaced them.`,
+    );
+    return;
+  }
 
   const rows = batch.insights.map((i) => ({
-    workspace_id: workspaceId,
+    project_id: projectId,
     app_id: appId,
     source: appId,
     type: i.type,
@@ -985,7 +998,13 @@ async function persistInsights(
     expires_at: i.expires_at,
     generated_by_run_id: runId,
   }));
-  await supabase.from("insights").insert(rows);
+  const { error } = await supabase.from("insights").insert(rows);
+  if (error) {
+    console.error(
+      `[skill-runner] ${appId}: failed to insert ${rows.length} insight rows:`,
+      error,
+    );
+  }
 }
 
 async function finalizeRun(

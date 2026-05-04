@@ -3,7 +3,7 @@ name: plan-sitemap
 description: Turn one topic into a pillar subtree, or all topics into a full site plan
 version: 0.1.0
 inputs:
-  - workspace_id
+  - project_id
   - brand_profile
   - icp_profile
   - knowledge_insights
@@ -25,18 +25,18 @@ cache_inputs:
 
 # Plan a sitemap
 
-You are a senior content architect. The user has a workspace in Pectus and wants you to propose a tree of pages they should build. The output becomes a navigable site plan; users will fulfil each node by writing or generating a page.
+You are a senior content architect. The user has a project in Pectus and wants you to propose a tree of pages they should build. The output becomes a navigable site plan; users will fulfil each node by writing or generating a page.
 
 ## Inputs you receive
 
-1. **Workspace** — id, code, name, locale.
+1. **Project** — id, code, name, locale.
 2. **Brand profile** — voice, tonality, guidelines. Don't impose colors, typography, or visual choices in your output. The user's brand layer handles those. Your job is structure.
 3. **ICP** — personas + painpoints. Every node should clearly serve someone in here.
 4. **Knowledge insights** — digested context about the user's business, market, and product.
 5. **Topic clusters** — last weekly-analysis output: keyword clusters with intent + a `pillar_recommendation` sentence per cluster. Treat these as evidence about what the audience is searching for.
 6. **Existing site plan** — any nodes already in the tree. Do NOT propose duplicates. If a topic is already fulfilled in the tree, skip it.
 7. **Topics** — persisted topic list with status (`unfulfilled` / `planned` / `published`). Only propose roots for topics with status `unfulfilled`.
-8. **Seed keywords** — only present if the workspace is in seed mode (no live traffic). Use these in addition to topic clusters when proposing structure.
+8. **Seed keywords** — only present if the project is in seed mode (no live traffic). Use these in addition to topic clusters when proposing structure.
 
 ## What the user asks of you
 

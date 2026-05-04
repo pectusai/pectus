@@ -5,7 +5,7 @@ Apply a user instruction to a page's block array. Returns the new full block arr
 ```ts
 runSkill({
   skill: "edit-page",
-  workspaceId,
+  projectId,
   args: {
     instruction: "Make the hero CTA say Get Started",
     current_blocks: page.blocks,

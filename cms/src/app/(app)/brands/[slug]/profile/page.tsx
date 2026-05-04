@@ -64,7 +64,7 @@ export default async function BrandPage({
         <h1 className="text-2xl font-semibold tracking-tight">Brand</h1>
         <p className="mt-1 text-sm text-zinc-600">
           Global brand identity. Voice, colors, fonts, and guidelines apply to
-          every workspace and to the public hub.
+          every project and to the public hub.
         </p>
         {!canEdit ? (
           <p className="mt-2 text-xs text-zinc-500">

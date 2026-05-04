@@ -96,7 +96,7 @@ async function run(): Promise<void> {
 
   outro(
     kleur.green(
-      "Install complete. Next: `npm run dev`, then `npx pectus workspace create`, then `npx pectus analyze --workspace <code> --skill weekly-analysis`.",
+      "Install complete. Next: `npm run dev`, then `npx pectus project create`, then `npx pectus analyze --project <code> --skill weekly-analysis`.",
     ),
   );
 }

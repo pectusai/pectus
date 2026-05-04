@@ -3,7 +3,7 @@ name: internal-linking
 description: Crawl your site and recommend inter-page links to build topical authority
 version: 1.0.0
 inputs:
-  - workspace_id
+  - project_id
   - max_depth
 outputs:
   - link_recommendations
@@ -18,7 +18,7 @@ You are an SEO link-sculpting specialist. The user has a site with N articles. Y
 
 ## Inputs
 
-1. The workspace's article inventory, including current body content (block-shaped from the parser).
+1. The project's article inventory, including current body content (block-shaped from the parser).
 2. The keyword each article currently targets (primary keyword from the GSC top query for the URL).
 3. The sitemap, so you know which URLs exist beyond the article inventory (e.g. product pages, landing pages).
 
@@ -37,4 +37,4 @@ You are an SEO link-sculpting specialist. The user has a site with N articles. Y
 
 ## Output file
 
-The skill writes `knowledge/linksculpting-{workspace_code}-{date}.md` to the workspace's knowledge folder. Subsequent runs append; old runs aren't deleted (the user can compare suggestions over time).
+The skill writes `knowledge/linksculpting-{project_code}-{date}.md` to the project's knowledge folder. Subsequent runs append; old runs aren't deleted (the user can compare suggestions over time).

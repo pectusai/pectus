@@ -1,5 +1,5 @@
 /**
- * fetch.ts — GSC API fetch for one workspace, one date range.
+ * fetch.ts — GSC API fetch for one project, one date range.
  *
  * Stub in v1. Real implementation lands in PR6.
  *
@@ -8,14 +8,14 @@
  * This module orchestrates the calls at two grains and shapes the results.
  *
  * Returns a GscFetchResult matching ./schema.ts. The runner upserts
- * keyword_rows into keywords (matching on workspace_id + query) and inserts
+ * keyword_rows into keywords (matching on project_id + query) and inserts
  * gsc_daily_rows into gsc_daily.
  */
 
 import type { GscFetchResultOutput } from "./schema.js";
 
 export async function fetch(_args: {
-  workspaceId: string;
+  projectId: string;
   siteUrl: string;
   since: string;
   until: string;

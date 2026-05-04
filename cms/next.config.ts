@@ -10,7 +10,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."
 loadEnvConfig(repoRoot);
 
 const config: NextConfig = {
-  /* Workspace packages ship .ts source. Next must transpile them. */
+  /* Project packages ship .ts source. Next must transpile them. */
   transpilePackages: [
     "@pectus/supabase",
     "@pectus/anthropic",
