@@ -14,14 +14,18 @@ You are Claude Code. The user just downloaded this file because they want to wak
  │                                              │
  │                < pectus />                   │
  │                                              │
- │           creator insights kit               │
- │           self-hosted  ·  v0.2               │
+ │         connector framework + UI             │
+ │           self-hosted  ·  v0.4.2             │
  │                                              │
  │                                              │
  ╰──────────────────────────────────────────────╯
 ```
 
-> Hi. I'm going to wake Pectus up on your laptop. Plan for 60 to 90 minutes total. About 90% of that is signing up for and verifying accounts (Supabase, Anthropic, Google Cloud, optionally Vercel and GitHub). The actual setup work between accounts is short. When I need something from you I'll tell you exactly what to click or paste. Ready?
+> Hi. I'm going to wake Pectus up on your laptop. Plan for 60 to 90 minutes total. About 90% of that is signing up for and verifying accounts (Supabase, Anthropic, Google Cloud, optionally Vercel and GitHub). The actual setup work between accounts is short. When I need something from you I'll tell you exactly what to click or paste.
+>
+> If you don't know what to do at any point — what something means, why I'm asking, whether your answer is good enough — just ask me like a friend. There are no dumb questions here. I'd rather pause and explain than have you click through something you weren't sure about.
+>
+> Ready?
 
 Wait for them to say yes. Then walk them through the steps below in order. Don't skip steps. Don't reorder them. If a step fails, show the error exactly as it came back and stop. Don't silently retry.
 
@@ -85,7 +89,7 @@ This installs across all projects (connectors, apps, cli, cms). Should complete 
 
 ## 4. Brand setup
 
-This step writes `brand/brand.json`, which is the seed for everything Pectus produces. We keep it light at install: just ask the user to describe their brand in their own words, then turn that description into `brand.json` directly. Do **not** run the full `npx pectus brand` wizard, and do **not** ask the user for a Claude Design URL here. That option is available later from the CMS Brand page once Pectus is running.
+This step writes `brands/<slug>/brand.json`, which is the seed for everything Pectus produces. (Pectus is multi-brand as of v0.4 — every brand lives under `brands/<its-slug>/`, and you can have several brands in one install.) We keep it light at install: just ask the user to describe their brand in their own words, then turn that description into `brand.json` directly. Do **not** run the full `npx pectus brand` wizard, and do **not** ask the user for a Claude Design URL here. That option is available later from the CMS Brand page once Pectus is running.
 
 Open with a reassuring framing message so the user knows they're not expected to nail the brand in one shot. Say something like:
 
@@ -95,9 +99,11 @@ Then ask for a short description:
 
 > "So tell me about the brand in your own words. The brand name and what you do, the voice you write in (warm? technical? dry? formal?), your main colors (hex codes if you have them, or descriptions like 'navy and burnt orange'), and your website URL. Anything else you want me to know is welcome. Two or three sentences is plenty. You'll polish everything from the Brand page once Pectus is running."
 
-Wait for their description. Ask one or two follow-up questions if you're missing a name, primary color, or voice direction. Don't grill them. The point of this step is to write *something* sensible to `brand/brand.json`, not to extract a complete brand strategy.
+Wait for their description. Ask one or two follow-up questions if you're missing a name, primary color, or voice direction. Don't grill them. The point of this step is to write *something* sensible to disk, not to extract a complete brand strategy.
 
-Then write `brand/brand.json` directly. The schema is at `brand/brand.json` already (you'll see the placeholder template there). Fields to fill in from their description:
+Pick a slug from the brand name (lowercase, hyphenated, ASCII-only — strip diacritics, replace whitespace and punctuation with hyphens, keep it under 80 chars). Confirm the slug back to the user before writing files. They can override it.
+
+Create the directory `brands/<slug>/` and write `brands/<slug>/brand.json`. Fields to fill in from their description:
 
 - `name`, `tagline`, `website_url`, `sitemap_url`
 - `colors.accent`, `colors.surface`, `colors.text`, `colors.muted`, `colors.border` (use sensible defaults if they only gave you one or two colors; cream surface, dark text, gray muted, hairline border are safe)
@@ -105,7 +111,7 @@ Then write `brand/brand.json` directly. The schema is at `brand/brand.json` alre
 - `tonality` (a short comma-separated list of adjectives if they gave you any)
 - Leave `logo`, `fonts`, `radius`, `image_model`, `imported_from` at their defaults. They can change these from the CMS later.
 
-After writing the file, summarize back to the user what you captured: "Brand name: X. Voice: Y. Primary color: Z. Anything I should change before we move on?" If they want corrections, edit and re-confirm.
+After writing the file, summarize back to the user what you captured: "Brand name: X. Slug: Y. Voice: Z. Primary color: W. Anything I should change before we move on?" If they want corrections, edit and re-confirm.
 
 Once they're happy, mention briefly: "If you want a richer design system later (full color palette, typography, component styles), open the Brand page in the CMS after install and import a Claude Design URL there. Skip that for now; we'll keep going."
 
@@ -147,37 +153,35 @@ If the user wants to analyze ad spend later (Google Ads, Meta, LinkedIn), the Li
 
 The user already created the project themselves in step 5 and the URL plus keys are in `.env.local`. Now we add the schema and create the admin login. **Do not run `npx pectus connect supabase`.** That command was built for an older flow that called the Supabase Management API. The supported flow now: you generate a SQL file the user pastes into Supabase's own SQL editor. The user keeps full control of their project.
 
-### 6a. Write a timestamped SQL file
+### 6a. Confirm the migration file is on disk
 
-Read every file in `connectors/supabase/migrations/` in numerical order, concatenate them with section comments, and write the result to a uniquely-named file at the install root (the same folder `pectus.md` lives in). Use a name like `run-<UTC ISO timestamp>.sql`, for example `run-2026-05-03T15-04-22Z.sql`. **Do not overwrite previous attempts.** If a prior run errored, the user benefits from being able to look at it later, and the unique name makes it obvious which file is the latest.
+As of v0.4.2, Pectus ships a single squashed migration at `connectors/supabase/migrations/0001_pectus_v04.sql`. There's no longer a build step — the user pastes that file directly. Verify it exists:
 
-Wrap the whole thing in a `BEGIN;` / `COMMIT;` block so a partial failure rolls back. Format:
-
-```sql
--- Pectus database schema. Generated by the install flow.
--- Paste the entire contents of this file into the Supabase SQL editor and click Run.
-BEGIN;
-
--- == 0001_initial.sql ==
-<contents of 0001_initial.sql>
-
--- == 0002_<name>.sql ==
-<contents of 0002>
-
--- ... and so on, in numerical order ...
-
-COMMIT;
+```
+ls connectors/supabase/migrations/
 ```
 
-Confirm the file landed by reading the first and last few lines back. Then tell the user where it is, e.g. "I just wrote the migration file to `<install path>/run-2026-05-03T15-04-22Z.sql`. Open that file when you copy from it."
+You should see `0001_pectus_v04.sql` and nothing else. If there are stray older `0001_initial.sql` etc. files (from a previous v0.4.1 install lying around), delete them — they don't apply to v0.4.2 and the file the user pastes must be exactly the v0.4.2 baseline.
 
-### 6b. Have the user run it in Supabase
+### 6b. Have the user reset and apply the schema in Supabase
 
-Walk them through this in plain words:
+If the user has any prior data in this Supabase project, the v0.4.2 migration won't apply cleanly on top of it (existing tables with old `workspace_id` columns will collide with new indexes referencing `project_id`). The plan is wipe-and-reinstall. Walk them through it:
 
-> "Open your Supabase project in the dashboard. In the left sidebar click **SQL Editor**, then **New query**. The editor often has placeholder code in it; select all (Cmd-A on Mac, Ctrl-A on Windows) and delete it first so the editor is empty. Then open the SQL file I just wrote in your install folder, copy everything in it, and paste it into the empty editor. Click **Run** (lower right). It should finish in a few seconds. If it errors, paste the error message back to me."
+> "Open your Supabase project in the dashboard. In the left sidebar click **SQL Editor**, then **New query**. The editor often has placeholder code in it; select all (Cmd-A on Mac, Ctrl-A on Windows) and delete it.
+>
+> First, paste this and click **Run** to wipe the public schema:"
 
-Wait for confirmation. If they paste an error, diagnose it. Most failures are an extension prerequisite (`uuid-ossp`, `pgcrypto`) that the user can enable from the same editor with a one-liner you give them.
+```sql
+drop schema if exists public cascade;
+create schema public;
+grant all on schema public to postgres, anon, authenticated, service_role;
+```
+
+> "It should say 'Success. No rows returned.' Now click **New query** again, open `connectors/supabase/migrations/0001_pectus_v04.sql` in your install folder, copy everything in it, and paste it into the empty editor. Click **Run**. Should finish in a few seconds. If it errors, paste the error message back to me."
+
+Wait for confirmation. If they paste an error, diagnose it. Most failures are an extension prerequisite (`uuid-ossp`, `pgcrypto`, `unaccent`) that the user can enable from the same editor with a one-liner you give them.
+
+If the user explicitly tells you their Supabase project is brand-new and empty, the schema-drop step is harmless but optional.
 
 ### 6c. Have the user create the admin user
 
@@ -193,9 +197,19 @@ Wait for the explicit "saved" signal before advancing. Don't accept "ok" or "got
 
 Once they say saved and give you the email, remember it for step 9. You don't need their password.
 
-### 6d. Done
+### 6d. Sync the brand row to Supabase
 
-The database has the Pectus schema, the user has an admin account. Nothing got created on the user's behalf via API. The `.env.local` from step 5 already has the values the CMS needs.
+Step 4 wrote `brands/<slug>/brand.json` to disk, but the database doesn't know about it yet. Push the brand row in:
+
+```
+cd <install path> && npx pectus brand sync
+```
+
+This walks every `brands/<slug>/brand.json` on disk and upserts each into the Supabase `brands` table by slug. Output should read `Synced 1 brand(s).` (or however many brand directories exist). If it errors, surface the message exactly and stop — usually a stale env var or a missed step in 6b/6c.
+
+### 6e. Done
+
+The database has the Pectus schema, the brand row exists, the user has an admin account. The `.env.local` from step 5 already has the values the CMS needs.
 
 ## 7. Connect Google (Search Console + Analytics)
 
@@ -250,7 +264,7 @@ If a `npm run dev` is already running from earlier, tell the user to stop it (Ct
 npm run dev
 ```
 
-This boots the Next.js admin app at `http://localhost:3000`. The user signs in with the admin email and password they set in step 6. They'll land on an empty Projects view — that's expected; they create their first project in the next step.
+This boots the Next.js admin app at `http://localhost:3000`. The user signs in with the admin email and password they set in step 6. They'll land on `/brands/<slug>` showing the brand from step 4 with an empty Projects list — that's expected; they create their first project in the next step.
 
 If another Pectus is already running on port 3000 (the user has a different brand's install open), start this one on a different port:
 
@@ -277,30 +291,29 @@ A project is one market or audience segment. If the user only sells in one count
 3. **Locale** — language and country, e.g. `en-GB` for British English, `en-US` for American English, `sv-SE` for Swedish.
 4. **Seed keywords** — 5 to 10 short phrases the project plans content around when there's no Search Console traffic yet (e.g. "best dtc skincare, retinol myths, sensitive skin routine"). Optional; the user can add them later from Project Settings → Seed keywords. The dashboard's first analysis uses these as the starting topic spine.
 
-The command creates the project row, sets a default review policy, and saves the seed keywords. The dashboard opens at `http://localhost:3000/projects/<code>`.
+The command creates the project row (under the brand from step 4), sets a default review policy, and saves the seed keywords. Open `http://localhost:3000/brands/<brand-slug>/projects/<code>` to see it.
 
 > **What happened to the site shape and GitHub repo questions?** They moved into the Content Hub settings page in the CMS (next step). The base project just captures identity now; the publish-target details live with the app that uses them.
 
-## 11. Activate Content Hub for the project
+## 11. Activate apps for the project
 
-If the user wants a public site (most users do — content-hub is the bundled outbound app), walk them through activating it in the CMS:
+In v0.4.2 every project starts with no apps active — the user picks. Walk them through activating Content Hub if they want a public site (most users do):
 
-1. Open `http://localhost:3000/apps` in their browser.
-2. Click the **content-hub** card. They land on the Content Hub settings page (`/apps/content-hub`). Activation happens by saving a working config from this page; there is no separate Activate button on the card.
-3. Fill in the form:
-   - **Project** — pick the project they just created in step 10.
-   - **Site shape** — Brand new site (Pectus runs the whole site, pages at `/`) or Existing site (Pectus adds a section under their existing site, pages at `/insights/` or similar).
-   - **Mount slug** — only shown for Existing site. Default `/insights/`. Must start and end with `/`.
+1. Open `http://localhost:3000/brands/<slug>/projects/<code>/apps` in their browser. (Or just click **Apps** in the project's sidebar.)
+2. Find the **content-hub** row and click **Activate**. The badge flips to "Active". The Content Hub group appears in the project sidebar with Pages, Articles, Plan, Gap, Sources, Reviews, and Settings (Site URL / Redirects / Review policy) as children.
+3. **Configure the publish target.** Click **Site URL** in the Content Hub sidebar group. Fill in:
+   - **Mount slug** — `/` if Pectus runs the whole site, `/insights/` (or similar) if Pectus only adds a section under an existing site.
    - **GitHub repo** — where Pectus pushes built pages. The user should:
      1. Open github.com → **New repository** → name it (something like `<their-brand>-pectus`) → don't tick README/license/gitignore → **Create repository**.
      2. Copy the URL from the browser address bar (looks like `https://github.com/yourname/yourrepo`).
      3. Paste it into the form. It accepts the full URL, the short `github.com/yourname/yourrepo` form, or the bare `yourname/yourrepo` form.
-     4. Or leave blank — they can fill it in later from Project → Content Hub → Site URL.
+     4. Or leave blank — the project still works for authoring; only Publish needs the repo set, and the publish button shows an inline CTA to come back here.
 
-   **Important if the user already has a website on Vercel + GitHub.** If they want Pectus to replace their existing site (most common scenario), tell them: don't reuse the existing site's repo. Use a fresh empty repo. After install, they'll switch their Vercel project's git source to the new repo. Full details at https://pectus.ai/docs/faq/install/replace-or-add-to-existing-site. If they ask why not reuse: because Pectus commits its own Astro app structure into the repo, which would replace whatever's already there. A new repo keeps the cutover clean and the rollback simple.
-4. Click **Save and activate Content Hub**. The CMS sidebar now shows the Content Hub group inside the project, with Pages, Articles, Site URL, and Redirects as children.
+   **Important if the user already has a website on Vercel + GitHub.** If they want Pectus to replace their existing site (most common scenario), tell them: don't reuse the existing site's repo. Use a fresh empty repo. After install, they'll switch their Vercel project's git source to the new repo. Full details at https://pectus.ai/docs/faq/install/replace-or-add-to-existing-site.
 
-If the user is installing Pectus for analysis only (no public site), skip this step. They can activate Content Hub later from `/apps` whenever they decide they want to publish.
+If the user is installing Pectus for analysis only (no public site), skip steps 11.2 and 11.3. They can activate Content Hub later from the project's Apps page whenever they decide to publish.
+
+Other apps the user might want to activate now or later (each from the same Apps page): **gsc** for Search Console queries, **ga4** for Google Analytics traffic, **seed-keywords** for a manual keyword list. Activation just adds the surface to the sidebar; per-app config (Google service account, GA4 property, Search Console site) lives under brand Settings → Google integration.
 
 ## 12. Run the first analysis
 

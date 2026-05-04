@@ -18,13 +18,26 @@ program
     await run();
   });
 
-program
-  .command("brand")
-  .description("Interactive brand setup")
+const brand = program.command("brand").description("Brand management");
+brand
+  .command("setup")
+  .description("Interactive brand setup (writes brands/<slug>/brand.json)")
   .action(async () => {
     const { run } = await import("./commands/brand.js");
     await run();
   });
+brand
+  .command("sync")
+  .description("Push every brands/<slug>/brand.json on disk into Supabase")
+  .action(async () => {
+    const { sync } = await import("./commands/brand.js");
+    await sync();
+  });
+// Back-compat: bare `pectus brand` runs the interactive setup as before.
+brand.action(async () => {
+  const { run } = await import("./commands/brand.js");
+  await run();
+});
 
 const connect = program.command("connect").description("Connect external services");
 for (const service of ["supabase", "google", "vercel", "github"] as const) {

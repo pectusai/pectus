@@ -179,6 +179,81 @@ async function promptFont(role: "heading" | "body"): Promise<FontDef> {
   };
 }
 
+export async function sync(): Promise<void> {
+  loadEnv();
+  const repo = findRepoRoot();
+  intro(kleur.bold().bgBlue().white(" Pectus / Brand sync "));
+
+  const { getServiceClient } = await import("../lib/supabase.js");
+  const supabase = await getServiceClient();
+
+  const root = path.join(repo, "brands");
+  if (!fs.existsSync(root)) {
+    cancel(
+      `No brands/ folder at ${root}. Run 'npx pectus brand' or write brands/<slug>/brand.json by hand first.`,
+    );
+    process.exit(1);
+  }
+  const slugs = fs
+    .readdirSync(root, { withFileTypes: true })
+    .filter((e) => e.isDirectory())
+    .map((e) => e.name);
+  if (slugs.length === 0) {
+    cancel(`No brand directories under ${root}.`);
+    process.exit(1);
+  }
+
+  const s = spinner();
+  s.start(`Syncing ${slugs.length} brand(s) to Supabase`);
+  let synced = 0;
+  let skipped = 0;
+  for (const slug of slugs) {
+    const file = path.join(root, slug, "brand.json");
+    if (!fs.existsSync(file)) {
+      skipped++;
+      continue;
+    }
+    try {
+      const brand = JSON.parse(fs.readFileSync(file, "utf8"));
+      const payload: Record<string, unknown> = {
+        slug,
+        name: brand.name ?? null,
+        tagline: brand.tagline ?? null,
+        website_url: brand.website_url ?? null,
+        sitemap_url: brand.sitemap_url ?? null,
+        voice: brand.voice ?? null,
+        tonality: brand.tonality ?? null,
+        image_model: brand.image_model ?? null,
+        colors: brand.colors ?? null,
+        fonts: brand.fonts ?? null,
+        radius: brand.radius ?? null,
+        imported_from: brand.imported_from ?? null,
+      };
+      const { error } = await supabase
+        .from("brands")
+        .upsert(payload, { onConflict: "slug" });
+      if (error) {
+        s.stop(`Brand sync failed for ${slug}.`);
+        console.error(kleur.red(`  ${error.message}`));
+        process.exit(1);
+      }
+      synced++;
+    } catch (err) {
+      s.stop(`Brand sync error for ${slug}.`);
+      console.error(
+        kleur.red(`  ${err instanceof Error ? err.message : String(err)}`),
+      );
+      process.exit(1);
+    }
+  }
+  s.stop(`Synced ${synced} brand(s)${skipped ? `, skipped ${skipped}` : ""}.`);
+  outro(
+    kleur.green(
+      `Done. Run 'npx pectus project create' to add a project under one of these brands.`,
+    ),
+  );
+}
+
 export async function run(): Promise<void> {
   loadEnv();
   const repo = findRepoRoot();

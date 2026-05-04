@@ -4,6 +4,7 @@ import {
   intro,
   outro,
   text,
+  select,
   isCancel,
   cancel,
   spinner,
@@ -19,11 +20,53 @@ function bail(msg = "Cancelled."): never {
 
 const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/u;
 
+type BrandRow = { id: string; slug: string; name: string | null };
+
+async function pickBrand(
+  supabase: Awaited<ReturnType<typeof getServiceClient>>,
+): Promise<BrandRow> {
+  const { data, error } = await supabase
+    .from("brands")
+    .select("id, slug, name")
+    .order("created_at", { ascending: true });
+  if (error) {
+    console.error(kleur.red(`brands lookup failed: ${error.message}`));
+    process.exit(1);
+  }
+  const brands = (data ?? []) as BrandRow[];
+  if (brands.length === 0) {
+    bail(
+      "No brands in Supabase yet. Run `npx pectus brand sync` first to push your brands/<slug>/brand.json onto the brands table.",
+    );
+  }
+  if (brands.length === 1) {
+    const only = brands[0];
+    console.log(
+      kleur.dim(
+        `Using the only brand: ${only.name ?? only.slug} (${only.slug}).`,
+      ),
+    );
+    return only;
+  }
+  const choice = await select({
+    message: "Which brand should this project belong to?",
+    options: brands.map((b) => ({
+      label: `${b.name ?? b.slug} (${b.slug})`,
+      value: b.slug,
+    })),
+  });
+  if (isCancel(choice)) bail();
+  const selected = brands.find((b) => b.slug === choice);
+  if (!selected) bail(`Brand ${choice} not found.`);
+  return selected!;
+}
+
 export async function create(): Promise<void> {
   loadEnv();
   intro(kleur.bold().bgMagenta().white(" Pectus / Project create "));
 
   const supabase = await getServiceClient();
+  const brand = await pickBrand(supabase);
 
   const name = await text({
     message: 'Market name (e.g. "United Kingdom")',
@@ -47,11 +90,12 @@ export async function create(): Promise<void> {
   });
   if (isCancel(code)) bail();
 
-  // Uniqueness check.
+  // Uniqueness check (per-brand: a brand can have only one project per code).
   const codeStr = (code as string).trim();
   const { data: existing, error: exErr } = await supabase
     .from("projects")
     .select("id")
+    .eq("brand_id", brand.id)
     .eq("code", codeStr)
     .maybeSingle();
   if (exErr && !/no rows/i.test(exErr.message)) {
@@ -59,7 +103,9 @@ export async function create(): Promise<void> {
     process.exit(1);
   }
   if (existing) {
-    bail(`A project with code "${codeStr}" already exists.`);
+    bail(
+      `Brand ${brand.slug} already has a project with code "${codeStr}".`,
+    );
   }
 
   const locale = await text({
@@ -103,6 +149,7 @@ export async function create(): Promise<void> {
   const { data: created, error: insErr } = await supabase
     .from("projects")
     .insert({
+      brand_id: brand.id,
       name: (name as string).trim(),
       code: codeStr,
       locale: localeStr,
@@ -147,8 +194,8 @@ export async function create(): Promise<void> {
 
   outro(
     kleur.green(
-      `Project ready. Open http://localhost:3000/projects/${created.code} to see it. ` +
-        `To turn on the public site (Pages, Articles, Publish), open http://localhost:3000/apps and activate Content Hub.`,
+      `Project ready. Open http://localhost:3000/brands/${brand.slug}/projects/${created.code} to see it. ` +
+        `To turn on the public site (Pages, Articles, Publish), open the project's Apps page and activate Content Hub.`,
     ),
   );
 }
