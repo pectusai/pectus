@@ -35,11 +35,23 @@ Wait for them to say yes. Then walk them through the steps below in order. Don't
 
 Speak to the user like a person who has installed maybe one or two dev tools before. Define jargon the first time it shows up. When you ask for a value, say what it looks like (e.g. "starts with `sk-ant-`"). When you point them at a console, tell them what they'll click once they're there.
 
+**Critical rule: don't expose scary diagnostic noise to the user.** This includes: raw npm error output, stack traces, source-code reads, exploratory `which`/`ls`/`cat` runs, "let me check the CLI source" rambling, half-finished thoughts about whether something might be a stub, and back-and-forth Bash invocations to test commands. The user sees terminal output as a wall of red and assumes things are broken. Do all that work silently if you need to. Only what's necessary for the user to know — what's done, what's next, what they need to type or click — should reach them. If you discover something unexpected (a CLI command isn't wired, an env var is missing), summarize the finding in one calm sentence and tell them what you're doing about it. Don't paste the proof.
+
+**Critical rule: open every step with a one-line user-facing preamble.** Format: `**Step N: <title>.** <one sentence on why this step exists, in plain words>.` Then do the work. The preamble text for each step is given inside that step below — print it verbatim. The point is that a non-technical user reading the chat understands what they're about to do and why before any commands run.
+
+**Critical rule: avoid CLI jargon in user-visible text.** Words like `npm link`, `PATH`, `npx`, `bin`, `symlink`, `stub`, `source` are scary if the user doesn't already know them. If you must run a CLI command in front of them, frame it: "I'll run `<command>` — this <plain-words explanation>." If you must say a jargon term, define it inline once. Better: do the technical step silently and tell the user the result in plain words ("Pectus is now installed locally" instead of "I just `npm link`-ed the cli/ folder so `pectus` is on `PATH`").
+
+**Critical rule: short messages, frequent check-ins.** No walls of text. Two or three sentences max per message, then a check-in like "Good to keep going?" or "Want me to continue?" or "Anything to ask before we move on?". The user should feel like they're chatting with a friend who's helping, not reading a manual. If a step has multiple sub-actions, walk through them one at a time with a check-in between, not as a single bullet list dump. Long explanations belong inline in pectus.md (for you), not in chat (for the user).
+
 ---
 
 ## 1. Check prerequisites
 
-Run:
+Print to the user verbatim:
+
+> **Step 1 of 13: prerequisites.** Quick check that your laptop has the basic tools Pectus needs to run (Node, npm, git). 30 seconds.
+
+Then run:
 
 ```
 which node npm npx git
@@ -48,6 +60,10 @@ which node npm npx git
 You need Node.js 20.19 or later, npm 10+, and git. The 20.19 floor is set by Vite (used inside the CMS build) and several other deps that need ≥20.18.1. If `node --version` reports anything below 20.19, install a newer Node before continuing — `npm install` will warn loudly otherwise and parts of the dev server can fail in non-obvious ways. macOS path: install Homebrew (`https://brew.sh`), then `brew install node git`. To pin a specific version, use `nvm install 20` and `nvm use 20`.
 
 ## 2. Clone the upstream repo (or confirm an existing clone)
+
+Print to the user verbatim:
+
+> **Step 2 of 13: downloading Pectus.** I'm putting the Pectus code on your laptop so you can run it locally. Takes about a minute.
 
 First, figure out whether the user already has the repo on disk.
 
@@ -81,9 +97,29 @@ If the target path already exists but is not a Pectus clone (no `apps/`, `cms/`,
 
 ## 3. Install dependencies
 
+Print to the user verbatim:
+
+> **Step 3 of 13: installing the building blocks.** Pulling down the libraries Pectus uses. About 60 to 90 seconds.
+
+Run:
+
 ```
 npm install
 ```
+
+Pectus is set up as an npm workspace, so this single install also links the `pectus` CLI into `node_modules/.bin/`, making `npx pectus ...` work in later steps.
+
+Verify the link landed by running silently:
+
+```
+npx pectus --help
+```
+
+If that prints help text, you're set. If it errors with "could not determine executable to run" or similar, the workspace install didn't complete cleanly — re-run `npm install` from the install root once more. **Do not run `npm link` ad-hoc** to fix it; that creates a global symlink the user has to clean up later. A clean re-install of the root is the right path.
+
+When the install (and verify) finish, tell the user in plain words:
+
+> "Done. Pectus's building blocks are in place."
 
 This installs across all projects (connectors, apps, cli, cms). Should complete in under 90 seconds on a normal connection.
 
@@ -116,6 +152,16 @@ After writing the file, summarize back to the user what you captured: "Brand nam
 Once they're happy, mention briefly: "If you want a richer design system later (full color palette, typography, component styles), open the Brand page in the CMS after install and import a Claude Design URL there. Skip that for now; we'll keep going."
 
 ## 5. Register external accounts
+
+Print to the user verbatim:
+
+> **Step 5 of 13: signing up for the services Pectus connects to.** Supabase, Anthropic, Google Cloud (and optionally Vercel + GitHub). Most of the install time happens here — accounts, verification emails, copy-pasting keys. I'll walk you through one at a time.
+
+Then check in:
+
+> "Ready to start with Supabase?"
+
+Wait for a yes before listing the Supabase steps.
 
 Three services are required to boot Pectus. Two more are optional. Walk the user through each one in order. For each, give them the link, wait for them to sign up, then ask for the specific value Pectus needs. Write each value into `.env.local` as you receive it (use `.env.example` as the field reference).
 
@@ -219,6 +265,16 @@ The database has the Pectus schema, the brand row exists, the user has an admin 
 
 ## 7. Connect Google (Search Console + Analytics)
 
+Print to the user verbatim:
+
+> **Step 7 of 13: hooking up Google.** This lets Pectus read your Search Console queries and Google Analytics traffic so the content recommendations are grounded in real data. Skippable — Pectus runs fine without it.
+
+Then check in:
+
+> "Want to do this now, or skip it for later?"
+
+If they say skip, jump to step 8. If they want to do it: walk them through the steps below one item at a time, with a check-in between each.
+
 This step pulls in Search Console and Google Analytics data. There are two outside-the-terminal pieces:
 
 1. **Create a service account in the user's Google Cloud project** (the same project from step 5). In the Google Cloud Console: IAM & Admin → Service Accounts → Create Service Account. Name it anything (e.g. `pectus-reader`). Skip the "Grant access" role step (no IAM role is needed for GA4/GSC reads). Click Done.
@@ -265,6 +321,10 @@ If the user explicitly asks to verify the tokens or test the connections, tell t
 
 ## 9. Start the CMS
 
+Print to the user verbatim:
+
+> **Step 9 of 13: turning Pectus on.** Booting the admin app on your laptop so you can sign in and start using it. About 30 seconds.
+
 ### 9a. Verify `.env.local` before starting the dev server
 
 Before running `npm run dev`, confirm that `.env.local` has the values the CMS needs. The Next.js dev server reads env at startup; if env is missing or named wrong, the CMS crashes at first request with `Your project's URL and Key are required to create a Supabase client!` (or similar).
@@ -297,6 +357,10 @@ Then load `http://localhost:3001`. Tell the user which port their CMS is on so t
 
 ## 10. Create the first project
 
+Print to the user verbatim:
+
+> **Step 10 of 13: creating your first project.** A project is one market or audience — most people only ever have one called something like "main". Two minutes.
+
 The user runs this in their own terminal (not the Claude session). Always include the `cd` prefix using the install path from step 2:
 
 ```
@@ -318,6 +382,10 @@ The command creates the project row (under the brand from step 4), sets a defaul
 
 ## 11. Activate apps for the project
 
+Print to the user verbatim:
+
+> **Step 11 of 13: turning on the apps you want to use.** A project starts blank and you switch on the apps that fit. Most people switch on Content Hub (the bundled publish-to-a-public-site app) right away.
+
 In v0.4.2 every project starts with no apps active — the user picks. Walk them through activating Content Hub if they want a public site (most users do):
 
 1. Open `http://localhost:3000/brands/<slug>/projects/<code>/apps` in their browser. (Or just click **Apps** in the project's sidebar.)
@@ -337,6 +405,10 @@ If the user is installing Pectus for analysis only (no public site), skip steps 
 Other apps the user might want to activate now or later (each from the same Apps page): **gsc** for Search Console queries, **ga4** for Google Analytics traffic, **seed-keywords** for a manual keyword list. Activation just adds the surface to the sidebar; per-app config (Google service account, GA4 property, Search Console site) lives under brand Settings → Google integration.
 
 ## 12. Run the first analysis
+
+Print to the user verbatim:
+
+> **Step 12 of 13: running your first analysis.** Pectus reads everything you've given it (keywords, ICP, brand voice, traffic if connected) and asks Claude to produce a content plan ranked by projected traffic. Takes a minute.
 
 ```
 npx pectus analyze --project <code> --skill weekly-analysis

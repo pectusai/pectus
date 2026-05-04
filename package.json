@@ -9,15 +9,15 @@
     "type": "git",
     "url": "https://github.com/pectusai/pectus.git"
   },
-  "projects": [
+  "workspaces": [
     "apps/*",
     "connectors/*",
     "cli",
     "cms"
   ],
   "scripts": {
-    "dev": "npm --project cms run dev",
-    "build": "npm --projects --if-present run build",
+    "dev": "npm --workspace cms run dev",
+    "build": "npm --workspaces --if-present run build",
     "doctor": "npx pectus doctor",
     "update": "npx pectus update"
   },
