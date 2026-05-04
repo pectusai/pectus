@@ -55,15 +55,20 @@ $$;
 
 create or replace function public.is_admin()
 returns boolean
-language sql
+language plpgsql
 stable
 security definer
 set search_path = public
 as $$
+declare
+  result boolean;
+begin
   select coalesce(
-    (select is_admin from public.profiles where id = auth.uid()),
+    (select p.is_admin from public.profiles p where p.id = auth.uid()),
     false
-  );
+  ) into result;
+  return result;
+end;
 $$;
 
 create or replace function public.handle_new_user()
