@@ -9,23 +9,18 @@ export default async function BrandPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const { user } = await requireUser();
+  await requireUser();
   const supabase = await createServerClient();
 
-  const [{ data: profile }, { data: brandRow }] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("is_admin")
-      .eq("id", user.id)
-      .single(),
-    supabase
-      .from("brands")
-      .select("*")
-      .eq("slug", slug)
-      .maybeSingle(),
-  ]);
+  const { data: brandRow } = await supabase
+    .from("brands")
+    .select("*")
+    .eq("slug", slug)
+    .maybeSingle();
 
-  const canEdit = Boolean(profile?.is_admin);
+  // Pectus is single-user-mode (per feedback_pectus_single_user.md), so any
+  // authenticated user can edit the brand. The save action is service-role.
+  const canEdit = true;
   const fileBrand = await loadBrand(slug);
 
   /* DB is the source of truth for fields the CMS edits, but fall back to the
@@ -66,11 +61,6 @@ export default async function BrandPage({
           Global brand identity. Voice, colors, fonts, and guidelines apply to
           every project and to the public hub.
         </p>
-        {!canEdit ? (
-          <p className="mt-2 text-xs text-zinc-500">
-            Read-only. Only admins can edit brand settings.
-          </p>
-        ) : null}
       </div>
 
       <BrandForm initial={initial} canEdit={canEdit} brandSlug={slug} />

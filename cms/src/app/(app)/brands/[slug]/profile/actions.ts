@@ -3,7 +3,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { revalidatePath } from "next/cache";
-import { requireAdmin } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
+import { createServiceClient } from "@pectus/supabase";
 import { brandJsonPath, importsDir } from "@/lib/brand-paths";
 import {
   importDesign,
@@ -145,7 +146,10 @@ export type SaveBrandResult =
   | { ok: false; error: string };
 
 export async function saveBrand(formData: FormData): Promise<SaveBrandResult> {
-  const { supabase, user } = await requireAdmin();
+  const { user } = await requireUser();
+  // Service-role bypasses RLS. requireUser() above is the actual gate;
+  // single-user-mode means anyone signed in to this install owns the brand.
+  const supabase = createServiceClient();
 
   const slug = String(formData.get("brand_slug") ?? "").trim();
   if (!slug) {
@@ -285,7 +289,7 @@ export type ImportBrandResult =
 export async function importBrandFromUrl(
   formData: FormData,
 ): Promise<ImportBrandResult> {
-  await requireAdmin();
+  await requireUser();
 
   const slug = String(formData.get("brand_slug") ?? "").trim();
   if (!slug) {
