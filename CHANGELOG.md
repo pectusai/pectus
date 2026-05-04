@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.4.1 — Slug fix + CMS-driven updates
+
+The v0.4.0 alpha shipped with two slugify implementations that disagreed on Unicode. The CLI used NFKD + combining-mark stripping (so "Aström" became "astrom"), but the SQL `_slugify` had no diacritic handling (so "Aström" became "astr-m"). The disk dir was written under one slug and the DB row under another, breaking every `/brands/<slug>/...` route on installs with non-ASCII brand names.
+
+This release fixes the slugify mismatch and ships the first cut of a CMS-driven update flow so future schema migrations don't need a manual SQL paste.
+
+- **Migration 0008 (`0008_slug_unaccent.sql`):** rewrites `public._slugify` to use the `unaccent` Postgres extension before character stripping. Re-slugifies every existing brand row whose stored slug differs from the canonical form. Idempotent.
+- **`/system/updates` page:** lists every migration in `connectors/supabase/migrations/`. Click **Apply** to run a migration against your Supabase project via the Management API. Pectus reads `SUPABASE_ACCESS_TOKEN` from `.env.local` (added in v0.3.9) to authenticate. View-SQL toggle on each migration so you can read what's about to run.
+- **`runManagementSql` helper:** wraps `POST https://api.supabase.com/v1/projects/<ref>/database/query` with project-ref derivation from `NEXT_PUBLIC_SUPABASE_URL` and access-token reading. Surfaces 4xx/5xx response bodies inline.
+- **NavBar entry:** new "Updates" link visible to every authenticated user. Sits between brand-prefixed links and the admin link.
+
+### Known v0.4.2 follow-ups
+
+- `schema_version` table + auto-detection of pending migrations (today the user picks).
+- Banner / badge in the NavBar when pending migrations exist.
+- Auto-apply non-destructive migrations on first CMS load.
+- Migrate the install agent (`pectus.md` step 6) onto the same Management-API path so first-time installs and ongoing upgrades use the same code.
+
 ## v0.4.0 — Multi-brand alpha
 
 Pectus now hosts multiple brands inside a single install. Every brand gets its own row, its own disk directory, its own slug-prefixed URL space, and its own scoped DB rows. Switching brands is a one-click action in the top nav. The intended persona for this is small agencies running several client brands from one Pectus, but it works the same for solo operators who want to keep their personal site, side project, and client work out of each other's way.

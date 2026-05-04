@@ -46,6 +46,7 @@ export async function NavBar() {
           ) : (
             <Link href="/brands">Brands</Link>
           )}
+          <Link href="/system/updates">Updates</Link>
           {isAdmin ? <Link href="/admin">Admin</Link> : null}
         </nav>
 
