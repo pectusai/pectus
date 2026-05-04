@@ -24,7 +24,9 @@ export async function signInWithPassword(
     return { ok: false, error: error.message };
   }
 
-  redirect("/projects");
+  // Land on the brand resolver. It picks the last-used brand (or the only
+  // brand, or the brands list if none) so the user goes somewhere real.
+  redirect("/");
 }
 
 export async function signUpWithPassword(

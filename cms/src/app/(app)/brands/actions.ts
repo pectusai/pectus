@@ -3,7 +3,7 @@
 import { mkdir, writeFile, access } from "node:fs/promises";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { createServerClient } from "@pectus/supabase";
+import { createServiceClient } from "@pectus/supabase";
 import { requireUser } from "@/lib/auth";
 import { brandDir, brandJsonPath } from "@/lib/brand-paths";
 import { slugify } from "@/lib/slugify";
@@ -35,7 +35,8 @@ export async function createBrand(
     };
   }
 
-  const supabase = await createServerClient();
+  // Service-role bypasses RLS. requireUser() above is the actual gate.
+  const supabase = createServiceClient();
 
   const { data: existing } = await supabase
     .from("brands")

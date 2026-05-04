@@ -77,14 +77,17 @@ language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  has_admin boolean;
 begin
+  select exists(select 1 from public.profiles where is_admin = true) into has_admin;
   insert into public.profiles (id, email, full_name, role, is_admin)
   values (
     new.id,
     new.email,
     coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name'),
     'drafter',
-    false
+    not has_admin  -- first signed-in user auto-promotes to admin
   )
   on conflict (id) do nothing;
   return new;
