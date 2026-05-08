@@ -1,5 +1,4 @@
 // Pectus CLI entry point.
-// Stub. Full implementation lands in PR5.
 
 import { Command } from "commander";
 

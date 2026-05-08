@@ -295,9 +295,9 @@ Make sure the user has the JSON key file saved somewhere safe (note the path in 
 
 If GA4 and Search Console accept the email straight away (most users): run `npx pectus connect google`. It's interactive: it asks the user to paste the full service-account JSON, asks for a GA4 property ID and a Search Console site URL, then tests both connections live. If either test fails, surface the error and stop. The most common cause is the user adding the service account in GA4 but not Search Console (or vice versa); have them double-check both. On success the command writes the JSON, property ID, and site URL into the `integrations` table in Supabase.
 
-## 8. Vercel and GitHub (optional, deferred)
+## 8. Vercel and GitHub (optional at this stage)
 
-The Vercel and GitHub connectors that ship with the CLI today are stubs — they print "coming in v2" and exit. Do **not** offer to run them. The tokens the user pasted in step 5 still live in `.env.local`; the publish flow inside Content Hub (step 11) reads them directly when it commits a page.
+The Vercel and GitHub connectors that ship with the CLI today are stubs — they print "coming in v2" and exit. Do **not** offer to run them. GitHub and Vercel are optional at install time, but required when the user wants to publish their content-hub to a public URL. Frame both as "skip for now, come back when you're ready to go live."
 
 Walk the user through this step one item at a time, in this order. Don't bundle them into one prompt with multiple options.
 
@@ -305,19 +305,19 @@ Walk the user through this step one item at a time, in this order. Don't bundle 
 
 Tell the user, in plain words:
 
-> GitHub is where Pectus pushes the static pages it generates. When you publish an article from inside Pectus, it commits the page's JSON to a content-hub repo on GitHub, and Vercel auto-deploys it from there. The GitHub token you pasted in step 5 is already in `.env.local`, so there's nothing to set up here. We'll point Pectus at the actual repo from inside the CMS during step 11 (Content Hub setup).
+> GitHub is where Pectus pushes the static pages it generates. When you publish, Pectus commits the page's JSON to a content-hub repo on GitHub, and Vercel auto-deploys it from there. Skip for now. When you're ready to publish, paste a GitHub token (`GITHUB_TOKEN` in `cms/.env.local`) and point Pectus at the repo from the Content Hub settings page.
 
-Then move on. Don't ask anything; this step is just framing so the user knows GitHub is wired up and what it does.
+Then move on. Don't ask anything; this step is just framing so the user knows what GitHub does and when to come back to it.
 
 ### 8b. Vercel
 
 Tell the user, in plain words:
 
-> Vercel is where the public site lives once Pectus pushes pages to GitHub. Vercel watches your content-hub repo and rebuilds the site every time Pectus commits to it. The Vercel token you pasted in step 5 is already in `.env.local`. You'll connect Vercel to the GitHub repo when you set up Content Hub in step 11; nothing to do here right now.
+> Vercel is where the public site lives once Pectus pushes pages to GitHub. Vercel watches your content-hub repo and rebuilds whenever Pectus commits to it. Same shape — skip for now. When you're ready to publish, paste a Vercel token (`VERCEL_TOKEN` in `cms/.env.local`) and connect Vercel to the GitHub repo from the Content Hub settings page.
 
 Then move on. Same shape: framing only, no prompt.
 
-If the user explicitly asks to verify the tokens or test the connections, tell them the connectors aren't wired yet and the verification happens implicitly the first time Pectus tries to publish (step 11+). Don't invent a CLI command to run.
+If the user explicitly asks to verify or test the connections, tell them the connectors aren't wired yet and the verification happens implicitly the first time Pectus tries to publish (step 11+). Don't invent a CLI command to run.
 
 ## 9. Start the CMS
 

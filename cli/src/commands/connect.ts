@@ -172,7 +172,7 @@ async function connectSupabase(): Promise<void> {
 
   // Migrations — manual paste in v1.
   const repo = findRepoRoot();
-  const migration = path.join(repo, "connectors/supabase/migrations/0001_initial.sql");
+  const migration = path.join(repo, "connectors/supabase/migrations/0001_pectus_v04.sql");
   if (fs.existsSync(migration)) {
     note(
       [
