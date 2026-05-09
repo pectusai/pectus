@@ -18,6 +18,9 @@ const config: NextConfig = {
     "@pectus/github",
     "@pectus/cli",
   ],
+  devIndicators: {
+    position: "bottom-right",
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: "4mb",
