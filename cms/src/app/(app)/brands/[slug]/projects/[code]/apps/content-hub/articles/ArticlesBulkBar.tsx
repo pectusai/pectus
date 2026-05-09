@@ -189,9 +189,11 @@ export function ArticlesBulkBar({
     startTransition(() => router.refresh());
   };
 
+  const yearNow = new Date().getFullYear();
+
   return (
-    <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 bg-zinc-50 px-4 py-2.5">
+    <div className="rounded-xl border border-zinc-200 bg-white">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 bg-zinc-50 px-3 py-2">
         <div className="flex flex-wrap items-center gap-3 text-sm">
           <span className="text-xs text-zinc-500">
             {selected.size} of {rows.length} selected
@@ -211,7 +213,7 @@ export function ArticlesBulkBar({
             value={action}
             onChange={(e) => setAction(e.target.value as BulkAction)}
             disabled={busy !== null || selected.size === 0}
-            className="h-[32px] rounded-md border border-zinc-300 bg-white px-2 text-xs font-medium disabled:opacity-50"
+            className="h-[28px] rounded-md border border-zinc-300 bg-white px-2 text-xs font-medium disabled:opacity-50"
           >
             {BULK_ACTIONS.map((a) => (
               <option key={a.value} value={a.value}>
@@ -223,7 +225,7 @@ export function ArticlesBulkBar({
             type="button"
             onClick={runBulk}
             disabled={busy !== null || selected.size === 0}
-            className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-black disabled:opacity-50"
+            className="rounded-md bg-zinc-900 px-3 py-1 text-xs font-semibold text-white hover:bg-black disabled:opacity-50"
           >
             {busy ? "Running…" : "Apply"}
           </button>
@@ -231,137 +233,163 @@ export function ArticlesBulkBar({
       </div>
 
       {progress ? (
-        <p className="border-b border-zinc-100 bg-white px-4 py-1.5 text-xs text-zinc-600">
+        <p className="border-b border-zinc-100 bg-white px-3 py-1.5 text-xs text-zinc-600">
           {progress}
         </p>
       ) : null}
       {error ? (
-        <p className="border-b border-red-100 bg-red-50 px-4 py-1.5 text-xs text-red-700">
+        <p className="border-b border-red-100 bg-red-50 px-3 py-1.5 text-xs text-red-700">
           {error}
         </p>
       ) : null}
 
-      <table className="w-full text-sm">
-        <thead className="bg-zinc-50">
-          <tr>
-            <Th width="2.25rem" align="left">
-              <input
-                type="checkbox"
-                checked={allSelected}
-                ref={(el) => {
-                  if (el) el.indeterminate = someSelected;
-                }}
-                onChange={toggleAll}
-                aria-label="Select all rows"
-                className="cursor-pointer accent-pink-700"
-              />
-            </Th>
-            <Th>Title</Th>
-            <Th>Category</Th>
-            <Th>Author</Th>
-            <Th align="right">Published</Th>
-            <Th align="right">Words</Th>
-            <Th>Status</Th>
-            <Th align="right">Actions</Th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((a) => {
-            const rawStatus = a.status ?? "draft";
-            const status: ArticleStatus = isStatus(rawStatus)
-              ? (rawStatus as ArticleStatus)
-              : "draft";
-            const wordCount = a.word_count ?? 0;
-            const showFetch = status === "imported" && wordCount === 0;
-            const isChecked = selected.has(a.id);
-            return (
-              <tr
-                key={a.id}
-                className={`border-t border-zinc-100 ${isChecked ? "bg-pink-50/40" : ""}`}
-              >
-                <td className="px-4 py-3 align-top">
-                  <input
-                    type="checkbox"
-                    checked={isChecked}
-                    onChange={() => toggleOne(a.id)}
-                    aria-label={`Select ${a.title}`}
-                    className="cursor-pointer accent-pink-700"
-                  />
-                </td>
-                <td className="px-4 py-3 align-top">
-                  <Link
-                    href={`${articleBase}/${a.slug}`}
-                    className="block font-medium text-zinc-900 hover:underline"
-                  >
-                    {a.title}
-                  </Link>
-                  <span className="mt-0.5 block truncate text-xs text-zinc-500">
-                    {a.slug}
-                  </span>
-                </td>
-                <td className="px-4 py-3 align-top">
-                  {a.category ? (
-                    <span className="inline-flex items-center rounded bg-pink-100 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-pink-800">
-                      {a.category}
-                    </span>
-                  ) : (
-                    <span className="text-zinc-400">—</span>
-                  )}
-                </td>
-                <td className="px-4 py-3 align-top text-zinc-700">
-                  {a.author ?? <span className="text-zinc-400">—</span>}
-                </td>
-                <td className="px-4 py-3 text-right align-top text-zinc-700 tabular-nums">
-                  {a.date_published ? (
-                    new Date(a.date_published).toLocaleDateString("en-US", {
+      <div className="overflow-x-auto">
+        <table className="w-full text-[13px]">
+          <thead className="bg-zinc-50">
+            <tr>
+              <Th width="2rem" align="left">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  ref={(el) => {
+                    if (el) el.indeterminate = someSelected;
+                  }}
+                  onChange={toggleAll}
+                  aria-label="Select all rows"
+                  className="cursor-pointer accent-pink-700"
+                />
+              </Th>
+              <Th>Title</Th>
+              <Th>Category</Th>
+              <Th>Author</Th>
+              <Th align="right">Published</Th>
+              <Th align="right">Words</Th>
+              <Th>Status</Th>
+              <Th align="right">Actions</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((a) => {
+              const rawStatus = a.status ?? "draft";
+              const status: ArticleStatus = isStatus(rawStatus)
+                ? (rawStatus as ArticleStatus)
+                : "draft";
+              const wordCount = a.word_count ?? 0;
+              const showFetch = status === "imported" && wordCount === 0;
+              const isChecked = selected.has(a.id);
+              const publishedDate = a.date_published
+                ? new Date(a.date_published)
+                : null;
+              const publishedLabel = publishedDate
+                ? publishedDate.getFullYear() === yearNow
+                  ? publishedDate.toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
-                      year: "numeric",
                     })
-                  ) : (
-                    <span className="text-zinc-400">—</span>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-right align-top text-zinc-900 tabular-nums">
-                  {wordCount > 0 ? (
-                    wordCount.toLocaleString("en-US")
-                  ) : (
-                    <span className="text-zinc-400">—</span>
-                  )}
-                </td>
-                <td className="px-4 py-3 align-top">
-                  {showFetch ? (
-                    <FetchArticleButton
-                      brandSlug={brandSlug}
-                      code={code}
-                      articleId={a.id}
+                  : publishedDate.toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "2-digit",
+                    })
+                : null;
+              return (
+                <tr
+                  key={a.id}
+                  className={`border-t border-zinc-100 ${isChecked ? "bg-pink-50/40" : ""}`}
+                >
+                  <td className="px-3 py-2 align-top">
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => toggleOne(a.id)}
+                      aria-label={`Select ${a.title}`}
+                      className="cursor-pointer accent-pink-700"
                     />
-                  ) : (
-                    <span
-                      className={`inline-flex items-center rounded px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider ${STATUS_PILL[status]}`}
-                    >
-                      {STATUS_LABELS[status]}
-                    </span>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-right align-top">
-                  {status === "archived" ? (
-                    <span className="text-[11px] text-zinc-400">—</span>
-                  ) : (
-                    <RemoveArticleButton
-                      brandSlug={brandSlug}
-                      code={code}
-                      articleId={a.id}
+                  </td>
+                  <td
+                    className="px-3 py-2 align-top"
+                    style={{ maxWidth: "22rem" }}
+                  >
+                    <Link
+                      href={`${articleBase}/${a.slug}`}
                       title={a.title}
-                      isShell={showFetch}
-                    />
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                      className="block truncate font-medium text-zinc-900 hover:underline"
+                    >
+                      {a.title}
+                    </Link>
+                    <span
+                      className="mt-0.5 block truncate text-[11px] text-zinc-500"
+                      title={a.slug}
+                    >
+                      {a.slug}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 align-top">
+                    {a.category ? (
+                      <span className="inline-flex max-w-[10rem] items-center truncate rounded bg-pink-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-pink-800">
+                        {a.category}
+                      </span>
+                    ) : (
+                      <span className="text-zinc-400">—</span>
+                    )}
+                  </td>
+                  <td
+                    className="max-w-[8rem] truncate px-3 py-2 align-top text-zinc-700"
+                    title={a.author ?? ""}
+                  >
+                    {a.author ?? <span className="text-zinc-400">—</span>}
+                  </td>
+                  <td
+                    className="whitespace-nowrap px-3 py-2 text-right align-top text-zinc-700 tabular-nums"
+                    title={
+                      publishedDate
+                        ? publishedDate.toLocaleDateString()
+                        : ""
+                    }
+                  >
+                    {publishedLabel ?? <span className="text-zinc-400">—</span>}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-2 text-right align-top text-zinc-900 tabular-nums">
+                    {wordCount > 0 ? (
+                      wordCount.toLocaleString("en-US")
+                    ) : (
+                      <span className="text-zinc-400">—</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2 align-top">
+                    {showFetch ? (
+                      <FetchArticleButton
+                        brandSlug={brandSlug}
+                        code={code}
+                        articleId={a.id}
+                      />
+                    ) : (
+                      <span
+                        className={`inline-flex whitespace-nowrap items-center rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${STATUS_PILL[status]}`}
+                      >
+                        {STATUS_LABELS[status]}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2 text-right align-top">
+                    {status === "archived" ? (
+                      <span className="text-[11px] text-zinc-400">—</span>
+                    ) : (
+                      <RemoveArticleButton
+                        brandSlug={brandSlug}
+                        code={code}
+                        articleId={a.id}
+                        title={a.title}
+                        isShell={showFetch}
+                      />
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
