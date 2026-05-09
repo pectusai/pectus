@@ -60,30 +60,94 @@ export default async function ArticlesIndexPage({
   const statusFilter = (query.status ?? "").trim();
   const articleBase = `/brands/${slug}/projects/${code}/apps/content-hub/articles`;
 
-  let listQuery = supabase
+  type ArticleRow = {
+    id: string;
+    slug: string;
+    title: string;
+    category: string | null;
+    author: string | null;
+    date_published: string | null;
+    word_count: number | null;
+    status: string | null;
+    source: string | null;
+  };
+
+  const baseSelect =
+    "id, slug, title, category, author, date_published, word_count, status, source";
+
+  let articles: ArticleRow[] = [];
+  let total = 0;
+  let categoriesResultPromise = supabase
     .from("articles")
-    .select(
-      "id, slug, title, category, author, date_published, word_count, status, source",
-      { count: "exact" },
-    )
+    .select("category")
     .eq("project_id", project.id)
-    .order("date_published", { ascending: false, nullsFirst: false })
-    .limit(PAGE_LIMIT);
-  if (q) listQuery = listQuery.ilike("title", `%${q}%`);
-  if (statusFilter) listQuery = listQuery.eq("status", statusFilter);
+    .not("category", "is", null);
+  let brandRowPromise = supabase
+    .from("brands")
+    .select("sitemap_url")
+    .eq("slug", slug)
+    .maybeSingle();
 
-  const [listResult, categoriesResult, brandRow] = await Promise.all([
-    listQuery,
-    supabase
+  if (statusFilter) {
+    let single = supabase
       .from("articles")
-      .select("category")
+      .select(baseSelect, { count: "exact" })
       .eq("project_id", project.id)
-      .not("category", "is", null),
-    supabase.from("brands").select("sitemap_url").eq("slug", slug).maybeSingle(),
-  ]);
+      .eq("status", statusFilter)
+      .order(
+        statusFilter === "published" ? "date_published" : "date_modified",
+        { ascending: false, nullsFirst: false },
+      )
+      .limit(PAGE_LIMIT);
+    if (q) single = single.ilike("title", `%${q}%`);
 
-  const articles = listResult.data ?? [];
-  const total = listResult.count ?? articles.length;
+    const [listResult, categoriesResult, brandRow] = await Promise.all([
+      single,
+      categoriesResultPromise,
+      brandRowPromise,
+    ]);
+    articles = (listResult.data ?? []) as ArticleRow[];
+    total = listResult.count ?? articles.length;
+    categoriesResultPromise = Promise.resolve(categoriesResult) as never;
+    brandRowPromise = Promise.resolve(brandRow) as never;
+  } else {
+    let draftsQ = supabase
+      .from("articles")
+      .select(baseSelect, { count: "exact" })
+      .eq("project_id", project.id)
+      .eq("status", "draft")
+      .order("date_modified", { ascending: false, nullsFirst: false })
+      .limit(PAGE_LIMIT);
+    let othersQ = supabase
+      .from("articles")
+      .select(baseSelect, { count: "exact" })
+      .eq("project_id", project.id)
+      .neq("status", "draft")
+      .order("date_published", { ascending: false, nullsFirst: false })
+      .order("date_modified", { ascending: false, nullsFirst: false })
+      .limit(PAGE_LIMIT);
+    if (q) {
+      draftsQ = draftsQ.ilike("title", `%${q}%`);
+      othersQ = othersQ.ilike("title", `%${q}%`);
+    }
+
+    const [draftsResult, othersResult, categoriesResult, brandRow] =
+      await Promise.all([
+        draftsQ,
+        othersQ,
+        categoriesResultPromise,
+        brandRowPromise,
+      ]);
+
+    const drafts = (draftsResult.data ?? []) as ArticleRow[];
+    const others = (othersResult.data ?? []) as ArticleRow[];
+    articles = [...drafts, ...others].slice(0, PAGE_LIMIT);
+    total = (draftsResult.count ?? drafts.length) + (othersResult.count ?? others.length);
+    categoriesResultPromise = Promise.resolve(categoriesResult) as never;
+    brandRowPromise = Promise.resolve(brandRow) as never;
+  }
+  const categoriesResult = await categoriesResultPromise;
+  const brandRow = await brandRowPromise;
   const knownCategories = Array.from(
     new Set(
       (categoriesResult.data ?? [])

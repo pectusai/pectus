@@ -52,11 +52,34 @@ export default async function ArticleDetailPage({
   ).sort();
 
   const cameras = (Array.isArray(brand.cameras) ? brand.cameras : []) as Camera[];
-  const examplePhotoCategories = (
+  const explicitCategories = (
     Array.isArray(brand.example_photo_categories)
       ? brand.example_photo_categories
       : []
   ) as ExamplePhotoCategory[];
+  const referenceUrlList = (
+    Array.isArray(brand.reference_image_urls)
+      ? (brand.reference_image_urls as unknown[])
+      : []
+  ).filter((u): u is string => typeof u === "string");
+  const referenceCategory: ExamplePhotoCategory[] =
+    referenceUrlList.length > 0
+      ? [
+          {
+            id: "_references",
+            label: "Brand references",
+            photos: referenceUrlList.map((url, i) => ({
+              id: `ref-${i}`,
+              url,
+              description: "",
+            })),
+          },
+        ]
+      : [];
+  const examplePhotoCategories: ExamplePhotoCategory[] = [
+    ...explicitCategories,
+    ...referenceCategory,
+  ];
   const defaultImageModel = (brand.image_model as string) ?? "imagen-4";
 
   const rawBlocks = Array.isArray(article.blocks) ? article.blocks : [];
