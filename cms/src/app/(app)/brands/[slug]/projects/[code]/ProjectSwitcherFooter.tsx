@@ -114,14 +114,16 @@ export function ProjectSwitcherFooter({
         aria-expanded={open}
         className={`pectus-project-trigger ${open ? "is-open" : ""}`}
       >
-        <span className="pectus-project-trigger-meta">Project</span>
+        <div className="pectus-project-trigger-row">
+          <span className="pectus-project-trigger-meta">Project</span>
+          <span aria-hidden className="pectus-project-trigger-chevron">
+            {open ? "▾" : "▴"}
+          </span>
+        </div>
         <span className="pectus-project-trigger-name">{current.name}</span>
         <span className="pectus-project-trigger-code">
           {current.code}
           {current.locale ? ` · ${current.locale}` : ""}
-        </span>
-        <span aria-hidden className="pectus-project-trigger-chevron">
-          {open ? "▾" : "▴"}
         </span>
       </button>
     </div>
