@@ -150,3 +150,8 @@ alter table public.content_sources add column if not exists url text;
 alter table public.content_sources add column if not exists body text;
 alter table public.content_sources alter column sitemap_url drop not null;
 alter table public.content_sources alter column name drop not null;
+
+-- ── self-record so the in-app updates page sees this as applied ────────────
+insert into public._pectus_migrations (filename)
+values ('0002_content_hub.sql')
+on conflict (filename) do nothing;

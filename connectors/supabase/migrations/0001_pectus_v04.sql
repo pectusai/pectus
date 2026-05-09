@@ -814,7 +814,7 @@ begin
 end;
 $$;
 
--- ── Migration bookkeeping + guarded exec for in-app updates ────────────────
+-- ── Migration bookkeeping for in-app updates ───────────────────────────────
 create table if not exists public._pectus_migrations (
   filename text primary key,
   applied_at timestamptz not null default now()
@@ -826,20 +826,6 @@ drop policy if exists pectus_migrations_admin_read on public._pectus_migrations;
 create policy pectus_migrations_admin_read on public._pectus_migrations
   for select to authenticated
   using (public.is_admin());
-
-create or replace function public.exec_pectus_sql(sql text)
-returns void
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  execute sql;
-end;
-$$;
-
-revoke all on function public.exec_pectus_sql(text) from public, anon, authenticated;
-grant execute on function public.exec_pectus_sql(text) to service_role;
 
 insert into public._pectus_migrations (filename)
 values ('0001_pectus_v04.sql')

@@ -4,7 +4,15 @@ import path from "node:path";
 export type Migration = { id: string; filename: string; sql: string };
 
 export function migrationsDir(): string {
-  return path.resolve(process.cwd(), "..", "connectors", "supabase", "migrations");
+  const candidates = [
+    path.resolve(process.cwd(), "connectors", "supabase", "migrations"),
+    path.resolve(process.cwd(), "..", "connectors", "supabase", "migrations"),
+    path.resolve(process.cwd(), "..", "..", "connectors", "supabase", "migrations"),
+  ];
+  for (const dir of candidates) {
+    if (fs.existsSync(dir)) return dir;
+  }
+  return candidates[0];
 }
 
 export function listMigrations(): Migration[] {
