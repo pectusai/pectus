@@ -5,6 +5,7 @@ import { SubmitButton } from "@/app/components/SubmitButton";
 import { createClient as createBrowserClient } from "@pectus/supabase/browser";
 import {
   saveImageGenApiKey,
+  saveProviderApiKey,
   type SaveApiKeyResult,
   createReferenceImageUploadUrl,
   appendReferenceImageUrls,
@@ -16,6 +17,8 @@ import type { Camera } from "@/lib/brand-types";
 type Props = {
   brandSlug: string;
   apiKeyMasked: string | null;
+  falKeyMasked: string | null;
+  replicateKeyMasked: string | null;
   referenceUrls: string[];
   cameras: Camera[];
 };
@@ -28,6 +31,8 @@ function maskKey(value: string): string {
 export function ImageGenSection({
   brandSlug,
   apiKeyMasked,
+  falKeyMasked,
+  replicateKeyMasked,
   referenceUrls,
   cameras: initialCameras,
 }: Props) {
@@ -36,13 +41,44 @@ export function ImageGenSection({
       <div>
         <h2 className="text-xl font-semibold tracking-tight">Image generation</h2>
         <p className="mt-1 text-sm text-zinc-600">
-          The Google AI key Pectus uses to generate hero and inline article
-          images. Reference photos and camera presets shape the look so generated
-          images feel like your brand, not stock.
+          API keys, reference photos, and camera presets that drive every
+          hero and inline image generated in Content Hub. The hero section in
+          the article editor reads from these.
         </p>
       </div>
 
-      <ApiKeyForm brandSlug={brandSlug} apiKeyMasked={apiKeyMasked} />
+      <ApiKeyForm
+        brandSlug={brandSlug}
+        apiKeyMasked={apiKeyMasked}
+        provider="google"
+        title="Google AI"
+        keyPrefixHint="AIza…"
+        helpHref="https://aistudio.google.com/apikey"
+        helpLabel="aistudio.google.com/apikey"
+        helpAfter="Powers Imagen 4 and Gemini 3 Pro Image."
+        primaryAction={saveImageGenApiKey}
+      />
+      <ApiKeyForm
+        brandSlug={brandSlug}
+        apiKeyMasked={falKeyMasked}
+        provider="fal"
+        title="fal.ai"
+        keyPrefixHint="fal-…"
+        helpHref="https://fal.ai/dashboard/keys"
+        helpLabel="fal.ai/dashboard/keys"
+        helpAfter="Powers Flux Pro 1.1 Ultra — best for detailed camera-direction prompts."
+      />
+      <ApiKeyForm
+        brandSlug={brandSlug}
+        apiKeyMasked={replicateKeyMasked}
+        provider="replicate"
+        title="Replicate"
+        keyPrefixHint="r8_…"
+        helpHref="https://replicate.com/account/api-tokens"
+        helpLabel="replicate.com/account/api-tokens"
+        helpAfter="Powers Flux Dev (cheap iteration) and Recraft v3 (illustration)."
+      />
+
       <ReferencePhotos brandSlug={brandSlug} initialUrls={referenceUrls} />
       <CamerasSection brandSlug={brandSlug} initialCameras={initialCameras} />
     </section>
@@ -52,12 +88,27 @@ export function ImageGenSection({
 function ApiKeyForm({
   brandSlug,
   apiKeyMasked,
+  provider,
+  title,
+  keyPrefixHint,
+  helpHref,
+  helpLabel,
+  helpAfter,
+  primaryAction,
 }: {
   brandSlug: string;
   apiKeyMasked: string | null;
+  provider: "google" | "fal" | "replicate";
+  title: string;
+  keyPrefixHint: string;
+  helpHref: string;
+  helpLabel: string;
+  helpAfter: string;
+  primaryAction?: typeof saveImageGenApiKey;
 }) {
+  const action = primaryAction ?? saveProviderApiKey;
   const [state, formAction] = useActionState<SaveApiKeyResult | null, FormData>(
-    saveImageGenApiKey,
+    action,
     null,
   );
   const [showKey, setShowKey] = useState(false);
@@ -65,37 +116,39 @@ function ApiKeyForm({
   return (
     <form
       action={formAction}
-      className="rounded-lg border border-zinc-200 bg-white p-5"
+      className="rounded-xl border border-zinc-200 bg-white p-5"
     >
       <input type="hidden" name="brand_slug" value={brandSlug} />
+      <input type="hidden" name="provider" value={provider} />
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h3 className="text-sm font-semibold">Google AI API key</h3>
+        <h3 className="text-sm font-semibold">{title} API key</h3>
         {state?.ok ? (
-          <span className="text-xs text-emerald-600">Saved.</span>
+          <span className="text-xs text-emerald-700">Saved.</span>
         ) : null}
       </div>
       <p className="mt-1 text-xs text-zinc-500">
         Get one at{" "}
         <a
-          href="https://aistudio.google.com/apikey"
+          href={helpHref}
           target="_blank"
           rel="noopener noreferrer"
           className="underline"
         >
-          aistudio.google.com/apikey
+          {helpLabel}
         </a>
-        . The same key powers Imagen 4 and Gemini 3 Pro Image. Stored in this
-        Pectus install&apos;s database, not your env file.
+        . {helpAfter} Stored in this Pectus install&apos;s database, not in env.
       </p>
 
       <div className="mt-4 space-y-3">
         {apiKeyMasked ? (
           <p className="text-xs text-zinc-600">
-            Saved key: <code className="rounded bg-zinc-100 px-1">{apiKeyMasked}</code>
+            Saved key:{" "}
+            <code className="rounded bg-zinc-100 px-1">{apiKeyMasked}</code>
           </p>
         ) : (
           <p className="text-xs text-amber-700">
-            No key saved yet. Image generation will fail until one is added.
+            No key saved. Models from this provider will return an error until
+            one is added.
           </p>
         )}
 
@@ -108,7 +161,7 @@ function ApiKeyForm({
               name="api_key"
               type={showKey ? "text" : "password"}
               autoComplete="off"
-              placeholder={apiKeyMasked ? "Paste a new key to replace" : "AIza…"}
+              placeholder={apiKeyMasked ? "Paste a new key to replace" : keyPrefixHint}
               className="flex-1 rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-sm"
             />
             <button
@@ -124,7 +177,7 @@ function ApiKeyForm({
         <div className="flex flex-wrap items-center gap-3">
           <SubmitButton
             pendingLabel="Saving…"
-            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
+            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-black"
           >
             Save key
           </SubmitButton>

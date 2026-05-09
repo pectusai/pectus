@@ -38,6 +38,19 @@ export default async function ArticleDetailPage({
     .maybeSingle();
   if (!article) notFound();
 
+  const { data: categoryRows } = await supabase
+    .from("articles")
+    .select("category")
+    .eq("project_id", project.id)
+    .not("category", "is", null);
+  const knownCategories = Array.from(
+    new Set(
+      (categoryRows ?? [])
+        .map((r) => (r.category as string | null)?.trim())
+        .filter((s): s is string => !!s),
+    ),
+  ).sort();
+
   const cameras = (Array.isArray(brand.cameras) ? brand.cameras : []) as Camera[];
   const examplePhotoCategories = (
     Array.isArray(brand.example_photo_categories)
@@ -160,12 +173,14 @@ export default async function ArticleDetailPage({
         defaultImageModel={defaultImageModel}
         cameras={cameras}
         examplePhotoCategories={examplePhotoCategories}
+        knownCategories={knownCategories}
         canEdit
         article={{
           id: article.id,
           title: article.title,
           description: article.description,
           category: article.category,
+          tag: article.tag,
           hero_image: article.hero_image,
           author: article.author,
           author_image: article.author_image,

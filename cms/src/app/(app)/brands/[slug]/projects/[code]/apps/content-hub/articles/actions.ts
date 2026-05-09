@@ -6,7 +6,8 @@ import { getBrandBySlug } from "@/lib/active-brand";
 import { createServiceClient } from "@pectus/supabase";
 import {
   generateImage,
-  getBrandImageGenKey,
+  getBrandKeyForProvider,
+  providerFor,
   type ImageRef,
   MissingImageGenKeyError,
 } from "@/lib/image-generation";
@@ -42,6 +43,7 @@ export async function updateArticleBasics(formData: FormData): Promise<void> {
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const category = String(formData.get("category") ?? "").trim();
+  const tag = String(formData.get("tag") ?? "").trim();
   const author = String(formData.get("author") ?? "").trim();
   const authorImage = String(formData.get("author_image") ?? "").trim();
 
@@ -54,6 +56,7 @@ export async function updateArticleBasics(formData: FormData): Promise<void> {
       title: title || null,
       description: description || null,
       category: category || null,
+      tag: tag || null,
       author: author || null,
       author_image: authorImage || null,
     })
@@ -253,12 +256,12 @@ export async function generateHeroImage(
     const brand = await getBrandBySlug(brandSlug);
     const { projectId } = await resolveProject({ brandSlug, code });
 
-    const apiKey = await getBrandImageGenKey(brand.id);
+    const provider = providerFor(model);
+    const apiKey = await getBrandKeyForProvider(brand.id, provider);
     if (!apiKey) {
       return {
         ok: false,
-        error:
-          "No Google AI key set for this brand. Add one on the brand profile page.",
+        error: `No ${provider === "google" ? "Google AI" : provider === "fal" ? "fal.ai" : "Replicate"} API key set for this brand. Add one on the brand profile page.`,
       };
     }
 
@@ -302,17 +305,15 @@ export async function generateHeroImage(
       }
     }
 
+    const useRefs =
+      model === "gemini-3-pro-image-preview" && references.length > 0;
     const fullPrompt = [
-      `ARTICLE TITLE: ${article.title}`,
-      article.description ? `ARTICLE SUMMARY: ${article.description}` : "",
+      cameraDirection ? `PHOTOGRAPHY DIRECTION:\n${cameraDirection}` : "",
       "",
-      "USER DIRECTION:",
-      userPrompt,
-      "",
-      "PHOTOGRAPHY DIRECTION:",
-      cameraDirection,
-      "",
-      "Render at 16:9. Realistic, never stocky. Avoid text overlays.",
+      `SUBJECT:\n${userPrompt}`,
+      useRefs
+        ? `\nREFERENCE PHOTOS: the attached ${references.length} image${references.length === 1 ? "" : "s"} show how this brand photographs people and spaces. Match their look, skin tones, lighting quality, and mood. Do NOT copy the subject or setting.`
+        : "",
     ]
       .filter(Boolean)
       .join("\n");
@@ -321,6 +322,7 @@ export async function generateHeroImage(
       model,
       references,
       apiKey,
+      provider,
     });
 
     const ts = Date.now();
@@ -493,12 +495,12 @@ export async function generateInlineImage(
     const brand = await getBrandBySlug(brandSlug);
     const { projectId } = await resolveProject({ brandSlug, code });
 
-    const apiKey = await getBrandImageGenKey(brand.id);
+    const provider = providerFor(model);
+    const apiKey = await getBrandKeyForProvider(brand.id, provider);
     if (!apiKey) {
       return {
         ok: false,
-        error:
-          "No Google AI key set for this brand. Add one on the brand profile page.",
+        error: `No ${provider === "google" ? "Google AI" : provider === "fal" ? "fal.ai" : "Replicate"} API key set for this brand. Add one on the brand profile page.`,
       };
     }
 
@@ -542,20 +544,24 @@ export async function generateInlineImage(
       }
     }
 
+    const useRefs =
+      model === "gemini-3-pro-image-preview" && references.length > 0;
     const fullPrompt = [
-      "USER DIRECTION:",
-      userPrompt,
+      cameraDirection ? `PHOTOGRAPHY DIRECTION:\n${cameraDirection}` : "",
       "",
-      "PHOTOGRAPHY DIRECTION:",
-      cameraDirection,
-      "",
-      "Render at 16:9. Realistic, never stocky. Avoid text overlays.",
-    ].join("\n");
+      `SUBJECT:\n${userPrompt}`,
+      useRefs
+        ? `\nREFERENCE PHOTOS: the attached ${references.length} image${references.length === 1 ? "" : "s"} show how this brand photographs people and spaces. Match their look, skin tones, lighting quality, and mood. Do NOT copy the subject or setting.`
+        : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
 
     const result = await generateImage(fullPrompt, {
       model,
       references,
       apiKey,
+      provider,
     });
 
     const ts = Date.now();

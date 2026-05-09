@@ -3,7 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { createServiceClient } from "@pectus/supabase";
-import { setBrandImageGenKey } from "@/lib/image-generation";
+import {
+  setBrandImageGenKey,
+  setBrandKeyForProvider,
+  type ImageProvider,
+} from "@/lib/image-generation";
 import type { Camera } from "@/lib/brand-types";
 
 async function brandIdFromSlug(slug: string): Promise<string | null> {
@@ -35,6 +39,27 @@ export async function saveImageGenApiKey(
   if (!brandId) return { ok: false, error: "Brand not found." };
 
   await setBrandImageGenKey(brandId, apiKey, user.id);
+  revalidatePath(`/brands/${slug}/profile`);
+  return { ok: true };
+}
+
+export async function saveProviderApiKey(
+  _prev: SaveApiKeyResult | null,
+  formData: FormData,
+): Promise<SaveApiKeyResult> {
+  const slug = String(formData.get("brand_slug") ?? "");
+  const provider = String(formData.get("provider") ?? "") as ImageProvider;
+  const apiKey = String(formData.get("api_key") ?? "").trim();
+  if (!slug) return { ok: false, error: "Missing brand context." };
+  if (provider !== "google" && provider !== "fal" && provider !== "replicate") {
+    return { ok: false, error: `Unknown provider: ${provider}` };
+  }
+
+  const { user } = await requireUser();
+  const brandId = await brandIdFromSlug(slug);
+  if (!brandId) return { ok: false, error: "Brand not found." };
+
+  await setBrandKeyForProvider(brandId, provider, apiKey, user.id);
   revalidatePath(`/brands/${slug}/profile`);
   return { ok: true };
 }

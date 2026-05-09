@@ -26,15 +26,29 @@ export default async function BrandPage({
     .maybeSingle();
 
   const service = createServiceClient();
-  const { data: integrationRow } = await service
+  const { data: integrationRows } = await service
     .from("integrations")
-    .select("service_account_json")
+    .select("provider, service_account_json")
     .eq("brand_id", brandRow?.id ?? "")
-    .eq("provider", "google_genai")
-    .maybeSingle();
-  const storedKey = (integrationRow?.service_account_json as { api_key?: string } | null)
-    ?.api_key ?? null;
-  const apiKeyMasked = storedKey ? maskKey(storedKey) : null;
+    .in("provider", ["google_genai", "fal", "replicate"]);
+
+  const keyByProvider: Record<string, string | null> = {
+    google_genai: null,
+    fal: null,
+    replicate: null,
+  };
+  for (const row of integrationRows ?? []) {
+    const k = (row.service_account_json as { api_key?: string } | null)
+      ?.api_key ?? null;
+    keyByProvider[row.provider as string] = k;
+  }
+  const apiKeyMasked = keyByProvider.google_genai
+    ? maskKey(keyByProvider.google_genai)
+    : null;
+  const falKeyMasked = keyByProvider.fal ? maskKey(keyByProvider.fal) : null;
+  const replicateKeyMasked = keyByProvider.replicate
+    ? maskKey(keyByProvider.replicate)
+    : null;
 
   const referenceUrls = (
     Array.isArray(brandRow?.reference_image_urls)
@@ -95,6 +109,8 @@ export default async function BrandPage({
       <ImageGenSection
         brandSlug={slug}
         apiKeyMasked={apiKeyMasked}
+        falKeyMasked={falKeyMasked}
+        replicateKeyMasked={replicateKeyMasked}
         referenceUrls={referenceUrls}
         cameras={cameras}
       />

@@ -17,6 +17,7 @@ import {
 import { createClient as createBrowserClient } from "@pectus/supabase/browser";
 import type { Camera, ExamplePhotoCategory } from "@/lib/brand-types";
 import { ExamplePhotoPicker } from "./ExamplePhotoPicker";
+import Link from "next/link";
 
 const STAGES = [
   "Reading the article for the real subject",
@@ -116,11 +117,37 @@ export function HeroImageSection({
     });
   };
 
+  const noCameras = cameras.length === 0;
+  const noPhotos = examplePhotoCategories.length === 0;
+  const showSetupCallout = noCameras || noPhotos;
+
   return (
-    <section className="rounded-lg border border-zinc-200 bg-white p-5">
+    <section className="rounded-xl border border-zinc-200 bg-white p-6">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h3 className="text-sm font-semibold">Hero image</h3>
+        <h3 className="text-base font-semibold tracking-tight text-zinc-900">
+          Hero image
+        </h3>
       </div>
+
+      {showSetupCallout ? (
+        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] leading-relaxed text-amber-900">
+          <strong className="font-semibold">Brand setup makes this much better.</strong>{" "}
+          {noCameras ? (
+            <>You haven&apos;t added any <strong>cameras</strong> yet (Leica/Portra preset, etc.) which carries the photography direction. </>
+          ) : null}
+          {noPhotos ? (
+            <>You haven&apos;t added <strong>reference photos</strong> for Gemini to anchor on. </>
+          ) : null}
+          Add cameras, reference photos, and image generation API keys (Google AI, fal.ai, Replicate) on the{" "}
+          <Link
+            href={`/brands/${brandSlug}/profile`}
+            className="font-semibold text-amber-900 underline underline-offset-2"
+          >
+            brand profile
+          </Link>
+          .
+        </div>
+      ) : null}
 
       <div className="relative mt-3 overflow-hidden rounded-md">
         {hero ? (
@@ -204,10 +231,21 @@ export function HeroImageSection({
               aria-label="Image model"
               className="h-[38px] rounded-md border border-zinc-300 bg-white px-3 text-sm"
             >
-              <option value="imagen-4">Imagen 4</option>
-              <option value="imagen-4-fast">Imagen 4 Fast</option>
-              <option value="imagen-4-ultra">Imagen 4 Ultra</option>
-              <option value="gemini-3-pro-image-preview">Gemini 3 Pro</option>
+              <optgroup label="Google">
+                <option value="imagen-4">Imagen 4</option>
+                <option value="imagen-4-fast">Imagen 4 Fast</option>
+                <option value="imagen-4-ultra">Imagen 4 Ultra</option>
+                <option value="gemini-3-pro-image-preview">
+                  Gemini 3 Pro (uses reference photos)
+                </option>
+              </optgroup>
+              <optgroup label="fal.ai">
+                <option value="flux-pro-1.1-ultra">Flux Pro 1.1 Ultra</option>
+              </optgroup>
+              <optgroup label="Replicate">
+                <option value="flux-dev">Flux Dev</option>
+                <option value="recraft-v3">Recraft v3</option>
+              </optgroup>
             </select>
             <SubmitButton
               pendingLabel="Generating (~20s)…"

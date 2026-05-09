@@ -3,6 +3,7 @@
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
+import LinkExt from "@tiptap/extension-link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
   createInlineImageUploadUrl,
@@ -146,6 +147,14 @@ export function RichTextEditor({
     extensions: [
       StarterKit.configure({ heading: { levels: [2, 3] } }),
       Image.configure({ inline: false, allowBase64: false }),
+      LinkExt.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          rel: "noopener noreferrer",
+          target: "_blank",
+          class: "underline",
+        },
+      }),
     ],
     content: blocksToHtml(initialBlocks),
     editable,
@@ -304,6 +313,33 @@ export function RichTextEditor({
           >
             <s>S</s>
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              const previous = editor.getAttributes("link").href as
+                | string
+                | undefined;
+              const url = window.prompt(
+                "Link URL (leave empty to remove)",
+                previous ?? "https://",
+              );
+              if (url === null) return;
+              if (url === "") {
+                editor.chain().focus().extendMarkRange("link").unsetLink().run();
+                return;
+              }
+              editor
+                .chain()
+                .focus()
+                .extendMarkRange("link")
+                .setLink({ href: url })
+                .run();
+            }}
+            className={btn(editor.isActive("link"))}
+            title="Insert/remove link"
+          >
+            Link
+          </button>
           <span className="mx-1 h-4 w-px bg-zinc-200" />
           <button
             type="button"
@@ -423,10 +459,19 @@ export function RichTextEditor({
               aria-label="Image model"
               className="h-[30px] rounded-md border border-zinc-300 bg-white px-2 text-xs"
             >
-              <option value="imagen-4">Imagen 4</option>
-              <option value="imagen-4-fast">Imagen 4 Fast</option>
-              <option value="imagen-4-ultra">Imagen 4 Ultra</option>
-              <option value="gemini-3-pro-image-preview">Gemini 3 Pro</option>
+              <optgroup label="Google">
+                <option value="imagen-4">Imagen 4</option>
+                <option value="imagen-4-fast">Imagen 4 Fast</option>
+                <option value="imagen-4-ultra">Imagen 4 Ultra</option>
+                <option value="gemini-3-pro-image-preview">Gemini 3 Pro</option>
+              </optgroup>
+              <optgroup label="fal.ai">
+                <option value="flux-pro-1.1-ultra">Flux Pro 1.1 Ultra</option>
+              </optgroup>
+              <optgroup label="Replicate">
+                <option value="flux-dev">Flux Dev</option>
+                <option value="recraft-v3">Recraft v3</option>
+              </optgroup>
             </select>
             <button
               type="button"
