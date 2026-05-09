@@ -110,7 +110,7 @@ export async function run(): Promise<void> {
   console.log(kleur.green("Update complete."));
   console.log(
     kleur.dim(
-      "If the migration file changed, run `pectus connect supabase` again to apply new SQL. Otherwise restart `npm run dev`.",
+      "Restart `npm run dev` and open the CMS. If schema changes shipped, you'll see an Apply banner at the top — click it.",
     ),
   );
 }

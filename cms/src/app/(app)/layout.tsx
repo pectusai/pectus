@@ -1,4 +1,5 @@
 import { NavBar } from "@/app/components/NavBar";
+import { MigrationBanner } from "@/app/components/MigrationBanner";
 import { requireUser } from "@/lib/auth";
 
 export default async function AppLayout({
@@ -11,6 +12,7 @@ export default async function AppLayout({
   return (
     <div className="flex min-h-screen flex-col">
       <NavBar />
+      <MigrationBanner />
       <div className="flex-1">{children}</div>
     </div>
   );
