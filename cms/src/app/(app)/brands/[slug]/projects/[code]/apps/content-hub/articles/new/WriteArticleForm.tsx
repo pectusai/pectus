@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useState, useActionState } from "react";
 import { generateArticle, type GenerateResult } from "./actions";
 
 const STAGES = [
@@ -11,24 +11,32 @@ const STAGES = [
   "Final pass",
 ];
 
+export type AiFormValues = {
+  keyword: string;
+  purpose: string;
+  brief: string;
+  persona: string;
+};
+
 export function WriteArticleForm({
   brandSlug,
   code,
-  initial,
+  value,
+  onChange,
 }: {
   brandSlug: string;
   code: string;
-  initial: {
-    keyword: string;
-    purpose: string;
-    brief: string;
-    persona: string;
-  };
+  value: AiFormValues;
+  onChange: (next: AiFormValues) => void;
 }) {
   const [state, formAction, isPending] = useActionState<
     GenerateResult | null,
     FormData
   >(generateArticle, null);
+  const [references, setReferences] = useState("");
+
+  const set = <K extends keyof AiFormValues>(key: K, v: AiFormValues[K]) =>
+    onChange({ ...value, [key]: v });
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -40,7 +48,8 @@ export function WriteArticleForm({
         <textarea
           name="brief"
           rows={6}
-          defaultValue={initial.brief}
+          value={value.brief}
+          onChange={(e) => set("brief", e.target.value)}
           placeholder="What this article should say. The angle, the audience, why it matters now."
           className="min-h-20 w-full resize-y rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 leading-relaxed focus:border-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-200"
           required
@@ -55,7 +64,8 @@ export function WriteArticleForm({
           <input
             name="keyword"
             type="text"
-            defaultValue={initial.keyword}
+            value={value.keyword}
+            onChange={(e) => set("keyword", e.target.value)}
             placeholder="e.g. applicant tracking system"
             className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-200"
           />
@@ -67,7 +77,8 @@ export function WriteArticleForm({
           <input
             name="persona"
             type="text"
-            defaultValue={initial.persona}
+            value={value.persona}
+            onChange={(e) => set("persona", e.target.value)}
             placeholder="The ICP this writes to. Leave blank for all."
             className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-200"
           />
@@ -82,7 +93,8 @@ export function WriteArticleForm({
         <input
           name="purpose"
           type="text"
-          defaultValue={initial.purpose}
+          value={value.purpose}
+          onChange={(e) => set("purpose", e.target.value)}
           placeholder="A one-liner if you want to constrain the take."
           className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-200"
         />
@@ -98,6 +110,8 @@ export function WriteArticleForm({
         <textarea
           name="references"
           rows={2}
+          value={references}
+          onChange={(e) => setReferences(e.target.value)}
           placeholder="https://example.com/article-to-match-tone"
           className="w-full resize-y rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 leading-relaxed focus:border-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-200"
         />

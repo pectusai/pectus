@@ -4,10 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { getBrandBySlug } from "@/lib/active-brand";
 import { isAppActiveForProject } from "@/lib/apps";
 import { ActivateAppPointer } from "@/app/components/ActivateAppPointer";
-import { BlankArticleForm } from "./BlankArticleForm";
-import { WriteArticleForm } from "./WriteArticleForm";
-import { SuggestFromGapsForm } from "./SuggestFromGapsForm";
-import { ModeTabs } from "./ModeTabs";
+import { NewArticleSurface } from "./NewArticleSurface";
 
 export const dynamic = "force-dynamic";
 
@@ -126,56 +123,19 @@ export default async function NewArticlePage({
         it yourself, or pick from the keywords with no existing coverage.
       </p>
 
-      <ModeTabs brandSlug={slug} code={code} active={mode} />
-
-      {(icpEmpty || voiceEmpty) && mode === "ai" ? (
-        <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900">
-          <strong className="font-semibold">Heads up.</strong>{" "}
-          {voiceEmpty ? (
-            <>
-              Brand voice is not set yet, so the AI will fall back to a generic
-              direct, warm voice.{" "}
-              <Link
-                href={`/brands/${slug}/profile`}
-                className="font-medium text-pink-700 no-underline hover:underline"
-              >
-                Set voice →
-              </Link>{" "}
-            </>
-          ) : null}
-          {icpEmpty ? (
-            <>
-              ICP is empty, so the AI won&apos;t personalise to a persona or
-              painpoint.{" "}
-              <Link
-                href={`/brands/${slug}/projects/${code}/icp`}
-                className="font-medium text-pink-700 no-underline hover:underline"
-              >
-                Add personas →
-              </Link>
-            </>
-          ) : null}
-        </div>
-      ) : null}
-
-      <div className="mt-5 rounded-2xl border border-zinc-200 bg-white p-6">
-        {mode === "blank" ? (
-          <BlankArticleForm brandSlug={slug} code={code} />
-        ) : mode === "suggest" ? (
-          <SuggestFromGapsForm brandSlug={slug} code={code} gaps={gaps} />
-        ) : (
-          <WriteArticleForm
-            brandSlug={slug}
-            code={code}
-            initial={{
-              keyword: search.keyword ?? "",
-              purpose: search.purpose ?? "",
-              brief: search.brief ?? "",
-              persona: search.persona ?? "",
-            }}
-          />
-        )}
-      </div>
+      <NewArticleSurface
+        brandSlug={slug}
+        code={code}
+        initialMode={mode}
+        initialAi={{
+          keyword: search.keyword ?? "",
+          purpose: search.purpose ?? "",
+          brief: search.brief ?? "",
+          persona: search.persona ?? "",
+        }}
+        gaps={gaps}
+        warnings={{ icpEmpty, voiceEmpty }}
+      />
     </div>
   );
 }
