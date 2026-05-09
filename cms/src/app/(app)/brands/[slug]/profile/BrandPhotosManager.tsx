@@ -9,6 +9,7 @@ import {
   type StoredExampleCategory,
   type StoredExamplePhoto,
 } from "./image-gen-actions";
+import { ApiKeysPanel } from "./ApiKeysPanel";
 
 const MAX_FILE_BYTES = 20 * 1024 * 1024;
 const MAX_DIMENSION = 2048;
@@ -126,10 +127,16 @@ export function BrandPhotosManager({
   brandSlug,
   initialCategories,
   legacyReferenceUrls,
+  apiKeyMasked,
+  falKeyMasked,
+  replicateKeyMasked,
 }: {
   brandSlug: string;
   initialCategories: StoredExampleCategory[];
   legacyReferenceUrls: string[];
+  apiKeyMasked: string | null;
+  falKeyMasked: string | null;
+  replicateKeyMasked: string | null;
 }) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 
@@ -450,6 +457,15 @@ export function BrandPhotosManager({
             <span className="text-xs text-zinc-600">{progress}</span>
           ) : null}
         </div>
+      </div>
+
+      <div className="mt-4">
+        <ApiKeysPanel
+          brandSlug={brandSlug}
+          apiKeyMasked={apiKeyMasked}
+          falKeyMasked={falKeyMasked}
+          replicateKeyMasked={replicateKeyMasked}
+        />
       </div>
 
       <div className="mt-4 space-y-3">

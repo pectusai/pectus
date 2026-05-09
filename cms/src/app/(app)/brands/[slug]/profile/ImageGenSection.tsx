@@ -57,42 +57,13 @@ export function ImageGenSection({
         </p>
       </div>
 
-      <ApiKeyForm
-        brandSlug={brandSlug}
-        apiKeyMasked={apiKeyMasked}
-        provider="google"
-        title="Google AI"
-        keyPrefixHint="AIza…"
-        helpHref="https://aistudio.google.com/apikey"
-        helpLabel="aistudio.google.com/apikey"
-        helpAfter="Powers Imagen 4 and Gemini 3 Pro Image."
-        primaryAction={saveImageGenApiKey}
-      />
-      <ApiKeyForm
-        brandSlug={brandSlug}
-        apiKeyMasked={falKeyMasked}
-        provider="fal"
-        title="fal.ai"
-        keyPrefixHint="fal-…"
-        helpHref="https://fal.ai/dashboard/keys"
-        helpLabel="fal.ai/dashboard/keys"
-        helpAfter="Powers Flux Pro 1.1 Ultra — best for detailed camera-direction prompts."
-      />
-      <ApiKeyForm
-        brandSlug={brandSlug}
-        apiKeyMasked={replicateKeyMasked}
-        provider="replicate"
-        title="Replicate"
-        keyPrefixHint="r8_…"
-        helpHref="https://replicate.com/account/api-tokens"
-        helpLabel="replicate.com/account/api-tokens"
-        helpAfter="Powers Flux Dev (cheap iteration) and Recraft v3 (illustration)."
-      />
-
       <BrandPhotosManager
         brandSlug={brandSlug}
         initialCategories={photoCategories}
         legacyReferenceUrls={referenceUrls}
+        apiKeyMasked={apiKeyMasked}
+        falKeyMasked={falKeyMasked}
+        replicateKeyMasked={replicateKeyMasked}
       />
       <CamerasSection brandSlug={brandSlug} initialCameras={initialCameras} />
     </section>
