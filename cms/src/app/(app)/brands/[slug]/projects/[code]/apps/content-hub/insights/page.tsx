@@ -265,7 +265,7 @@ export default async function InsightsPage({
               <RenewButton projectId={project.id} />
             </div>
 
-            <div className="pectus-insights-cards">
+            <div className="flex flex-col gap-3">
               {cards.length === 0 ? (
                 <div className="pectus-insights-empty-card">
                   <p>
