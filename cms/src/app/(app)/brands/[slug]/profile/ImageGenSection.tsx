@@ -12,6 +12,15 @@ import {
   saveCameras,
 } from "./image-gen-actions";
 import type { Camera } from "@/lib/brand-types";
+import { BrandPhotosManager } from "./BrandPhotosManager";
+
+type StoredPhoto = {
+  id: string;
+  url: string;
+  storage_path: string;
+  description: string;
+};
+type StoredCategory = { id: string; label: string; photos: StoredPhoto[] };
 
 type Props = {
   brandSlug: string;
@@ -19,6 +28,7 @@ type Props = {
   falKeyMasked: string | null;
   replicateKeyMasked: string | null;
   referenceUrls: string[];
+  photoCategories: StoredCategory[];
   cameras: Camera[];
 };
 
@@ -33,6 +43,7 @@ export function ImageGenSection({
   falKeyMasked,
   replicateKeyMasked,
   referenceUrls,
+  photoCategories,
   cameras: initialCameras,
 }: Props) {
   return (
@@ -78,7 +89,11 @@ export function ImageGenSection({
         helpAfter="Powers Flux Dev (cheap iteration) and Recraft v3 (illustration)."
       />
 
-      <ReferencePhotos brandSlug={brandSlug} initialUrls={referenceUrls} />
+      <BrandPhotosManager
+        brandSlug={brandSlug}
+        initialCategories={photoCategories}
+        legacyReferenceUrls={referenceUrls}
+      />
       <CamerasSection brandSlug={brandSlug} initialCameras={initialCameras} />
     </section>
   );

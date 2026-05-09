@@ -8,6 +8,7 @@ import {
   setBrandKeyForProvider,
   type ImageProvider,
 } from "@/lib/image-generation";
+import { describeImageFromUrl } from "@/lib/describe-image";
 import type { Camera } from "@/lib/brand-types";
 
 async function brandIdFromSlug(slug: string): Promise<string | null> {
@@ -161,6 +162,427 @@ export async function removeReferenceImage(formData: FormData): Promise<void> {
     }
   }
   revalidatePath(`/brands/${brandSlug}/profile`);
+}
+
+// ── Example photo categories (description + category per photo) ─────────
+
+type StoredPhoto = { id: string; url: string; description: string };
+type StoredCategory = { id: string; label: string; photos: StoredPhoto[] };
+
+function newId(prefix: string): string {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+export type ExamplePhotoInput = {
+  url: string;
+  description: string;
+  categoryLabel: string;
+};
+
+async function loadCategoriesAndRefs(
+  brandSlug: string,
+): Promise<
+  { ok: true; categories: StoredCategory[]; refs: string[] }
+  | { ok: false; error: string }
+> {
+  const service = createServiceClient();
+  const { data: brand } = await service
+    .from("brands")
+    .select("example_photo_categories, reference_image_urls")
+    .eq("slug", brandSlug)
+    .maybeSingle();
+  if (!brand) return { ok: false, error: "Brand not found." };
+  const categories: StoredCategory[] = Array.isArray(
+    brand.example_photo_categories,
+  )
+    ? (brand.example_photo_categories as StoredCategory[])
+    : [];
+  const refs = (
+    Array.isArray(brand.reference_image_urls)
+      ? (brand.reference_image_urls as unknown[])
+      : []
+  ).filter((u): u is string => typeof u === "string");
+  return { ok: true, categories, refs };
+}
+
+function findOrCreateCategory(
+  categories: StoredCategory[],
+  label: string,
+): StoredCategory {
+  const trimmed = label.trim() || "Uncategorized";
+  let cat = categories.find(
+    (c) => c.label.toLowerCase() === trimmed.toLowerCase(),
+  );
+  if (!cat) {
+    cat = { id: newId("cat"), label: trimmed, photos: [] };
+    categories.push(cat);
+  }
+  return cat;
+}
+
+export async function saveExamplePhotosBatch(
+  brandSlug: string,
+  photos: ExamplePhotoInput[],
+): Promise<{ ok: true; saved: number } | { ok: false; error: string }> {
+  if (!brandSlug || photos.length === 0) {
+    return { ok: false, error: "Nothing to save." };
+  }
+  await requireUser();
+  const loaded = await loadCategoriesAndRefs(brandSlug);
+  if (!loaded.ok) return loaded;
+
+  const { categories, refs } = loaded;
+  let added = 0;
+  for (const p of photos) {
+    if (!p.url) continue;
+    const cat = findOrCreateCategory(categories, p.categoryLabel);
+    if (cat.photos.some((ph) => ph.url === p.url)) continue;
+    cat.photos.push({
+      id: newId("ph"),
+      url: p.url,
+      description: (p.description ?? "").trim(),
+    });
+    added++;
+  }
+
+  // If a saved photo was previously in the flat reference list, drop it from
+  // there so we don't show it twice.
+  const movedUrls = new Set(photos.map((p) => p.url));
+  const newRefs = refs.filter((u) => !movedUrls.has(u));
+
+  const service = createServiceClient();
+  const { error } = await service
+    .from("brands")
+    .update({
+      example_photo_categories: categories,
+      reference_image_urls: newRefs,
+    })
+    .eq("slug", brandSlug);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(`/brands/${brandSlug}/profile`);
+  return { ok: true, saved: added };
+}
+
+export async function updateExamplePhotoDescription(
+  brandSlug: string,
+  categoryId: string,
+  photoId: string,
+  description: string,
+  newCategoryLabel: string | null,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireUser();
+  const loaded = await loadCategoriesAndRefs(brandSlug);
+  if (!loaded.ok) return loaded;
+  const { categories } = loaded;
+
+  const sourceCat = categories.find((c) => c.id === categoryId);
+  if (!sourceCat) return { ok: false, error: "Category not found." };
+  const photo = sourceCat.photos.find((p) => p.id === photoId);
+  if (!photo) return { ok: false, error: "Photo not found." };
+
+  photo.description = (description ?? "").trim();
+
+  if (newCategoryLabel && newCategoryLabel.trim()) {
+    const targetCat = findOrCreateCategory(categories, newCategoryLabel);
+    if (targetCat.id !== sourceCat.id) {
+      sourceCat.photos = sourceCat.photos.filter((p) => p.id !== photoId);
+      targetCat.photos.push(photo);
+    }
+  }
+
+  // Drop any newly-empty categories.
+  const trimmed = categories.filter((c) => c.photos.length > 0);
+
+  const service = createServiceClient();
+  const { error } = await service
+    .from("brands")
+    .update({ example_photo_categories: trimmed })
+    .eq("slug", brandSlug);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(`/brands/${brandSlug}/profile`);
+  return { ok: true };
+}
+
+export async function removeExamplePhoto(
+  brandSlug: string,
+  categoryId: string,
+  photoId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireUser();
+  const loaded = await loadCategoriesAndRefs(brandSlug);
+  if (!loaded.ok) return loaded;
+  const { categories } = loaded;
+
+  const cat = categories.find((c) => c.id === categoryId);
+  if (!cat) return { ok: false, error: "Category not found." };
+  cat.photos = cat.photos.filter((p) => p.id !== photoId);
+  const trimmed = categories.filter((c) => c.photos.length > 0);
+
+  const service = createServiceClient();
+  const { error } = await service
+    .from("brands")
+    .update({ example_photo_categories: trimmed })
+    .eq("slug", brandSlug);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(`/brands/${brandSlug}/profile`);
+  return { ok: true };
+}
+
+// ── Spec-aligned full lifecycle: signed upload + bulk save + describe ────
+
+export type ExampleSavePhoto = {
+  id?: string;
+  url: string;
+  storage_path?: string;
+  description: string;
+};
+export type ExampleSaveCategory = {
+  id?: string;
+  label: string;
+  photos: ExampleSavePhoto[];
+};
+export type StoredExamplePhoto = {
+  id: string;
+  url: string;
+  storage_path: string;
+  description: string;
+};
+export type StoredExampleCategory = {
+  id: string;
+  label: string;
+  photos: StoredExamplePhoto[];
+};
+
+export type SignedExampleUploadResult =
+  | {
+      ok: true;
+      path: string;
+      token: string;
+      publicUrl: string;
+    }
+  | { ok: false; error: string };
+
+export async function createExamplePhotoUploadUrl(
+  brandSlug: string,
+  filename: string,
+): Promise<SignedExampleUploadResult> {
+  if (!brandSlug || !filename) {
+    return { ok: false, error: "Missing brand or filename." };
+  }
+  await requireUser();
+  const safeName = filename.toLowerCase().replace(/[^a-z0-9.]+/g, "-");
+  const ext = (safeName.split(".").pop() || "jpg").slice(0, 8) || "jpg";
+  const random = Math.random().toString(36).slice(2, 10);
+  const path = `brand-examples/${brandSlug}/${Date.now()}-${random}.${ext}`;
+  const service = createServiceClient();
+  const { data, error } = await service.storage
+    .from("article-images")
+    .createSignedUploadUrl(path);
+  if (error || !data) {
+    return {
+      ok: false,
+      error: error?.message ?? "Could not create upload URL.",
+    };
+  }
+  const { data: pub } = service.storage
+    .from("article-images")
+    .getPublicUrl(path);
+  return { ok: true, path: data.path, token: data.token, publicUrl: pub.publicUrl };
+}
+
+function cleanCategories(
+  raw: ExampleSaveCategory[],
+): { ok: true; cleaned: StoredExampleCategory[] } | { ok: false; error: string } {
+  const cleaned: StoredExampleCategory[] = [];
+  for (const cat of raw) {
+    const label = (cat.label ?? "").trim();
+    const id = cat.id && typeof cat.id === "string" ? cat.id : newId("cat");
+    const photos: StoredExamplePhoto[] = [];
+    for (const photo of cat.photos ?? []) {
+      const url = (photo.url ?? "").trim();
+      if (!url) continue;
+      photos.push({
+        id:
+          photo.id && typeof photo.id === "string" ? photo.id : newId("ph"),
+        url,
+        storage_path: (photo.storage_path ?? "").trim(),
+        description: (photo.description ?? "").trim(),
+      });
+    }
+    if (!label && photos.length === 0) continue;
+    if (!label) {
+      return {
+        ok: false,
+        error: "Every category needs a label before saving.",
+      };
+    }
+    cleaned.push({ id, label, photos });
+  }
+  return { ok: true, cleaned };
+}
+
+export type SaveExamplePhotosResult =
+  | { ok: true; categories: StoredExampleCategory[] }
+  | { ok: false; error: string };
+
+export async function saveExamplePhotoCategories(
+  brandSlug: string,
+  rawCategories: ExampleSaveCategory[],
+): Promise<SaveExamplePhotosResult> {
+  if (!brandSlug) return { ok: false, error: "Missing brand context." };
+  await requireUser();
+
+  const cleaned = cleanCategories(rawCategories);
+  if (!cleaned.ok) return cleaned;
+
+  const service = createServiceClient();
+  const { data: brand, error: loadErr } = await service
+    .from("brands")
+    .select("example_photo_categories, reference_image_urls")
+    .eq("slug", brandSlug)
+    .maybeSingle();
+  if (loadErr) return { ok: false, error: loadErr.message };
+  if (!brand) return { ok: false, error: "Brand not found." };
+
+  const previous: StoredExampleCategory[] = Array.isArray(
+    brand.example_photo_categories,
+  )
+    ? (brand.example_photo_categories as StoredExampleCategory[])
+    : [];
+
+  const keptPaths = new Set(
+    cleaned.cleaned.flatMap((c) =>
+      c.photos.map((p) => p.storage_path).filter(Boolean),
+    ),
+  );
+  const orphans: string[] = [];
+  for (const oldCat of previous) {
+    for (const oldPhoto of oldCat.photos ?? []) {
+      const path = oldPhoto.storage_path;
+      if (path && !keptPaths.has(path)) orphans.push(path);
+    }
+  }
+
+  // If a saved photo URL was previously held in the legacy reference list,
+  // drop it from there so the photo isn't shown twice.
+  const keptUrls = new Set(
+    cleaned.cleaned.flatMap((c) => c.photos.map((p) => p.url)),
+  );
+  const oldRefs = (
+    Array.isArray(brand.reference_image_urls)
+      ? (brand.reference_image_urls as unknown[])
+      : []
+  ).filter((u): u is string => typeof u === "string");
+  const newRefs = oldRefs.filter((u) => !keptUrls.has(u));
+
+  const { error: updateErr } = await service
+    .from("brands")
+    .update({
+      example_photo_categories: cleaned.cleaned,
+      reference_image_urls: newRefs,
+    })
+    .eq("slug", brandSlug);
+  if (updateErr) return { ok: false, error: updateErr.message };
+
+  if (orphans.length > 0) {
+    try {
+      await service.storage.from("article-images").remove(orphans);
+    } catch {
+      /* best-effort — DB is the source of truth */
+    }
+  }
+
+  revalidatePath(`/brands/${brandSlug}/profile`);
+  return { ok: true, categories: cleaned.cleaned };
+}
+
+export type DescribeResult =
+  | { ok: true; description: string; cached: boolean }
+  | { ok: false; error: string };
+
+export async function describeImageByUrl(
+  brandSlug: string,
+  imageUrl: string,
+): Promise<{ ok: true; description: string } | { ok: false; error: string }> {
+  if (!brandSlug || !imageUrl) {
+    return { ok: false, error: "Missing brand or image URL." };
+  }
+  await requireUser();
+  const service = createServiceClient();
+  const { data: brand } = await service
+    .from("brands")
+    .select("id")
+    .eq("slug", brandSlug)
+    .maybeSingle();
+  if (!brand) return { ok: false, error: "Brand not found." };
+  try {
+    const description = await describeImageFromUrl(
+      brand.id as string,
+      imageUrl,
+    );
+    return { ok: true, description };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Describe failed.",
+    };
+  }
+}
+
+export async function describeExamplePhoto(
+  brandSlug: string,
+  categoryId: string,
+  photoId: string,
+  forceRegenerate: boolean,
+): Promise<DescribeResult> {
+  if (!brandSlug) return { ok: false, error: "Missing brand context." };
+  await requireUser();
+
+  const service = createServiceClient();
+  const { data: brand } = await service
+    .from("brands")
+    .select("id, example_photo_categories")
+    .eq("slug", brandSlug)
+    .maybeSingle();
+  if (!brand) return { ok: false, error: "Brand not found." };
+
+  const categories: StoredExampleCategory[] = Array.isArray(
+    brand.example_photo_categories,
+  )
+    ? (brand.example_photo_categories as StoredExampleCategory[])
+    : [];
+
+  const cat = categories.find((c) => c.id === categoryId);
+  if (!cat) return { ok: false, error: "Category not found." };
+  const photo = cat.photos.find((p) => p.id === photoId);
+  if (!photo) return { ok: false, error: "Photo not found." };
+
+  if (
+    !forceRegenerate &&
+    photo.description &&
+    photo.description.trim().length > 0
+  ) {
+    return { ok: true, description: photo.description, cached: true };
+  }
+
+  let description: string;
+  try {
+    description = await describeImageFromUrl(brand.id as string, photo.url);
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Describe failed.",
+    };
+  }
+
+  photo.description = description;
+  const { error } = await service
+    .from("brands")
+    .update({ example_photo_categories: categories })
+    .eq("slug", brandSlug);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(`/brands/${brandSlug}/profile`);
+  return { ok: true, description, cached: false };
 }
 
 // ── Camera presets ───────────────────────────────────────────────────────

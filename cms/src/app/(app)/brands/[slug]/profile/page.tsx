@@ -55,6 +55,18 @@ export default async function BrandPage({
       ? (brandRow!.reference_image_urls as string[])
       : []
   ).filter((u): u is string => typeof u === "string");
+  type StoredPhoto = {
+    id: string;
+    url: string;
+    storage_path: string;
+    description: string;
+  };
+  type StoredCategory = { id: string; label: string; photos: StoredPhoto[] };
+  const photoCategories: StoredCategory[] = Array.isArray(
+    brandRow?.example_photo_categories,
+  )
+    ? (brandRow!.example_photo_categories as StoredCategory[])
+    : [];
   const cameras = (
     Array.isArray(brandRow?.cameras) ? (brandRow!.cameras as Camera[]) : []
   );
@@ -112,6 +124,7 @@ export default async function BrandPage({
         falKeyMasked={falKeyMasked}
         replicateKeyMasked={replicateKeyMasked}
         referenceUrls={referenceUrls}
+        photoCategories={photoCategories}
         cameras={cameras}
       />
     </div>
