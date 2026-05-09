@@ -101,26 +101,34 @@ export async function ProjectShell({
         tooltip="Where data comes into the project. Configuration only — these don't have user-facing surfaces of their own."
         defaultOpen={false}
       >
-        <SidebarGroup
-          id="project-data"
-          label="Project data"
-          tooltip="Project-scoped data that lives in Pectus directly: ICP and the keywords aggregator."
-        >
-          <SidebarLink href={`${base}/icp`}>ICP</SidebarLink>
-          <SidebarLink href={`${base}/keywords`}>Keywords</SidebarLink>
-        </SidebarGroup>
-        {inboundApps.map((a) => renderAppGroup(a.name))}
+        {inboundApps.length === 0 ? (
+          <p className="pectus-sidebar-empty">
+            No inbound apps activated.{" "}
+            <a className="pectus-sidebar-empty-link" href={`${base}/apps`}>
+              Browse apps →
+            </a>
+          </p>
+        ) : (
+          inboundApps.map((a) => renderAppGroup(a.name))
+        )}
       </SidebarSection>
     </>
   );
 
   const footer = (
-    <Link href={`${base}/settings`} className="pectus-sidebar-settings-link">
-      <span className="pectus-sidebar-settings-icon" aria-hidden>
-        ⚙
-      </span>
-      <span>Project settings</span>
-    </Link>
+    <div className="pectus-sidebar-footer-nav">
+      <Link
+        href={`${base}/settings`}
+        className="pectus-sidebar-footer-heading"
+      >
+        <span aria-hidden className="pectus-sidebar-footer-icon">⚙</span>
+        Project settings
+      </Link>
+      <div className="pectus-sidebar-footer-items">
+        <SidebarLink href={`${base}/icp`}>ICP</SidebarLink>
+        <SidebarLink href={`${base}/keywords`}>Keywords</SidebarLink>
+      </div>
+    </div>
   );
 
   return (

@@ -56,13 +56,6 @@ export const APP_SIDEBAR_MANIFESTS: Record<string, AppSidebarManifest> = {
       },
     ],
   },
-  "seed-keywords": {
-    label: "Seed keywords",
-    tooltip: "Manual seed keyword list per project.",
-    items: [
-      { label: "Settings", href: (b) => `${b}/apps/seed-keywords/settings` },
-    ],
-  },
   ga4: {
     label: "GA4",
     tooltip: "Google Analytics 4 traffic data.",

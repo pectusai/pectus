@@ -55,10 +55,6 @@ export function ProjectHeaderSwitcher({
         <span aria-hidden className="pectus-project-header-chevron">
           {open ? "▴" : "▾"}
         </span>
-        <span className="pectus-project-header-code">
-          {current.code}
-          {current.locale ? ` · ${current.locale}` : ""}
-        </span>
       </button>
 
       {open ? (

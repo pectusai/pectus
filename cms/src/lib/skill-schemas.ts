@@ -12,11 +12,9 @@ import type { ZodSchema } from "zod";
 import { WeeklyAnalysis } from "@pectus/skills/weekly-analysis/schema";
 import { PlanSitemap } from "@pectus/skills/plan-sitemap/schema";
 import { EditPage } from "@pectus/skills/edit-page/schema";
-import { SeedKeywordsInsights } from "@pectus/apps/seed-keywords/insights/schema";
 
 export const skillSchemas: Record<string, ZodSchema> = {
   "weekly-analysis": WeeklyAnalysis,
   "plan-sitemap": PlanSitemap,
   "edit-page": EditPage,
-  "seed-keywords/insights": SeedKeywordsInsights,
 };
