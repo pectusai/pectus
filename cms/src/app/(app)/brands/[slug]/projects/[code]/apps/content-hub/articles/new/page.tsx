@@ -111,15 +111,17 @@ export default async function NewArticlePage({
   }
 
   return (
-    <div className="pectus-new-article">
+    <div className="mx-auto max-w-3xl px-6 py-8">
       <Link
         href={`/brands/${slug}/projects/${code}/apps/content-hub/articles`}
-        className="pectus-new-article-back"
+        className="text-xs text-zinc-500 no-underline hover:text-zinc-900"
       >
         ← All articles
       </Link>
-      <h1 className="pectus-new-article-title">New article</h1>
-      <p className="pectus-new-article-lede">
+      <h1 className="mt-2 mb-2 text-3xl font-bold tracking-tight text-zinc-900">
+        New article
+      </h1>
+      <p className="mb-4 max-w-[60ch] text-sm leading-relaxed text-zinc-600">
         Write a brief and let Sonnet draft the article, start blank and write
         it yourself, or pick from the keywords with no existing coverage.
       </p>
@@ -127,15 +129,15 @@ export default async function NewArticlePage({
       <ModeTabs brandSlug={slug} code={code} active={mode} />
 
       {(icpEmpty || voiceEmpty) && mode === "ai" ? (
-        <div className="pectus-new-article-warning">
-          <strong>Heads up.</strong>{" "}
+        <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900">
+          <strong className="font-semibold">Heads up.</strong>{" "}
           {voiceEmpty ? (
             <>
               Brand voice is not set yet, so the AI will fall back to a generic
               direct, warm voice.{" "}
               <Link
                 href={`/brands/${slug}/profile`}
-                className="pectus-new-article-warning-link"
+                className="font-medium text-pink-700 no-underline hover:underline"
               >
                 Set voice →
               </Link>{" "}
@@ -147,7 +149,7 @@ export default async function NewArticlePage({
               painpoint.{" "}
               <Link
                 href={`/brands/${slug}/projects/${code}/icp`}
-                className="pectus-new-article-warning-link"
+                className="font-medium text-pink-700 no-underline hover:underline"
               >
                 Add personas →
               </Link>
@@ -156,7 +158,7 @@ export default async function NewArticlePage({
         </div>
       ) : null}
 
-      <div className="pectus-new-article-card">
+      <div className="mt-5 rounded-2xl border border-zinc-200 bg-white p-6">
         {mode === "blank" ? (
           <BlankArticleForm brandSlug={slug} code={code} />
         ) : mode === "suggest" ? (

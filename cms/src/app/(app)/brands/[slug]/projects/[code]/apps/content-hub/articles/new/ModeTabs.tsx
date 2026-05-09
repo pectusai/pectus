@@ -18,7 +18,10 @@ export function ModeTabs({
   active: "blank" | "ai" | "suggest";
 }) {
   return (
-    <nav className="pectus-mode-tabs" aria-label="New article mode">
+    <nav
+      className="mt-5 flex items-center gap-1 border-b border-zinc-200"
+      aria-label="New article mode"
+    >
       {TABS.map((t) => {
         const params = new URLSearchParams({ mode: t.key });
         const href = `/brands/${brandSlug}/projects/${code}/apps/content-hub/articles/new?${params.toString()}`;
@@ -27,7 +30,11 @@ export function ModeTabs({
           <Link
             key={t.key}
             href={href}
-            className={`pectus-mode-tab ${isActive ? "is-active" : ""}`}
+            className={`-mb-px rounded-t-md border-b-2 px-3.5 py-2 text-sm font-medium no-underline transition ${
+              isActive
+                ? "border-pink-700 text-zinc-900"
+                : "border-transparent text-zinc-500 hover:text-zinc-900"
+            }`}
           >
             {t.label}
           </Link>
