@@ -563,6 +563,147 @@ body {
   color: #888;
 }
 
+/* =============================================================================
+ * Content Hub > Insights (smart CMS dashboard).
+ * ========================================================================= */
+
+.pectus-insights {
+  max-width: 64rem;
+}
+
+.pectus-insights-header {
+  border-bottom: 1px solid var(--pectus-border);
+  padding-bottom: 2rem;
+  margin-bottom: 2.5rem;
+}
+
+.pectus-insights-eyebrow {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #888;
+  font-weight: 500;
+}
+
+.pectus-insights-header h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0.625rem 0 0.625rem;
+  color: #1a1a1a;
+}
+
+.pectus-insights-lede {
+  color: #555;
+  margin: 0 0 1.75rem;
+  line-height: 1.6;
+  max-width: 58ch;
+}
+
+.pectus-insights-counters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.875rem;
+  max-width: 32rem;
+  padding: 0;
+  margin: 0;
+}
+
+.pectus-insights-counter {
+  border: 1px solid var(--pectus-border);
+  border-radius: 0.625rem;
+  padding: 0.875rem 1.125rem;
+  background: white;
+}
+
+.pectus-insights-counter dt {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #777;
+  font-weight: 500;
+}
+
+.pectus-insights-counter dd {
+  font-size: 1.625rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #1a1a1a;
+  margin: 0.4rem 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.pectus-insights-empty {
+  border: 1px solid var(--pectus-border);
+  border-radius: 0.75rem;
+  background: white;
+  padding: 1.75rem 2rem;
+  max-width: 48rem;
+}
+
+.pectus-insights-empty h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 0.625rem;
+  color: #1a1a1a;
+}
+
+.pectus-insights-empty p {
+  color: #555;
+  margin: 0 0 1rem;
+  line-height: 1.6;
+}
+
+.pectus-insights-empty-meta {
+  color: #888;
+  font-size: 0.8125rem;
+  margin-bottom: 1.25rem;
+}
+
+.pectus-insights-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+}
+
+.pectus-insights-button-primary {
+  display: inline-block;
+  background: #b6004f;
+  color: white;
+  border: none;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  padding: 0.55rem 1.05rem;
+  text-decoration: none;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+.pectus-insights-button-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.pectus-insights-button-primary:hover:not(:disabled) {
+  background: #9a0042;
+}
+
+.pectus-insights-button-secondary {
+  display: inline-block;
+  background: white;
+  color: #1a1a1a;
+  border: 1px solid var(--pectus-border);
+  font-weight: 500;
+  border-radius: 0.5rem;
+  padding: 0.55rem 1.05rem;
+  text-decoration: none;
+  font-size: 0.9375rem;
+}
+
+.pectus-insights-button-secondary:hover {
+  border-color: #999;
+}
+
 .pectus-sidebar-section {
   display: flex;
   flex-direction: column;

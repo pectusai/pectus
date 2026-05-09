@@ -34,12 +34,11 @@ export const APP_SIDEBAR_MANIFESTS: Record<string, AppSidebarManifest> = {
   "content-hub": {
     label: "Content Hub",
     tooltip:
-      "Publish pages and articles to a public site you control. Includes plan, gap analysis, sources, and reviews.",
+      "Smart CMS that uses GA4, Search Console, and Google Ads data to recommend what to write next.",
     items: [
-      { label: "Pages", href: (b) => `${b}/apps/content-hub/pages` },
+      { label: "Insights", href: (b) => `${b}/apps/content-hub/insights` },
       { label: "Articles", href: (b) => `${b}/apps/content-hub/articles` },
-      { label: "Plan", href: (b) => `${b}/apps/content-hub/plan` },
-      { label: "Gap", href: (b) => `${b}/apps/content-hub/gap` },
+      { label: "Pages", href: (b) => `${b}/apps/content-hub/pages` },
       { label: "Sources", href: (b) => `${b}/apps/content-hub/sources` },
       { label: "Reviews", href: (b) => `${b}/apps/content-hub/reviews` },
       {
