@@ -10,6 +10,7 @@ import {
   type ArticleStatus,
 } from "@/lib/article-status";
 import { FetchArticleButton } from "./FetchArticleButton";
+import { RemoveArticleButton } from "./RemoveArticleButton";
 import { ImportForm } from "./ImportForm";
 
 export const dynamic = "force-dynamic";
@@ -260,6 +261,7 @@ export default async function ArticlesIndexPage({
                   <Th align="right">Published</Th>
                   <Th align="right">Words</Th>
                   <Th>Status</Th>
+                  <Th align="right">Actions</Th>
                 </tr>
               </thead>
               <tbody>
@@ -333,6 +335,19 @@ export default async function ArticlesIndexPage({
                           >
                             {STATUS_LABELS[status]}
                           </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right align-top">
+                        {status === "archived" ? (
+                          <span className="text-[11px] text-zinc-400">—</span>
+                        ) : (
+                          <RemoveArticleButton
+                            brandSlug={slug}
+                            code={code}
+                            articleId={a.id as string}
+                            title={a.title as string}
+                            isShell={showFetch}
+                          />
                         )}
                       </td>
                     </tr>
