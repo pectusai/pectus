@@ -2,14 +2,7 @@
 
 import { useState, useActionState } from "react";
 import { generateArticle, type GenerateResult } from "./actions";
-
-const STAGES = [
-  "Pulling in your brand voice and ICP",
-  "Reading the brief",
-  "Drafting four to six sections",
-  "Tightening the lede",
-  "Final pass",
-];
+import { GeneratingModal } from "./GeneratingModal";
 
 export type AiFormValues = {
   keyword: string;
@@ -124,18 +117,7 @@ export function WriteArticleForm({
           className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
           style={{ background: "linear-gradient(90deg, #db2777, #f97316)" }}
         >
-          {isPending ? (
-            <>
-              <span
-                className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30"
-                style={{ borderTopColor: "white", borderRightColor: "white" }}
-                aria-hidden
-              />
-              <span>Generating</span>
-            </>
-          ) : (
-            <>Generate article</>
-          )}
+          {isPending ? <>Generating…</> : <>Generate article</>}
         </button>
         {state && !state.ok ? (
           <p className="m-0 max-w-[48ch] text-[13px] text-red-700">
@@ -144,18 +126,7 @@ export function WriteArticleForm({
         ) : null}
       </div>
 
-      {isPending ? (
-        <div className="mt-2 border-t border-zinc-200 pt-3">
-          <p className="m-0 mb-2 text-[13px] text-zinc-500">
-            Sonnet 4.6 typically takes 8 to 20 seconds. Don&apos;t reload.
-          </p>
-          <ul className="m-0 list-none p-0 text-[13px] text-zinc-500 space-y-1">
-            {STAGES.map((s) => (
-              <li key={s}>{s}</li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+      <GeneratingModal open={isPending} />
     </form>
   );
 }
