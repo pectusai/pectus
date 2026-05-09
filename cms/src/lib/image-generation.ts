@@ -344,17 +344,33 @@ async function generateFalImage(
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`fal.ai request failed (${res.status}): ${text.slice(0, 400)}`);
+    throw new Error(
+      `fal.ai (${endpoint}) returned ${res.status}: ${text.slice(0, 500)}`,
+    );
   }
   const json = (await res.json()) as {
     images?: Array<{ url?: string; content_type?: string }>;
+    image?: { url?: string };
+    output?: string | string[];
   };
-  const url = json.images?.[0]?.url;
-  if (!url) throw new Error("fal.ai returned no image URL.");
+  // fal's response shape varies a bit by model; try the known shapes.
+  const url =
+    json.images?.[0]?.url ??
+    json.image?.url ??
+    (typeof json.output === "string"
+      ? json.output
+      : Array.isArray(json.output)
+        ? json.output[0]
+        : undefined);
+  if (!url) {
+    throw new Error(
+      `fal.ai returned no image URL. Response keys: ${Object.keys(json).join(", ")}`,
+    );
+  }
   const imgRes = await fetch(url);
   if (!imgRes.ok) {
     throw new Error(
-      `Could not fetch generated fal image (${imgRes.status}).`,
+      `Could not fetch generated fal image at ${url} (${imgRes.status}).`,
     );
   }
   const mimeType = imgRes.headers.get("content-type") || "image/jpeg";
