@@ -239,19 +239,19 @@ export default async function InsightsPage({
         </section>
       ) : (
         <>
-          <section className="pectus-insights-section">
-            <div className="pectus-insights-section-head">
+          <section className="mt-10">
+            <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
               <div>
-                <span className="pectus-insights-eyebrow">
+                <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-pink-600">
                   This week&apos;s ideas
                 </span>
-                <h2 className="pectus-insights-section-title">
+                <h2 className="mt-1.5 text-2xl font-bold tracking-tight text-zinc-900">
                   {cards.length === 0
                     ? "All ideas dismissed."
                     : `${cards.length} idea${cards.length === 1 ? "" : "s"} in the queue.`}
                 </h2>
                 {latestGeneratedAt ? (
-                  <p className="pectus-insights-section-meta">
+                  <p className="mt-1 text-xs text-zinc-500">
                     Last generated{" "}
                     {new Date(latestGeneratedAt).toLocaleString("en-US", {
                       month: "short",
@@ -267,12 +267,10 @@ export default async function InsightsPage({
 
             <div className="flex flex-col gap-3">
               {cards.length === 0 ? (
-                <div className="pectus-insights-empty-card">
-                  <p>
-                    Nothing in the queue. Click Renew to generate five fresh
-                    angles from the same interpretation, or update your data
-                    and run a full analysis.
-                  </p>
+                <div className="rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-600">
+                  Nothing in the queue. Click Renew to generate five fresh
+                  angles from the same interpretation, or update your data and
+                  run a full analysis.
                 </div>
               ) : (
                 cards.map((c) => (
@@ -291,45 +289,59 @@ export default async function InsightsPage({
           </section>
 
           {latestTrafficTable && latestTrafficTable.length > 0 ? (
-            <section className="pectus-insights-section">
-              <header className="pectus-insights-subsection-head">
-                <span className="pectus-insights-eyebrow">
+            <section className="mt-12">
+              <header className="mb-4">
+                <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-pink-600">
                   Traffic potential
                 </span>
-                <h2 className="pectus-insights-section-title">
+                <h2 className="mt-1.5 text-xl font-bold tracking-tight text-zinc-900">
                   Articles ranked by what they could pull in.
                 </h2>
-                <p className="pectus-insights-subsection-subtitle">
+                <p className="mt-1 max-w-2xl text-sm text-zinc-500">
                   From the most recent generation. Projected monthly sessions
                   if each ranks in the top five.
                 </p>
               </header>
-              <table className="pectus-insights-table">
-                <thead>
-                  <tr>
-                    <th>Topic</th>
-                    <th>Primary keyword</th>
-                    <th className="num">Monthly visits</th>
-                    <th>Why</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {latestTrafficTable.map((row, i) => (
-                    <tr key={i}>
-                      <td>{row.topic}</td>
-                      <td>
-                        <span className="pectus-idea-pill pectus-idea-pill-kw">
-                          {row.primary_keyword}
-                        </span>
-                      </td>
-                      <td className="num">
-                        {row.projected_monthly_traffic.toLocaleString("en-US")}
-                      </td>
-                      <td>{row.reasoning}</td>
+              <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white">
+                <table className="w-full text-[13px]">
+                  <thead className="bg-zinc-50">
+                    <tr>
+                      <th className="whitespace-nowrap px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                        Topic
+                      </th>
+                      <th className="whitespace-nowrap px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                        Primary keyword
+                      </th>
+                      <th className="whitespace-nowrap px-3 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                        Monthly visits
+                      </th>
+                      <th className="whitespace-nowrap px-3 py-2 text-left text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                        Why
+                      </th>
                     </tr>
+                  </thead>
+                  <tbody>
+                    {latestTrafficTable.map((row, i) => (
+                      <tr key={i} className="border-t border-zinc-100">
+                        <td className="px-3 py-2.5 align-top font-medium text-zinc-900">
+                          {row.topic}
+                        </td>
+                        <td className="px-3 py-2.5 align-top">
+                          <span className="inline-flex items-center rounded bg-pink-100 px-1.5 py-0.5 text-[11px] font-semibold text-pink-800">
+                            {row.primary_keyword}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2.5 text-right align-top tabular-nums font-semibold text-zinc-900">
+                          {row.projected_monthly_traffic.toLocaleString("en-US")}
+                        </td>
+                        <td className="px-3 py-2.5 align-top text-zinc-600">
+                          {row.reasoning}
+                        </td>
+                      </tr>
                   ))}
-                </tbody>
-              </table>
+                  </tbody>
+                </table>
+              </div>
             </section>
           ) : null}
 
