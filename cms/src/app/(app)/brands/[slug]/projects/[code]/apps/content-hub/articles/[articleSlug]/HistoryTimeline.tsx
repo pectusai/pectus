@@ -22,28 +22,32 @@ export function HistoryTimeline({
 }) {
   if (entries.length === 0) {
     return (
-      <div className="pectus-history-empty">
+      <div className="text-sm italic text-zinc-500">
         No status changes yet. The first move from draft will land here.
       </div>
     );
   }
 
   return (
-    <ol className="pectus-history">
+    <ol className="m-0 flex list-none flex-col gap-2.5 p-0">
       {entries.map((e) => (
-        <li key={e.id} className="pectus-history-row">
-          <div className="pectus-history-line">
-            <span className="pectus-history-dot" aria-hidden />
-            <span className="pectus-history-line-text">
-              <span className="pectus-history-from">
+        <li
+          key={e.id}
+          className="relative border-l-2 border-zinc-200 py-1 pl-3.5"
+        >
+          <span
+            className="absolute -left-[7px] top-3 h-2.5 w-2.5 rounded-full border-2 border-pink-700 bg-white"
+            aria-hidden
+          />
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="text-sm text-zinc-900">
+              <span className="text-zinc-500">
                 {statusLabel(e.from_status)}
               </span>
-              <span className="pectus-history-arrow"> → </span>
-              <span className="pectus-history-to">
-                {statusLabel(e.to_status)}
-              </span>
+              <span className="text-zinc-400"> → </span>
+              <span className="font-semibold">{statusLabel(e.to_status)}</span>
             </span>
-            <span className="pectus-history-meta">
+            <span className="text-xs text-zinc-500">
               {new Date(e.created_at).toLocaleString("en-US", {
                 month: "short",
                 day: "numeric",
@@ -53,7 +57,11 @@ export function HistoryTimeline({
               {e.actor_label ? ` · ${e.actor_label}` : ""}
             </span>
           </div>
-          {e.note ? <p className="pectus-history-note">{e.note}</p> : null}
+          {e.note ? (
+            <p className="m-0 mt-1 text-[13px] leading-relaxed text-zinc-600">
+              {e.note}
+            </p>
+          ) : null}
         </li>
       ))}
     </ol>

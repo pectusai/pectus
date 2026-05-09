@@ -6,9 +6,17 @@ import { transitionArticleStatus } from "../actions";
 import {
   ALLOWED_TRANSITIONS,
   STATUS_LABELS,
-  STATUS_PILL_CLASS,
   type ArticleStatus,
 } from "@/lib/article-status";
+
+const PILL_CLASSES: Record<ArticleStatus, string> = {
+  imported: "bg-zinc-100 text-zinc-600",
+  draft: "bg-zinc-100 text-zinc-600",
+  brand_review: "bg-amber-100 text-amber-800",
+  market_lead_review: "bg-blue-100 text-blue-800",
+  published: "bg-emerald-100 text-emerald-800",
+  archived: "bg-zinc-100 text-zinc-500",
+};
 
 export function StatusBar({
   brandSlug,
@@ -63,13 +71,17 @@ export function StatusBar({
   const isBusy = busy !== null || isPending;
 
   return (
-    <section className="pectus-status-bar">
-      <div className="pectus-status-row">
-        <span className={STATUS_PILL_CLASS[status]}>
+    <section className="rounded-xl border border-zinc-200 bg-white p-4">
+      <div className="flex flex-wrap items-center gap-2.5">
+        <span
+          className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-widest ${PILL_CLASSES[status]}`}
+        >
           {STATUS_LABELS[status]}
         </span>
         {transitions.length === 0 ? (
-          <span className="pectus-status-terminal">Terminal state.</span>
+          <span className="text-[13px] italic text-zinc-500">
+            Terminal state.
+          </span>
         ) : (
           transitions.map((t) => (
             <button
@@ -82,8 +94,8 @@ export function StatusBar({
               }}
               className={
                 t.variant === "primary"
-                  ? "pectus-status-button-primary"
-                  : "pectus-status-button-secondary"
+                  ? "inline-flex cursor-pointer items-center gap-1.5 rounded-lg border-0 bg-zinc-900 px-3.5 py-1.5 text-[13px] font-semibold text-white hover:bg-black disabled:cursor-not-allowed disabled:opacity-55"
+                  : "inline-flex cursor-pointer items-center rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-[13px] font-medium text-zinc-900 hover:border-zinc-400 disabled:cursor-not-allowed disabled:opacity-55"
               }
             >
               {t.label}
@@ -93,24 +105,24 @@ export function StatusBar({
       </div>
 
       {confirming ? (
-        <div className="pectus-status-confirm">
-          <p>
-            <strong>{confirming.label}</strong> — add an optional note for the
-            history (what changed, who needs to know):
+        <div className="mt-3.5 border-t border-zinc-100 pt-3.5">
+          <p className="m-0 mb-2 text-sm leading-relaxed text-zinc-700">
+            <strong className="font-semibold">{confirming.label}</strong> — add
+            an optional note for the history (what changed, who needs to know):
           </p>
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={2}
             placeholder="e.g. Voice check passed. Ready for market lead review."
-            className="pectus-status-confirm-textarea"
+            className="w-full resize-y rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm leading-relaxed focus:border-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-200"
           />
-          <div className="pectus-status-confirm-actions">
+          <div className="mt-2.5 flex flex-wrap gap-2">
             <button
               type="button"
               onClick={onConfirm}
               disabled={isBusy}
-              className="pectus-status-button-primary"
+              className="inline-flex cursor-pointer items-center rounded-lg bg-zinc-900 px-3.5 py-1.5 text-[13px] font-semibold text-white hover:bg-black disabled:cursor-not-allowed disabled:opacity-55"
             >
               {isBusy ? "Saving…" : "Confirm"}
             </button>
@@ -121,7 +133,7 @@ export function StatusBar({
                 setNote("");
               }}
               disabled={isBusy}
-              className="pectus-status-button-secondary"
+              className="inline-flex cursor-pointer items-center rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-[13px] font-medium text-zinc-900 hover:border-zinc-400 disabled:cursor-not-allowed disabled:opacity-55"
             >
               Cancel
             </button>
@@ -129,7 +141,9 @@ export function StatusBar({
         </div>
       ) : null}
 
-      {error ? <p className="pectus-status-error">{error}</p> : null}
+      {error ? (
+        <p className="m-0 mt-2 text-[13px] text-red-700">{error}</p>
+      ) : null}
     </section>
   );
 }

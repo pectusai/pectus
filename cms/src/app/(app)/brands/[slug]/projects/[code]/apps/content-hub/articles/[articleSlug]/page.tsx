@@ -126,16 +126,18 @@ export default async function ArticleDetailPage({
   );
 
   return (
-    <div className="pectus-article-page">
+    <div className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-8">
       <Link
         href={`/brands/${slug}/projects/${code}/apps/content-hub/articles`}
-        className="pectus-article-back"
+        className="text-xs text-zinc-500 no-underline hover:text-zinc-900"
       >
         ← All articles
       </Link>
-      <header className="pectus-article-header">
-        <h1 className="pectus-article-title">{article.title}</h1>
-        <p className="pectus-article-meta">
+      <header>
+        <h1 className="m-0 mb-2 text-3xl font-bold tracking-tight text-zinc-900">
+          {article.title}
+        </h1>
+        <p className="m-0 text-[13px] text-zinc-500">
           {article.category ?? "Uncategorised"} ·{" "}
           {article.author ?? "No author"} ·{" "}
           {article.date_published
@@ -172,8 +174,10 @@ export default async function ArticleDetailPage({
         }}
       />
 
-      <section className="pectus-article-history">
-        <h2 className="pectus-article-history-title">History</h2>
+      <section className="border-t border-zinc-200 pt-6">
+        <h2 className="m-0 mb-3.5 text-xs font-bold uppercase tracking-widest text-zinc-500">
+          History
+        </h2>
         <HistoryTimeline entries={historyEntries} />
       </section>
     </div>

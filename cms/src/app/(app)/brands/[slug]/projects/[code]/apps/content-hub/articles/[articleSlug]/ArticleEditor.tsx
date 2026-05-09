@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { SubmitButton } from "@/app/components/SubmitButton";
-import { updateArticleBasics, updateArticleBlocks, setArticleStatus } from "../actions";
+import { updateArticleBasics, updateArticleBlocks } from "../actions";
 import { RichTextEditor, type Block } from "./RichTextEditor";
 import { HeroImageSection } from "./HeroImageSection";
 import type { Camera, ExamplePhotoCategory } from "@/lib/brand-types";
@@ -27,13 +27,6 @@ type Props = {
   examplePhotoCategories?: ExamplePhotoCategory[];
 };
 
-const STATUS_OPTIONS = [
-  { value: "draft", label: "Draft" },
-  { value: "review", label: "In review" },
-  { value: "published", label: "Published" },
-  { value: "archived", label: "Archived" },
-];
-
 export function ArticleEditor({
   brandSlug,
   code,
@@ -55,7 +48,7 @@ export function ArticleEditor({
       : [{ type: "h2", text: "" }, { type: "p", text: "" }],
   );
   const [saveBlocksPending, startSaveBlocks] = useTransition();
-  const [savedFlash, setSavedFlash] = useState<null | "basics" | "blocks" | "status">(null);
+  const [savedFlash, setSavedFlash] = useState<null | "basics" | "blocks">(null);
 
   const saveBlocks = async () => {
     const formData = new FormData();
@@ -73,12 +66,6 @@ export function ArticleEditor({
   const saveBasics = async (formData: FormData) => {
     await updateArticleBasics(formData);
     setSavedFlash("basics");
-    setTimeout(() => setSavedFlash(null), 2500);
-  };
-
-  const setStatus = async (formData: FormData) => {
-    await setArticleStatus(formData);
-    setSavedFlash("status");
     setTimeout(() => setSavedFlash(null), 2500);
   };
 
@@ -221,44 +208,6 @@ export function ArticleEditor({
         ) : null}
       </section>
 
-      {canEdit ? (
-        <form
-          action={setStatus}
-          className="rounded-lg border border-zinc-200 bg-white p-5"
-        >
-          <input type="hidden" name="brand_slug" value={brandSlug} />
-          <input type="hidden" name="code" value={code} />
-          <input type="hidden" name="id" value={article.id} />
-          <div className="flex flex-wrap items-baseline justify-between gap-3">
-            <h3 className="text-sm font-semibold">Status</h3>
-            {savedFlash === "status" ? (
-              <span className="text-xs text-emerald-600">Saved.</span>
-            ) : null}
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <select
-              name="status"
-              defaultValue={article.status ?? "draft"}
-              className="h-[38px] rounded-md border border-zinc-300 bg-white px-3 text-sm"
-            >
-              {STATUS_OPTIONS.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-            <SubmitButton
-              pendingLabel="Saving…"
-              className="h-[38px] rounded-md bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-700"
-            >
-              Update status
-            </SubmitButton>
-            <span className="text-xs text-zinc-500">
-              Current: <strong>{article.status ?? "draft"}</strong>
-            </span>
-          </div>
-        </form>
-      ) : null}
     </div>
   );
 }
