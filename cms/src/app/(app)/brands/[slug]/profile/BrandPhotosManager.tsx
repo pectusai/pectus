@@ -5,6 +5,8 @@ import {
   createExamplePhotoUploadUrl,
   saveExamplePhotoCategories,
   describeImageByUrl,
+  addPhotoToCategory,
+  persistPhotoDescription,
   type ExampleSaveCategory,
   type StoredExampleCategory,
   type StoredExamplePhoto,
@@ -291,8 +293,9 @@ export function BrandPhotosManager({
       return;
     }
 
+    const localId = newLocalId("ph");
     const newPhoto: LocalPhoto = {
-      id: newLocalId("ph"),
+      id: localId,
       url: signed.publicUrl,
       storage_path: signed.path,
       description: "",
@@ -303,6 +306,52 @@ export function BrandPhotosManager({
         c.id === categoryId ? { ...c, photos: [...c.photos, newPhoto] } : c,
       ),
     );
+
+    // Persist immediately — no need to click Save for the photo to remain.
+    const cat = categories.find((c) => c.id === categoryId);
+    const labelToSend =
+      cat?.label?.trim() || (categoryId === "_legacy_refs" ? "Uncategorized" : "");
+    if (labelToSend) {
+      const persisted = await addPhotoToCategory(
+        brandSlug,
+        categoryId === "_legacy_refs" ? "" : categoryId,
+        labelToSend,
+        {
+          url: signed.publicUrl,
+          storage_path: signed.path,
+          description: "",
+        },
+      );
+      if (persisted.ok) {
+        // Sync the server-issued ids onto the local entry so future actions
+        // (describe persist, remove) match the right row.
+        const serverCategoryId = persisted.categoryId;
+        const serverPhotoId = persisted.photoId;
+        updateCategories((prev) =>
+          prev.map((c) => {
+            if (c.id === categoryId) {
+              return {
+                ...c,
+                id: serverCategoryId,
+                photos: c.photos.map((p) =>
+                  p.id === localId ? { ...p, id: serverPhotoId } : p,
+                ),
+              };
+            }
+            return c;
+          }),
+        );
+        dirtyRef.current = false; // freshly persisted
+      } else {
+        setSaveError(
+          `Photo uploaded but couldn't auto-save: ${persisted.error}\nClick "Save example photos" to retry.`,
+        );
+      }
+    } else {
+      setSaveError(
+        `${original.name}: photo uploaded but couldn't auto-save — give the category a name first.`,
+      );
+    }
   };
 
   const onPickFiles = async (categoryId: string, files: FileList) => {
@@ -344,23 +393,32 @@ export function BrandPhotosManager({
     setDrawerError(null);
   };
 
-  const applyDrawerDescription = () => {
+  const applyDrawerDescription = async () => {
     if (!drawer) return;
+    const cat = categories.find((c) => c.id === drawer.categoryId);
+    const photo = cat?.photos.find((p) => p.id === drawer.photoId);
+    const text = drawer.text.trim();
     updateCategories((prev) =>
       prev.map((c) =>
         c.id === drawer.categoryId
           ? {
               ...c,
               photos: c.photos.map((p) =>
-                p.id === drawer.photoId
-                  ? { ...p, description: drawer.text.trim() }
-                  : p,
+                p.id === drawer.photoId ? { ...p, description: text } : p,
               ),
             }
           : c,
       ),
     );
     closeDrawer();
+    if (photo?.url) {
+      const res = await persistPhotoDescription(brandSlug, photo.url, text);
+      if (!res.ok) {
+        setSaveError(
+          `Couldn't auto-save the description: ${res.error}\nClick "Save example photos" to commit.`,
+        );
+      }
+    }
   };
 
   const generateDescriptionForDrawer = async () => {

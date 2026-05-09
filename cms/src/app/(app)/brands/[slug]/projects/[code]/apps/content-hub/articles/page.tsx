@@ -4,25 +4,10 @@ import { requireUser } from "@/lib/auth";
 import { getBrandBySlug } from "@/lib/active-brand";
 import { isAppActiveForProject } from "@/lib/apps";
 import { ActivateAppPointer } from "@/app/components/ActivateAppPointer";
-import {
-  STATUS_LABELS,
-  isStatus,
-  type ArticleStatus,
-} from "@/lib/article-status";
-import { FetchArticleButton } from "./FetchArticleButton";
-import { RemoveArticleButton } from "./RemoveArticleButton";
+import { ArticlesBulkBar, type ArticleRow } from "./ArticlesBulkBar";
 import { ImportForm } from "./ImportForm";
 
 export const dynamic = "force-dynamic";
-
-const STATUS_PILL: Record<ArticleStatus, string> = {
-  imported: "bg-pink-100 text-pink-800",
-  draft: "bg-zinc-100 text-zinc-700",
-  brand_review: "bg-amber-100 text-amber-800",
-  market_lead_review: "bg-blue-100 text-blue-800",
-  published: "bg-emerald-100 text-emerald-800",
-  archived: "bg-zinc-100 text-zinc-500",
-};
 
 const STATUS_FILTER_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "", label: "All statuses" },
@@ -61,33 +46,11 @@ export default async function ArticlesIndexPage({
   const statusFilter = (query.status ?? "").trim();
   const articleBase = `/brands/${slug}/projects/${code}/apps/content-hub/articles`;
 
-  type ArticleRow = {
-    id: string;
-    slug: string;
-    title: string;
-    category: string | null;
-    author: string | null;
-    date_published: string | null;
-    word_count: number | null;
-    status: string | null;
-    source: string | null;
-  };
-
   const baseSelect =
     "id, slug, title, category, author, date_published, word_count, status, source";
 
   let articles: ArticleRow[] = [];
   let total = 0;
-  let categoriesResultPromise = supabase
-    .from("articles")
-    .select("category")
-    .eq("project_id", project.id)
-    .not("category", "is", null);
-  let brandRowPromise = supabase
-    .from("brands")
-    .select("sitemap_url")
-    .eq("slug", slug)
-    .maybeSingle();
 
   if (statusFilter) {
     let single = supabase
@@ -101,16 +64,18 @@ export default async function ArticlesIndexPage({
       )
       .limit(PAGE_LIMIT);
     if (q) single = single.ilike("title", `%${q}%`);
-
-    const [listResult, categoriesResult, brandRow] = await Promise.all([
-      single,
-      categoriesResultPromise,
-      brandRowPromise,
-    ]);
-    articles = (listResult.data ?? []) as ArticleRow[];
-    total = listResult.count ?? articles.length;
-    categoriesResultPromise = Promise.resolve(categoriesResult) as never;
-    brandRowPromise = Promise.resolve(brandRow) as never;
+    const { data, count } = await single;
+    articles = ((data ?? []) as ArticleRow[]).map((a) => ({
+      id: a.id,
+      slug: a.slug,
+      title: a.title,
+      category: a.category ?? null,
+      author: a.author ?? null,
+      date_published: a.date_published ?? null,
+      word_count: a.word_count ?? 0,
+      status: a.status ?? "draft",
+    }));
+    total = count ?? articles.length;
   } else {
     let draftsQ = supabase
       .from("articles")
@@ -131,32 +96,42 @@ export default async function ArticlesIndexPage({
       draftsQ = draftsQ.ilike("title", `%${q}%`);
       othersQ = othersQ.ilike("title", `%${q}%`);
     }
-
-    const [draftsResult, othersResult, categoriesResult, brandRow] =
-      await Promise.all([
-        draftsQ,
-        othersQ,
-        categoriesResultPromise,
-        brandRowPromise,
-      ]);
-
-    const drafts = (draftsResult.data ?? []) as ArticleRow[];
-    const others = (othersResult.data ?? []) as ArticleRow[];
-    articles = [...drafts, ...others].slice(0, PAGE_LIMIT);
-    total = (draftsResult.count ?? drafts.length) + (othersResult.count ?? others.length);
-    categoriesResultPromise = Promise.resolve(categoriesResult) as never;
-    brandRowPromise = Promise.resolve(brandRow) as never;
+    const [drafts, others] = await Promise.all([draftsQ, othersQ]);
+    const list: ArticleRow[] = [
+      ...((drafts.data ?? []) as ArticleRow[]),
+      ...((others.data ?? []) as ArticleRow[]),
+    ]
+      .slice(0, PAGE_LIMIT)
+      .map((a) => ({
+        id: a.id,
+        slug: a.slug,
+        title: a.title,
+        category: a.category ?? null,
+        author: a.author ?? null,
+        date_published: a.date_published ?? null,
+        word_count: a.word_count ?? 0,
+        status: a.status ?? "draft",
+      }));
+    articles = list;
+    total = (drafts.count ?? drafts.data?.length ?? 0) + (others.count ?? others.data?.length ?? 0);
   }
-  const categoriesResult = await categoriesResultPromise;
-  const brandRow = await brandRowPromise;
+
+  const [{ data: categoryRows }, { data: brandRow }] = await Promise.all([
+    supabase
+      .from("articles")
+      .select("category")
+      .eq("project_id", project.id)
+      .not("category", "is", null),
+    supabase.from("brands").select("sitemap_url").eq("slug", slug).maybeSingle(),
+  ]);
   const knownCategories = Array.from(
     new Set(
-      (categoriesResult.data ?? [])
+      (categoryRows ?? [])
         .map((r) => (r.category as string | null)?.trim())
         .filter((s): s is string => !!s),
     ),
   ).sort();
-  const defaultSitemap = brandRow.data?.sitemap_url ?? "";
+  const defaultSitemap = brandRow?.sitemap_url ?? "";
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
@@ -251,111 +226,12 @@ export default async function ArticlesIndexPage({
             </p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
-            <table className="w-full text-sm">
-              <thead className="bg-zinc-50">
-                <tr>
-                  <Th>Title</Th>
-                  <Th>Category</Th>
-                  <Th>Author</Th>
-                  <Th align="right">Published</Th>
-                  <Th align="right">Words</Th>
-                  <Th>Status</Th>
-                  <Th align="right">Actions</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {articles.map((a) => {
-                  const rawStatus = (a.status as string | null) ?? "draft";
-                  const status: ArticleStatus = isStatus(rawStatus)
-                    ? (rawStatus as ArticleStatus)
-                    : "draft";
-                  const wordCount = (a.word_count as number | null) ?? 0;
-                  const showFetch = status === "imported" && wordCount === 0;
-                  return (
-                    <tr
-                      key={a.id as string}
-                      className="border-t border-zinc-100"
-                    >
-                      <td className="px-4 py-3 align-top">
-                        <Link
-                          href={`${articleBase}/${a.slug}`}
-                          className="block font-medium text-zinc-900 hover:underline"
-                        >
-                          {a.title as string}
-                        </Link>
-                        <span className="mt-0.5 block truncate text-xs text-zinc-500">
-                          {a.slug as string}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 align-top">
-                        {a.category ? (
-                          <span className="inline-flex items-center rounded bg-pink-100 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-pink-800">
-                            {a.category as string}
-                          </span>
-                        ) : (
-                          <span className="text-zinc-400">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 align-top text-zinc-700">
-                        {(a.author as string | null) ?? (
-                          <span className="text-zinc-400">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right align-top text-zinc-700 tabular-nums">
-                        {a.date_published ? (
-                          new Date(
-                            a.date_published as string,
-                          ).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })
-                        ) : (
-                          <span className="text-zinc-400">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right align-top text-zinc-900 tabular-nums">
-                        {wordCount > 0 ? (
-                          wordCount.toLocaleString("en-US")
-                        ) : (
-                          <span className="text-zinc-400">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 align-top">
-                        {showFetch ? (
-                          <FetchArticleButton
-                            brandSlug={slug}
-                            code={code}
-                            articleId={a.id as string}
-                          />
-                        ) : (
-                          <span
-                            className={`inline-flex items-center rounded px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider ${STATUS_PILL[status]}`}
-                          >
-                            {STATUS_LABELS[status]}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right align-top">
-                        {status === "archived" ? (
-                          <span className="text-[11px] text-zinc-400">—</span>
-                        ) : (
-                          <RemoveArticleButton
-                            brandSlug={slug}
-                            code={code}
-                            articleId={a.id as string}
-                            title={a.title as string}
-                            isShell={showFetch}
-                          />
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <ArticlesBulkBar
+            brandSlug={slug}
+            code={code}
+            articleBase={articleBase}
+            rows={articles}
+          />
         )}
         <p className="mt-3 text-xs text-zinc-500">
           Showing first {Math.min(articles.length, PAGE_LIMIT)} of{" "}
@@ -364,21 +240,5 @@ export default async function ArticlesIndexPage({
         </p>
       </section>
     </div>
-  );
-}
-
-function Th({
-  children,
-  align = "left",
-}: {
-  children: React.ReactNode;
-  align?: "left" | "right";
-}) {
-  return (
-    <th
-      className={`${align === "right" ? "text-right" : "text-left"} px-4 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-500`}
-    >
-      {children}
-    </th>
   );
 }
