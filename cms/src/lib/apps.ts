@@ -194,6 +194,20 @@ export async function listActivatedAppsForProject(
   return (data ?? []).map((r) => r.app_name as string);
 }
 
+export async function listActivatedAppsWithTypeForProject(
+  projectId: string,
+): Promise<{ name: string; type: AppType }[]> {
+  const [activated, manifests] = await Promise.all([
+    listActivatedAppsForProject(projectId),
+    listAppManifests(),
+  ]);
+  const byName = new Map(manifests.map((m) => [m.name, m]));
+  return activated.map((name) => ({
+    name,
+    type: byName.get(name)?.type ?? "unknown",
+  }));
+}
+
 export async function getAppConfig<T = Record<string, unknown>>(
   projectId: string,
   appName: string,

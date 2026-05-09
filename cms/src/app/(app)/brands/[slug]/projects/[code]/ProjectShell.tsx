@@ -1,10 +1,15 @@
-import Link from "next/link";
-import { listActivatedAppsForProject, APP_SIDEBAR_MANIFESTS } from "@/lib/apps";
+import {
+  listActivatedAppsWithTypeForProject,
+  APP_SIDEBAR_MANIFESTS,
+} from "@/lib/apps";
 import type { Project } from "@/lib/project";
-import { InfoDot } from "@/app/components/InfoDot";
+import { listProjectsForBrand } from "@/lib/project";
+import { createServerClient } from "@pectus/supabase";
 import { SidebarFrame } from "./SidebarFrame";
 import { SidebarGroup } from "./SidebarGroup";
 import { SidebarLink } from "./SidebarLink";
+import { SidebarSection } from "./SidebarSection";
+import { ProjectSwitcherFooter } from "./ProjectSwitcherFooter";
 
 export async function ProjectShell({
   project,
@@ -17,58 +22,99 @@ export async function ProjectShell({
 }) {
   const code = project.code;
   const base = `/brands/${brandSlug}/projects/${code}`;
-  const activatedApps = await listActivatedAppsForProject(project.id);
+  const activatedApps = await listActivatedAppsWithTypeForProject(project.id);
 
-  const header = (
-    <Link href={base} className="group block">
-      <h1 className="text-base font-semibold tracking-tight text-zinc-900 group-hover:underline">
-        {project.name}
-      </h1>
-      <p className="mt-1 inline-flex items-center gap-1.5 text-[11px] uppercase tracking-widest text-zinc-500">
-        <span>
-          {project.code} · {project.locale}
-        </span>
-        <InfoDot text="Code is the URL identifier for this project. Locale is the BCP-47 language tag (e.g. en-GB, sv-SE) that drives content language and Google data scoping." />
-      </p>
-    </Link>
-  );
+  const supabase = await createServerClient();
+  const { data: brandRow } = await supabase
+    .from("brands")
+    .select("id")
+    .eq("slug", brandSlug)
+    .single();
+  const sisterProjects = brandRow?.id
+    ? await listProjectsForBrand(brandRow.id as string)
+    : [];
+
+  const inboundApps = activatedApps.filter((a) => a.type === "inbound");
+  const outboundApps = activatedApps.filter((a) => a.type !== "inbound");
+
+  const renderAppGroup = (appName: string) => {
+    const manifest = APP_SIDEBAR_MANIFESTS[appName];
+    if (!manifest) return null;
+    return (
+      <SidebarGroup
+        key={appName}
+        id={appName}
+        label={manifest.label}
+        tooltip={manifest.tooltip}
+      >
+        {manifest.items.map((item) => (
+          <SidebarLink key={item.label} href={item.href(base)}>
+            {item.label}
+          </SidebarLink>
+        ))}
+      </SidebarGroup>
+    );
+  };
 
   const nav = (
     <>
-      <SidebarGroup
-        id="project"
-        label="Project"
-        tooltip="Per-project shell. ICP, keywords aggregator, project settings, and the apps activation page."
+      <SidebarSection
+        id="inbound"
+        label="Inbound apps"
+        tooltip="Where data comes into the project. Configuration only — these don't have user-facing surfaces of their own."
+        defaultOpen={false}
       >
-        <SidebarLink href={`${base}/icp`}>ICP</SidebarLink>
-        <SidebarLink href={`${base}/keywords`}>Keywords</SidebarLink>
-        <SidebarLink href={`${base}/apps`}>Apps</SidebarLink>
-        <SidebarLink href={`${base}/settings`}>Settings</SidebarLink>
-      </SidebarGroup>
+        <SidebarGroup
+          id="project-data"
+          label="Project data"
+          tooltip="Project-scoped data that lives in Pectus directly: ICP and the keywords aggregator."
+        >
+          <SidebarLink href={`${base}/icp`}>ICP</SidebarLink>
+          <SidebarLink href={`${base}/keywords`}>Keywords</SidebarLink>
+        </SidebarGroup>
+        {inboundApps.map((a) => renderAppGroup(a.name))}
+      </SidebarSection>
 
-      {activatedApps.map((appName) => {
-        const manifest = APP_SIDEBAR_MANIFESTS[appName];
-        if (!manifest) return null;
-        return (
-          <SidebarGroup
-            key={appName}
-            id={appName}
-            label={manifest.label}
-            tooltip={manifest.tooltip}
-          >
-            {manifest.items.map((item) => (
-              <SidebarLink key={item.label} href={item.href(base)}>
-                {item.label}
-              </SidebarLink>
-            ))}
-          </SidebarGroup>
-        );
-      })}
+      <SidebarSection
+        id="outbound"
+        label="Apps"
+        tooltip="Consumer apps with their own user surfaces. Content Hub etc."
+        defaultOpen={true}
+      >
+        {outboundApps.length === 0 ? (
+          <p className="pectus-sidebar-empty">
+            No apps activated yet.{" "}
+            <a className="pectus-sidebar-empty-link" href={`${base}/apps`}>
+              Browse apps →
+            </a>
+          </p>
+        ) : (
+          outboundApps.map((a) => renderAppGroup(a.name))
+        )}
+      </SidebarSection>
     </>
   );
 
+  const footer = (
+    <ProjectSwitcherFooter
+      brandSlug={brandSlug}
+      current={{
+        id: project.id,
+        name: project.name,
+        code: project.code,
+        locale: project.locale ?? null,
+      }}
+      projects={sisterProjects.map((p) => ({
+        id: p.id,
+        name: p.name,
+        code: p.code,
+        locale: p.locale ?? null,
+      }))}
+    />
+  );
+
   return (
-    <SidebarFrame header={header} nav={nav}>
+    <SidebarFrame nav={nav} footer={footer}>
       {children}
     </SidebarFrame>
   );

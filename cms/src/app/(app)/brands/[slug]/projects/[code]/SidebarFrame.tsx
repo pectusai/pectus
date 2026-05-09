@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 export function SidebarFrame({
-  header,
   nav,
+  footer,
   children,
 }: {
-  header: React.ReactNode;
   nav: React.ReactNode;
+  footer?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -38,10 +38,14 @@ export function SidebarFrame({
         id="project-sidebar"
         className={`${
           open ? "block" : "hidden"
-        } w-full shrink-0 border-b border-zinc-200 bg-white lg:block lg:w-60 lg:border-b-0 lg:border-r`}
+        } pectus-sidebar w-full shrink-0 border-b border-zinc-200 bg-white lg:block lg:w-64 lg:border-b-0 lg:border-r`}
       >
-        <div className="border-b border-zinc-200 px-5 py-5">{header}</div>
-        <nav className="space-y-3 p-4">{nav}</nav>
+        <div className="pectus-sidebar-inner">
+          <nav className="pectus-sidebar-nav">{nav}</nav>
+          {footer ? (
+            <div className="pectus-sidebar-footer">{footer}</div>
+          ) : null}
+        </div>
       </aside>
       <main className="mx-auto w-full max-w-5xl px-6 py-8">{children}</main>
     </div>

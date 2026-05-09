@@ -36,6 +36,18 @@ export async function getProjectByCode(code: string): Promise<Project> {
   return data as Project;
 }
 
+export async function listProjectsForBrand(
+  brandId: string,
+): Promise<Pick<Project, "id" | "name" | "code" | "locale">[]> {
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("projects")
+    .select("id, name, code, locale")
+    .eq("brand_id", brandId)
+    .order("name", { ascending: true });
+  return (data ?? []) as Pick<Project, "id" | "name" | "code" | "locale">[];
+}
+
 export function describeAge(isoDate: string | null | undefined): {
   days: number | null;
   label: string;
