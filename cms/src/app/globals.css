@@ -1869,3 +1869,119 @@ button.pectus-project-header-trigger:hover {
   color: #777;
   margin-top: 0.05rem;
 }
+
+/* =============================================================================
+ * TipTap article body editor — readable typography inside the editor surface.
+ * The editor is the .tiptap element; everything below restores heading, list,
+ * blockquote, and inline-mark styles that Tailwind's preflight strips.
+ * ========================================================================= */
+
+.tiptap {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: #18181b;
+}
+
+.tiptap > * + * {
+  margin-top: 0.75rem;
+}
+
+.tiptap h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #0a0a0a;
+}
+
+.tiptap h2:first-child {
+  margin-top: 0;
+}
+
+.tiptap h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  margin-top: 1.25rem;
+  margin-bottom: 0.4rem;
+  color: #0a0a0a;
+}
+
+.tiptap h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.3rem;
+  color: #0a0a0a;
+}
+
+.tiptap p {
+  margin: 0;
+}
+
+.tiptap ul,
+.tiptap ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.tiptap ul {
+  list-style: disc;
+}
+
+.tiptap ol {
+  list-style: decimal;
+}
+
+.tiptap li {
+  margin: 0.25rem 0;
+}
+
+.tiptap li > p {
+  margin: 0;
+}
+
+.tiptap blockquote {
+  border-left: 3px solid #db2777;
+  padding: 0.25rem 1rem;
+  margin: 1rem 0;
+  color: #3f3f46;
+  font-style: italic;
+}
+
+.tiptap a {
+  color: #b6004f;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.tiptap strong {
+  font-weight: 700;
+}
+
+.tiptap em {
+  font-style: italic;
+}
+
+.tiptap s {
+  text-decoration: line-through;
+}
+
+.tiptap img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+  border: 1px solid #e4e4e7;
+}
+
+.tiptap p.is-editor-empty:first-child::before {
+  color: #a1a1aa;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
