@@ -1,139 +1,305 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { getBrandBySlug } from "@/lib/active-brand";
 import { isAppActiveForProject } from "@/lib/apps";
 import { ActivateAppPointer } from "@/app/components/ActivateAppPointer";
-import { notFound } from "next/navigation";
+import {
+  STATUS_LABELS,
+  isStatus,
+  type ArticleStatus,
+} from "@/lib/article-status";
+import { FetchArticleButton } from "./FetchArticleButton";
 import { ImportForm } from "./ImportForm";
 
-const STATUS_STYLES: Record<string, string> = {
-  imported: "bg-zinc-100 text-zinc-700",
-  draft: "bg-amber-50 text-amber-800",
-  review: "bg-blue-50 text-blue-800",
-  published: "bg-emerald-50 text-emerald-800",
+export const dynamic = "force-dynamic";
+
+const STATUS_PILL: Record<ArticleStatus, string> = {
+  imported: "bg-pink-100 text-pink-800",
+  draft: "bg-zinc-100 text-zinc-700",
+  brand_review: "bg-amber-100 text-amber-800",
+  market_lead_review: "bg-blue-100 text-blue-800",
+  published: "bg-emerald-100 text-emerald-800",
   archived: "bg-zinc-100 text-zinc-500",
 };
 
-export default async function Page({
+const STATUS_FILTER_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: "", label: "All statuses" },
+  { value: "imported", label: "Imported" },
+  { value: "draft", label: "Draft" },
+  { value: "brand_review", label: "Brand review" },
+  { value: "market_lead_review", label: "Market lead review" },
+  { value: "published", label: "Published" },
+  { value: "archived", label: "Archived" },
+];
+
+const PAGE_LIMIT = 50;
+
+export default async function ArticlesIndexPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string; code: string }>;
+  searchParams: Promise<{ q?: string; status?: string }>;
 }) {
-  const { slug, code } = await params;
+  const [{ slug, code }, query] = await Promise.all([params, searchParams]);
   const { supabase } = await requireUser();
   const brand = await getBrandBySlug(slug);
-
-  const { data: ws } = await supabase
+  const { data: project } = await supabase
     .from("projects")
-    .select("*")
+    .select("id")
     .eq("brand_id", brand.id)
     .eq("code", code)
     .maybeSingle();
-  if (!ws) notFound();
-  if (!(await isAppActiveForProject(ws.id, "content-hub"))) {
+  if (!project) notFound();
+  if (!(await isAppActiveForProject(project.id, "content-hub"))) {
     return <ActivateAppPointer appName="content-hub" surface="Articles" />;
   }
 
-  const { data: articles } = await supabase
-    .from("articles")
-    .select("slug, title, category, date_published, word_count, status, source, hero_image, author")
-    .eq("project_id", ws.id)
-    .order("date_modified", { ascending: false, nullsFirst: false })
-    .limit(200);
-
-  const { data: brandRow } = await supabase
-    .from("brands")
-    .select("sitemap_url")
-    .eq("slug", slug)
-    .maybeSingle();
-
-  const defaultSitemap = brandRow?.sitemap_url ?? "";
-  const list = articles ?? [];
+  const q = (query.q ?? "").trim();
+  const statusFilter = (query.status ?? "").trim();
   const articleBase = `/brands/${slug}/projects/${code}/apps/content-hub/articles`;
 
+  let listQuery = supabase
+    .from("articles")
+    .select(
+      "id, slug, title, category, author, date_published, word_count, status, source",
+      { count: "exact" },
+    )
+    .eq("project_id", project.id)
+    .order("date_published", { ascending: false, nullsFirst: false })
+    .limit(PAGE_LIMIT);
+  if (q) listQuery = listQuery.ilike("title", `%${q}%`);
+  if (statusFilter) listQuery = listQuery.eq("status", statusFilter);
+
+  const [listResult, categoriesResult, brandRow] = await Promise.all([
+    listQuery,
+    supabase
+      .from("articles")
+      .select("category")
+      .eq("project_id", project.id)
+      .not("category", "is", null),
+    supabase.from("brands").select("sitemap_url").eq("slug", slug).maybeSingle(),
+  ]);
+
+  const articles = listResult.data ?? [];
+  const total = listResult.count ?? articles.length;
+  const knownCategories = Array.from(
+    new Set(
+      (categoriesResult.data ?? [])
+        .map((r) => (r.category as string | null)?.trim())
+        .filter((s): s is string => !!s),
+    ),
+  ).sort();
+  const defaultSitemap = brandRow.data?.sitemap_url ?? "";
+
   return (
-    <div className="mx-auto max-w-5xl px-6 py-8">
+    <div className="mx-auto max-w-6xl px-6 py-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Articles</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
+            Articles{" "}
+            <span className="font-normal text-zinc-500">
+              ({total.toLocaleString("en-US")})
+            </span>
+          </h1>
           <p className="mt-1 text-sm text-zinc-600">
-            Write new articles, edit existing ones, and import what&apos;s already
-            on your site so the analysis knows what you&apos;ve covered.
+            Write new articles, edit existing ones, and import what&apos;s
+            already on your site so the analysis knows what you&apos;ve covered.
           </p>
         </div>
         <Link
           href={`${articleBase}/new`}
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
+          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-black"
         >
-          New article
+          + New article
         </Link>
       </div>
 
-      <details className="mt-6 rounded-lg border border-zinc-200 bg-white p-5">
-        <summary className="cursor-pointer text-sm font-semibold">
+      <form
+        action={`${articleBase}`}
+        method="get"
+        className="mt-5 flex flex-wrap items-center gap-2"
+      >
+        <input
+          type="text"
+          name="q"
+          defaultValue={q}
+          placeholder="Search title…"
+          className="h-[36px] w-full max-w-xs rounded-md border border-zinc-300 bg-white px-3 text-sm focus:border-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-200"
+        />
+        <select
+          name="status"
+          defaultValue={statusFilter}
+          className="h-[36px] rounded-md border border-zinc-300 bg-white px-2 text-sm focus:border-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-200"
+        >
+          {STATUS_FILTER_OPTIONS.map((o) => (
+            <option key={o.value || "_all"} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+        <button
+          type="submit"
+          className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-900 hover:border-zinc-400"
+        >
+          Apply
+        </button>
+        {q || statusFilter ? (
+          <Link
+            href={articleBase}
+            className="text-sm text-zinc-500 hover:text-zinc-900"
+          >
+            Clear
+          </Link>
+        ) : null}
+      </form>
+
+      {knownCategories.length > 0 ? (
+        <p className="mt-3 text-xs text-zinc-500">
+          Categories seen:{" "}
+          <span className="text-zinc-700">{knownCategories.join(", ")}</span>
+        </p>
+      ) : null}
+
+      <details className="mt-6 rounded-lg border border-zinc-200 bg-white px-5 py-3">
+        <summary className="cursor-pointer text-sm font-medium text-zinc-900">
           Import from your existing site
         </summary>
-        <p className="mt-2 text-sm text-zinc-600">
-          Pectus reads your sitemap, fetches each URL, parses the HTML, and
-          upserts into your articles table. Imported articles are reference
-          material the weekly analysis reads to know what you&apos;ve already
-          covered. Re-running is safe; articles are matched on slug.
+        <p className="mt-2 text-sm leading-relaxed text-zinc-600">
+          Reads your sitemap, fetches each URL, parses the HTML, and upserts
+          into your articles table. Re-running is safe; rows are matched on
+          slug.
         </p>
-        <div className="mt-4">
+        <div className="mt-3">
           <ImportForm projectCode={code} defaultSitemap={defaultSitemap} />
         </div>
       </details>
 
-      <section className="mt-10">
-        <h2 className="text-base font-semibold">
-          {list.length} {list.length === 1 ? "article" : "articles"}
-        </h2>
-        {list.length === 0 ? (
-          <p className="mt-3 text-sm text-zinc-500">
-            No articles yet. Click <strong>New article</strong> above to draft one,
-            or open the importer to pull in your existing site.
-          </p>
+      <section className="mt-8">
+        {articles.length === 0 ? (
+          <div className="rounded-xl border border-zinc-200 bg-white p-8 text-center">
+            <p className="text-sm text-zinc-600">
+              {q || statusFilter
+                ? "No articles match this filter. Clear it or change the search."
+                : "No articles yet. Click + New article to draft one, or open the importer above to pull in your existing site."}
+            </p>
+          </div>
         ) : (
-          <ul className="mt-3 divide-y divide-zinc-200 rounded-lg border border-zinc-200 bg-white">
-            {list.map((a) => {
-              const status = (a.status as string | null) ?? "draft";
-              return (
-                <li key={a.slug} className="flex items-center gap-3 p-3">
-                  {a.hero_image ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
-                      src={a.hero_image}
-                      alt=""
-                      className="h-12 w-20 shrink-0 rounded object-cover"
-                    />
-                  ) : (
-                    <div className="h-12 w-20 shrink-0 rounded bg-zinc-100" />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <Link
-                      href={`${articleBase}/${a.slug}`}
-                      className="block truncate font-medium hover:underline"
+          <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
+            <table className="w-full text-sm">
+              <thead className="bg-zinc-50">
+                <tr>
+                  <Th>Title</Th>
+                  <Th>Category</Th>
+                  <Th>Author</Th>
+                  <Th align="right">Published</Th>
+                  <Th align="right">Words</Th>
+                  <Th>Status</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {articles.map((a) => {
+                  const rawStatus = (a.status as string | null) ?? "draft";
+                  const status: ArticleStatus = isStatus(rawStatus)
+                    ? (rawStatus as ArticleStatus)
+                    : "draft";
+                  const wordCount = (a.word_count as number | null) ?? 0;
+                  const showFetch = status === "imported" && wordCount === 0;
+                  return (
+                    <tr
+                      key={a.id as string}
+                      className="border-t border-zinc-100"
                     >
-                      {a.title}
-                    </Link>
-                    <p className="mt-0.5 text-xs text-zinc-500">
-                      {a.category ? `${a.category} · ` : ""}
-                      {a.author ? `${a.author} · ` : ""}
-                      {a.date_published?.slice(0, 10) ?? "no date"} ·{" "}
-                      {a.word_count ?? 0} words
-                    </p>
-                  </div>
-                  <span
-                    className={`rounded px-2 py-0.5 text-[11px] font-medium ${STATUS_STYLES[status] ?? STATUS_STYLES.draft}`}
-                  >
-                    {status}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
+                      <td className="px-4 py-3 align-top">
+                        <Link
+                          href={`${articleBase}/${a.slug}`}
+                          className="block font-medium text-zinc-900 hover:underline"
+                        >
+                          {a.title as string}
+                        </Link>
+                        <span className="mt-0.5 block truncate text-xs text-zinc-500">
+                          {a.slug as string}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        {a.category ? (
+                          <span className="inline-flex items-center rounded bg-pink-100 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-pink-800">
+                            {a.category as string}
+                          </span>
+                        ) : (
+                          <span className="text-zinc-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 align-top text-zinc-700">
+                        {(a.author as string | null) ?? (
+                          <span className="text-zinc-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right align-top text-zinc-700 tabular-nums">
+                        {a.date_published ? (
+                          new Date(
+                            a.date_published as string,
+                          ).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })
+                        ) : (
+                          <span className="text-zinc-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right align-top text-zinc-900 tabular-nums">
+                        {wordCount > 0 ? (
+                          wordCount.toLocaleString("en-US")
+                        ) : (
+                          <span className="text-zinc-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        {showFetch ? (
+                          <FetchArticleButton
+                            brandSlug={slug}
+                            code={code}
+                            articleId={a.id as string}
+                          />
+                        ) : (
+                          <span
+                            className={`inline-flex items-center rounded px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider ${STATUS_PILL[status]}`}
+                          >
+                            {STATUS_LABELS[status]}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
+        <p className="mt-3 text-xs text-zinc-500">
+          Showing first {Math.min(articles.length, PAGE_LIMIT)} of{" "}
+          {total.toLocaleString("en-US")}.{" "}
+          {total > PAGE_LIMIT ? "Pagination coming next iteration." : null}
+        </p>
       </section>
     </div>
+  );
+}
+
+function Th({
+  children,
+  align = "left",
+}: {
+  children: React.ReactNode;
+  align?: "left" | "right";
+}) {
+  return (
+    <th
+      className={`${align === "right" ? "text-right" : "text-left"} px-4 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-500`}
+    >
+      {children}
+    </th>
   );
 }

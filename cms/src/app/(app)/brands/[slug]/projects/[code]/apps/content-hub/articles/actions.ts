@@ -11,6 +11,7 @@ import {
   type ImageRef,
   MissingImageGenKeyError,
 } from "@/lib/image-generation";
+import { parseArticle } from "@/lib/article-importer";
 import type { Camera } from "@/lib/brand-types";
 
 type ParentParams = { brandSlug: string; code: string };
@@ -148,6 +149,127 @@ import {
   isStatus,
   type ArticleStatus,
 } from "@/lib/article-status";
+
+export type ScrapeResult =
+  | { ok: true; wordCount: number }
+  | { ok: false; error: string };
+
+export async function scrapeArticleContent(
+  brandSlug: string,
+  code: string,
+  articleId: string,
+): Promise<ScrapeResult> {
+  if (!brandSlug || !code || !articleId) {
+    return { ok: false, error: "Missing project or article context." };
+  }
+  await requireUser();
+  const { projectId } = await resolveProject({ brandSlug, code });
+  const service = createServiceClient();
+
+  const { data: article } = await service
+    .from("articles")
+    .select(
+      "id, slug, title, description, hero_image, author, category, date_published, blocks, word_count, source",
+    )
+    .eq("id", articleId)
+    .eq("project_id", projectId)
+    .maybeSingle();
+  if (!article) return { ok: false, error: "Article not found." };
+
+  const sourceRaw = (article.source as string | null) ?? "";
+  const sourceMatch = sourceRaw.match(/^imported:(.+)$/);
+  const sourceUrl = sourceMatch
+    ? sourceMatch[1].trim()
+    : sourceRaw.startsWith("http")
+      ? sourceRaw.trim()
+      : null;
+  if (!sourceUrl) {
+    return {
+      ok: false,
+      error:
+        "This article has no source URL on it (the `source` column is empty or not a URL). Add one or paste the body manually.",
+    };
+  }
+
+  let parsed;
+  try {
+    parsed = await parseArticle(sourceUrl);
+  } catch (e) {
+    return {
+      ok: false,
+      error: `Could not fetch source: ${e instanceof Error ? e.message : String(e)}`,
+    };
+  }
+  if (!parsed) {
+    return {
+      ok: false,
+      error: `Could not parse the source page at ${sourceUrl}.`,
+    };
+  }
+
+  const update: Record<string, unknown> = {
+    blocks: parsed.blocks,
+    word_count: parsed.word_count,
+    date_modified: new Date().toISOString(),
+  };
+  if (!article.description && parsed.description) {
+    update.description = parsed.description;
+  }
+  if (!article.hero_image && parsed.hero_image) {
+    update.hero_image = parsed.hero_image;
+  }
+  if (!article.author && parsed.author) {
+    update.author = parsed.author;
+  }
+  if (!article.category && parsed.category) {
+    update.category = parsed.category;
+  }
+  if (!article.date_published && parsed.date_published) {
+    update.date_published = parsed.date_published;
+  }
+
+  const { error } = await service
+    .from("articles")
+    .update(update)
+    .eq("id", articleId)
+    .eq("project_id", projectId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(
+    `/brands/${brandSlug}/projects/${code}/apps/content-hub/articles`,
+  );
+  revalidatePath(
+    `/brands/${brandSlug}/projects/${code}/apps/content-hub/articles/${article.slug}`,
+  );
+
+  return { ok: true, wordCount: parsed.word_count };
+}
+
+export async function bulkDeleteArticles(
+  brandSlug: string,
+  code: string,
+  articleIds: string[],
+): Promise<{ ok: true; deleted: number } | { ok: false; error: string }> {
+  if (!brandSlug || !code) {
+    return { ok: false, error: "Missing project context." };
+  }
+  if (articleIds.length === 0) {
+    return { ok: true, deleted: 0 };
+  }
+  await requireUser();
+  const { projectId } = await resolveProject({ brandSlug, code });
+  const service = createServiceClient();
+  const { error, count } = await service
+    .from("articles")
+    .delete({ count: "exact" })
+    .eq("project_id", projectId)
+    .in("id", articleIds);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(
+    `/brands/${brandSlug}/projects/${code}/apps/content-hub/articles`,
+  );
+  return { ok: true, deleted: count ?? 0 };
+}
 
 export type TransitionResult =
   | { ok: true }
