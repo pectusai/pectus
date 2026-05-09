@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   listActivatedAppsWithTypeForProject,
   APP_SIDEBAR_MANIFESTS,
@@ -9,7 +10,7 @@ import { SidebarFrame } from "./SidebarFrame";
 import { SidebarGroup } from "./SidebarGroup";
 import { SidebarLink } from "./SidebarLink";
 import { SidebarSection } from "./SidebarSection";
-import { ProjectSwitcherFooter } from "./ProjectSwitcherFooter";
+import { ProjectHeaderSwitcher } from "./ProjectHeaderSwitcher";
 
 export async function ProjectShell({
   project,
@@ -56,25 +57,26 @@ export async function ProjectShell({
     );
   };
 
+  const header = (
+    <ProjectHeaderSwitcher
+      brandSlug={brandSlug}
+      current={{
+        id: project.id,
+        name: project.name,
+        code: project.code,
+        locale: project.locale ?? null,
+      }}
+      projects={sisterProjects.map((p) => ({
+        id: p.id,
+        name: p.name,
+        code: p.code,
+        locale: p.locale ?? null,
+      }))}
+    />
+  );
+
   const nav = (
     <>
-      <SidebarSection
-        id="inbound"
-        label="Inbound apps"
-        tooltip="Where data comes into the project. Configuration only — these don't have user-facing surfaces of their own."
-        defaultOpen={false}
-      >
-        <SidebarGroup
-          id="project-data"
-          label="Project data"
-          tooltip="Project-scoped data that lives in Pectus directly: ICP and the keywords aggregator."
-        >
-          <SidebarLink href={`${base}/icp`}>ICP</SidebarLink>
-          <SidebarLink href={`${base}/keywords`}>Keywords</SidebarLink>
-        </SidebarGroup>
-        {inboundApps.map((a) => renderAppGroup(a.name))}
-      </SidebarSection>
-
       <SidebarSection
         id="outbound"
         label="Apps"
@@ -92,29 +94,37 @@ export async function ProjectShell({
           outboundApps.map((a) => renderAppGroup(a.name))
         )}
       </SidebarSection>
+
+      <SidebarSection
+        id="inbound"
+        label="Inbound apps"
+        tooltip="Where data comes into the project. Configuration only — these don't have user-facing surfaces of their own."
+        defaultOpen={false}
+      >
+        <SidebarGroup
+          id="project-data"
+          label="Project data"
+          tooltip="Project-scoped data that lives in Pectus directly: ICP and the keywords aggregator."
+        >
+          <SidebarLink href={`${base}/icp`}>ICP</SidebarLink>
+          <SidebarLink href={`${base}/keywords`}>Keywords</SidebarLink>
+        </SidebarGroup>
+        {inboundApps.map((a) => renderAppGroup(a.name))}
+      </SidebarSection>
     </>
   );
 
   const footer = (
-    <ProjectSwitcherFooter
-      brandSlug={brandSlug}
-      current={{
-        id: project.id,
-        name: project.name,
-        code: project.code,
-        locale: project.locale ?? null,
-      }}
-      projects={sisterProjects.map((p) => ({
-        id: p.id,
-        name: p.name,
-        code: p.code,
-        locale: p.locale ?? null,
-      }))}
-    />
+    <Link href={`${base}/settings`} className="pectus-sidebar-settings-link">
+      <span className="pectus-sidebar-settings-icon" aria-hidden>
+        ⚙
+      </span>
+      <span>Project settings</span>
+    </Link>
   );
 
   return (
-    <SidebarFrame nav={nav} footer={footer}>
+    <SidebarFrame header={header} nav={nav} footer={footer}>
       {children}
     </SidebarFrame>
   );

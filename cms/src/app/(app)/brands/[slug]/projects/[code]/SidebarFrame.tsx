@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 export function SidebarFrame({
+  header,
   nav,
   footer,
   children,
 }: {
+  header?: React.ReactNode;
   nav: React.ReactNode;
   footer?: React.ReactNode;
   children: React.ReactNode;
@@ -41,6 +43,9 @@ export function SidebarFrame({
         } pectus-sidebar w-full shrink-0 border-b border-zinc-200 bg-white lg:block lg:w-64 lg:border-b-0 lg:border-r`}
       >
         <div className="pectus-sidebar-inner">
+          {header ? (
+            <div className="pectus-sidebar-header">{header}</div>
+          ) : null}
           <nav className="pectus-sidebar-nav">{nav}</nav>
           {footer ? (
             <div className="pectus-sidebar-footer">{footer}</div>
