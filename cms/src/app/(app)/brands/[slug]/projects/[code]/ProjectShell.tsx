@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
   listActivatedAppsWithTypeForProject,
   APP_SIDEBAR_MANIFESTS,
@@ -116,19 +115,15 @@ export async function ProjectShell({
   );
 
   const footer = (
-    <div className="pectus-sidebar-footer-nav">
-      <Link
-        href={`${base}/settings`}
-        className="pectus-sidebar-footer-heading"
-      >
-        <span aria-hidden className="pectus-sidebar-footer-icon">⚙</span>
-        Project settings
-      </Link>
-      <div className="pectus-sidebar-footer-items">
-        <SidebarLink href={`${base}/icp`}>ICP</SidebarLink>
-        <SidebarLink href={`${base}/keywords`}>Keywords</SidebarLink>
-      </div>
-    </div>
+    <SidebarSection
+      id="project-settings"
+      label="Project settings"
+      tooltip="Project-wide setup. ICP feeds the AI surfaces; Keywords feeds analysis and gap detection."
+      defaultOpen={false}
+    >
+      <SidebarLink href={`${base}/icp`}>ICP</SidebarLink>
+      <SidebarLink href={`${base}/keywords`}>Keywords</SidebarLink>
+    </SidebarSection>
   );
 
   return (
