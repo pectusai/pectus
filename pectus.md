@@ -199,7 +199,7 @@ If the user wants to analyze ad spend later (Google Ads, Meta, LinkedIn), the Li
 
 Print this to the user verbatim before doing anything else in this step:
 
-> Provision Supabase. This adds the Pectus database to your project and creates your admin login. Generating the SQL file now.
+> **Step 6 of 13: provisioning Supabase.** This is the longest step in the install — plan for 5-10 minutes. You'll be flipping between this terminal and the Supabase dashboard a few times: pasting two pieces of SQL into Supabase's SQL editor (one to wipe the schema clean, one to lay down the Pectus tables), creating your admin login inside Supabase, saving that login somewhere safe, and then letting Pectus push your brand profile into the new database. I'll walk you through each piece, one at a time, and tell you what to do at each stop. Ready?
 
 The user already created the project themselves in step 5 and the URL plus keys are in `.env.local`. Now we add the schema and create the admin login. **Do not run `npx pectus connect supabase`.** That command was built for an older flow that called the Supabase Management API. The supported flow now: you hand the user a SQL file they paste into Supabase's own SQL editor. The user keeps full control of their project.
 
@@ -259,9 +259,15 @@ cd <install path> && npx pectus brand sync
 
 This walks every `brands/<slug>/brand.json` on disk and upserts each into the Supabase `brands` table by slug. Output should read `Synced 1 brand(s).` (or however many brand directories exist). If it errors, surface the message exactly and stop — usually a stale env var or a missed step in 6b/6c.
 
-### 6e. Done
+### 6e. Close out step 6 and ask before continuing
 
 The database has the Pectus schema, the brand row exists, the user has an admin account. The `.env.local` from step 5 already has the values the CMS needs.
+
+**Do not roll into step 7 automatically.** After `pectus brand sync` succeeds, tell the user step 6 is complete and ask permission before moving on. Print this verbatim:
+
+> Step 6 is done — Supabase has the schema, your brand row is in place, and your admin login is created. Ready to move on to step 7 (connecting Google for Search Console and Analytics data)?
+
+Wait for an explicit yes before printing the step 7 preamble. If the user says "skip" or "later," go straight to step 8 instead.
 
 ## 7. Connect Google (Search Console + Analytics)
 
@@ -297,27 +303,51 @@ If GA4 and Search Console accept the email straight away (most users): run `npx 
 
 ## 8. Vercel and GitHub (optional at this stage)
 
-The Vercel and GitHub connectors that ship with the CLI today are stubs — they print "coming in v2" and exit. Do **not** offer to run them. GitHub and Vercel are optional at install time, but required when the user wants to publish their content-hub to a public URL. Frame both as "skip for now, come back when you're ready to go live."
+This step gets the user a public URL for the site Pectus will publish to. Both services are free. Skippable at install time; required before publishing.
 
-Walk the user through this step one item at a time, in this order. Don't bundle them into one prompt with multiple options.
+Print to the user verbatim:
+
+> **Step 8 of 13: Vercel and GitHub.** Vercel is what helps people reach your site while keeping your files protected. GitHub is the place outside your computer where your files are stored. To make them work you'll generate a "token" on each site — a long string Pectus uses to talk to them on your behalf. Both accounts are free. This is optional, but if you intend to go live with any of your projects we suggest you do this now. **Want to proceed?**
+
+If the user says skip → jump to step 9. If yes, print this expectation-setter verbatim before starting:
+
+> Heads up — this takes 15-20 minutes because we'll set up two accounts (if you don't already have them), create a GitHub repo for your published site, point a Vercel project at it, and generate two tokens. I'll walk you through each piece, one at a time.
+
+Walk through GitHub first, then Vercel. The Vercel project needs the GitHub repo to already exist, so doing it in this order avoids backtracking.
 
 ### 8a. GitHub
 
 Tell the user, in plain words:
 
-> GitHub is where Pectus pushes the static pages it generates. When you publish, Pectus commits the page's JSON to a content-hub repo on GitHub, and Vercel auto-deploys it from there. Skip for now. When you're ready to publish, paste a GitHub token (`GITHUB_TOKEN` in `cms/.env.local`) and point Pectus at the repo from the Content Hub settings page.
+> GitHub is where Pectus stores the files for your published site. When you hit Publish in Pectus, it commits each new page into a repo on GitHub, and Vercel watches that repo and rebuilds your site automatically.
 
-Then move on. Don't ask anything; this step is just framing so the user knows what GitHub does and when to come back to it.
+Walk them through these one at a time, with a check-in between each:
+
+1. **Create a GitHub account if they don't have one.** Go to https://github.com/signup. Email, username, password. Free.
+2. **Create the content-hub repo.** Once signed in, top-right `+` icon → New repository. Name it after the project (e.g. `pectus-content-hub` or `<brand>-site`). Visibility can be Public or Private — Pectus works with either. Skip the README, .gitignore, and license toggles (Pectus fills the repo on first publish). Click Create repository. Note the repo URL for later.
+3. **Generate a personal access token.** Top-right avatar → Settings → Developer settings (bottom of left sidebar) → Personal access tokens → Tokens (classic) → Generate new token (classic). Name it `Pectus`. Expiration: pick 90 days or No expiration. Scopes: tick `repo` (full) and `workflow`. Click Generate token. **Copy it immediately — GitHub only shows it once.**
+4. **Have the user paste the token back.** Save it to `cms/.env.local` as `GITHUB_TOKEN=<value>`. Use the env-file write helper in the CLI (or have the user open `cms/.env.local` and add the line themselves) — never write it to a different file.
 
 ### 8b. Vercel
 
 Tell the user, in plain words:
 
-> Vercel is where the public site lives once Pectus pushes pages to GitHub. Vercel watches your content-hub repo and rebuilds whenever Pectus commits to it. Same shape — skip for now. When you're ready to publish, paste a Vercel token (`VERCEL_TOKEN` in `cms/.env.local`) and connect Vercel to the GitHub repo from the Content Hub settings page.
+> Vercel is what serves your published site to visitors. It watches the GitHub repo you just created, and every time Pectus pushes a change to that repo, Vercel rebuilds and redeploys the site. The user never sees GitHub directly — Vercel handles the URL.
 
-Then move on. Same shape: framing only, no prompt.
+Walk them through these one at a time, with a check-in between each:
 
-If the user explicitly asks to verify or test the connections, tell them the connectors aren't wired yet and the verification happens implicitly the first time Pectus tries to publish (step 11+). Don't invent a CLI command to run.
+1. **Create a Vercel account if they don't have one.** Go to https://vercel.com/signup. Easiest path: click "Continue with GitHub" and authorize — that links the two accounts and saves a step later. Free Hobby tier is fine.
+2. **Import the GitHub repo as a Vercel project.** Vercel dashboard → Add New → Project → Import Git Repository → pick the repo from step 8a → Deploy. Vercel will build an empty project (the repo is empty until first publish, which is fine — the build will finish in seconds). Note the production URL Vercel assigns (e.g. `your-repo.vercel.app`).
+3. **Generate a Vercel token.** Avatar (top-right) → Settings → Tokens → Create Token. Name it `Pectus`. Scope: Full Account. Expiration: default fine. Click Create. **Copy it immediately — Vercel only shows it once.**
+4. **Have the user paste the token back.** Save it to `cms/.env.local` as `VERCEL_TOKEN=<value>`.
+
+### 8c. Done
+
+Tell the user:
+
+> Both tokens are saved. Once Pectus is running you'll connect this published site to a project from the Content Hub settings page in the CMS — that's where you'll paste the GitHub repo URL and pick which Vercel project gets the deploy.
+
+Move on to step 9.
 
 ## 9. Start the CMS
 
@@ -359,22 +389,50 @@ Then load `http://localhost:3001`. Tell the user which port their CMS is on so t
 
 Print to the user verbatim:
 
-> **Step 10 of 13: creating your first project.** A project is one market or audience — most people only ever have one called something like "main". Two minutes.
+> **Step 10 of 13: creating your first project.** A project is one market or audience — most people only ever have one called something like "main". It normally takes about two minutes to set up, and you do it through the CMS you just installed. If you'd rather set it up here in the terminal via the CLI, I can take you through that instead. **Want to set it up in the CMS or the CLI? Type CMS or CLI.**
 
-The user runs this in their own terminal (not the Claude session). Always include the `cd` prefix using the install path from step 2:
+A project is one market or audience segment. If the user only sells in one country, one project is enough. If they have separate sites for the UK, US, and Sweden, that's three projects. Branch on what the user typed:
 
-```
-cd <install path> && npx pectus project create
-```
+### 10a. CMS path (recommended)
 
-(For the default install location: `cd ~/pectus && npx pectus project create`.)
+Tell the user, in plain words:
 
-A project is one market or audience segment. If the user only sells in one country, one project is enough. If they have separate sites for the UK, US, and Sweden, that's three projects. The wizard asks four questions:
+> Easiest path. The CMS is already running from step 9. In your browser, open `http://localhost:3000/brands/<brand-slug>` (replace `<brand-slug>` with the slug from step 4 — e.g. `http://localhost:3000/brands/acme`). You'll see a page with an **Add project** button at the top. Click it. A small form opens asking for three things:
+>
+> 1. **Name** — a human label like "Main", "Primary", or the brand name itself. For a single-market install, anything descriptive works.
+> 2. **Code** — short identifier used in URLs (lowercase letters, digits, hyphens). The CMS auto-fills this from Name. For most installs, `main` is the standard pick.
+> 3. **Locale** — language and country code, e.g. `en-US`, `en-GB`, `sv-SE`. Defaults to `en-US`.
+>
+> Click **Create project** and you're done. Tell me when you've created it (or paste any error you see).
 
-1. **Market name** — a human label, e.g. "United Kingdom" or "DTC US". For single-market users, anything descriptive like "Main", "Primary", or the brand name works.
-2. **Code** — a short identifier for this project, used in URLs and as the project's handle. Lowercase letters, digits, and dashes only. Pick `uk` for the United Kingdom market, `dtc-us` for direct-to-consumer US. **For a single-market install (most common), `main` is the standard pick. The brand name (e.g. `acme`) also works.**
-3. **Locale** — language and country, e.g. `en-GB` for British English, `en-US` for American English, `sv-SE` for Swedish.
-4. **Seed keywords** — 5 to 10 short phrases the project plans content around when there's no Search Console traffic yet (e.g. "best dtc skincare, retinol myths, sensitive skin routine"). Optional; the user can add them later from Project Settings → Seed keywords. The dashboard's first analysis uses these as the starting topic spine.
+When the user confirms it's created, **the install is complete**. Print this verbatim and stop:
+
+> You're set up. Pectus is running at `http://localhost:3000`. From here you activate apps, configure them, and run analyses all from the CMS — no more terminal needed. Close this terminal whenever you're ready.
+
+Do not continue to steps 11-13 on this path. Those are CLI-flow steps and don't apply when the user is driving from the CMS.
+
+### 10b. CLI path
+
+The wizard at `npx pectus project create` is **interactive** — it uses arrow-key prompts and a paste textarea that need a real terminal. The install agent (you) cannot drive these prompts from inside this session because there's no TTY attached. **Don't try to run it yourself, and don't offer to bypass the wizard by writing the project row directly into Supabase** — the official path is the wizard. If the user really doesn't want to open a terminal, suggest they switch to the CMS path (10a) instead.
+
+Tell the user, in plain words:
+
+> This wizard is interactive (arrow-key picks, paste box for keywords) so it needs a real terminal. Open a new terminal window and run:
+>
+> ```
+> cd <install path> && npx pectus project create
+> ```
+>
+> (For the default install location: `cd ~/pectus && npx pectus project create`.)
+>
+> It'll ask you four things:
+>
+> 1. **Market name** — a human label, e.g. "United Kingdom" or "DTC US". For single-market users, "Main", "Primary", or the brand name works.
+> 2. **Code** — a short identifier used in URLs and as the project's handle (lowercase letters, digits, dashes). For a single-market install, `main` is the standard pick. The brand name (e.g. `acme`) also works.
+> 3. **Locale** — language and country, e.g. `en-GB`, `en-US`, `sv-SE`.
+> 4. **Seed keywords** — 5 to 10 short phrases the project plans content around when there's no Search Console traffic yet (e.g. "best dtc skincare, retinol myths, sensitive skin routine"). Optional; you can add them later from Project Settings → Seed keywords.
+>
+> Tell me when it finishes (or paste any error).
 
 The command creates the project row (under the brand from step 4), sets a default review policy, and saves the seed keywords. Open `http://localhost:3000/brands/<brand-slug>/projects/<code>` to see it.
 

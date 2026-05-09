@@ -1,7 +1,14 @@
-import { createServerClient } from "@pectus/supabase";
+import { createServerClient, createServiceClient } from "@pectus/supabase";
 import { requireUser } from "@/lib/auth";
 import { BrandForm } from "./BrandForm";
 import { loadBrand } from "./actions";
+import { ImageGenSection } from "./ImageGenSection";
+import type { Camera } from "@/lib/brand-types";
+
+function maskKey(value: string): string {
+  if (value.length <= 8) return "•".repeat(value.length);
+  return `${value.slice(0, 4)}…${value.slice(-4)}`;
+}
 
 export default async function BrandPage({
   params,
@@ -17,6 +24,26 @@ export default async function BrandPage({
     .select("*")
     .eq("slug", slug)
     .maybeSingle();
+
+  const service = createServiceClient();
+  const { data: integrationRow } = await service
+    .from("integrations")
+    .select("service_account_json")
+    .eq("brand_id", brandRow?.id ?? "")
+    .eq("provider", "google_genai")
+    .maybeSingle();
+  const storedKey = (integrationRow?.service_account_json as { api_key?: string } | null)
+    ?.api_key ?? null;
+  const apiKeyMasked = storedKey ? maskKey(storedKey) : null;
+
+  const referenceUrls = (
+    Array.isArray(brandRow?.reference_image_urls)
+      ? (brandRow!.reference_image_urls as string[])
+      : []
+  ).filter((u): u is string => typeof u === "string");
+  const cameras = (
+    Array.isArray(brandRow?.cameras) ? (brandRow!.cameras as Camera[]) : []
+  );
 
   // Pectus is single-user-mode (per feedback_pectus_single_user.md), so any
   // authenticated user can edit the brand. The save action is service-role.
@@ -64,6 +91,13 @@ export default async function BrandPage({
       </div>
 
       <BrandForm initial={initial} canEdit={canEdit} brandSlug={slug} />
+
+      <ImageGenSection
+        brandSlug={slug}
+        apiKeyMasked={apiKeyMasked}
+        referenceUrls={referenceUrls}
+        cameras={cameras}
+      />
     </div>
   );
 }

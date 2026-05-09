@@ -39,7 +39,7 @@ export default async function ReviewsPage() {
   const role: string | null = (profile?.role as string | null) ?? null;
   const isAdmin = Boolean(profile?.is_admin);
 
-  const visible = ((items ?? []) as Item[]).filter((item) => {
+  const visible = ((items ?? []) as unknown as Item[]).filter((item) => {
     if (isAdmin) return true;
     if (!item.required_roles || item.required_roles.length === 0) return true;
     return role ? item.required_roles.includes(role) : false;

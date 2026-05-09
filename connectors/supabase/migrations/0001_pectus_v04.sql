@@ -584,6 +584,40 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
+-- Backfill profiles for any existing auth.users rows that survived a prior
+-- public-schema wipe. Without this, a re-install on a dirty Supabase project
+-- leaves auth users without a matching profile, and the
+-- `Add user → Create new user` step in the dashboard silently no-ops on
+-- existing emails (no INSERT event = trigger never fires = no profile = RLS
+-- rejects every write).
+do $$
+declare
+  has_admin boolean;
+  oldest_orphan_id uuid;
+begin
+  select exists(select 1 from public.profiles where is_admin = true)
+    into has_admin;
+
+  select u.id into oldest_orphan_id
+  from auth.users u
+  where u.email is not null
+    and not exists(select 1 from public.profiles p where p.id = u.id)
+  order by u.created_at asc
+  limit 1;
+
+  insert into public.profiles (id, email, full_name, role, is_admin)
+  select
+    u.id,
+    u.email,
+    coalesce(u.raw_user_meta_data->>'full_name', u.raw_user_meta_data->>'name'),
+    'drafter',
+    (not has_admin and u.id = oldest_orphan_id)
+  from auth.users u
+  where u.email is not null
+    and not exists(select 1 from public.profiles p where p.id = u.id)
+  on conflict (id) do nothing;
+end $$;
+
 do $$
 declare
   t text;

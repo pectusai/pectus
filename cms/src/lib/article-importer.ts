@@ -104,14 +104,17 @@ function pickString(val: unknown): string {
   return "";
 }
 
-function htmlToBlocks($: cheerio.CheerioAPI, root: cheerio.Cheerio<unknown>, depth = 0): Block[] {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function htmlToBlocks($: cheerio.CheerioAPI, root: cheerio.Cheerio<any>, depth = 0): Block[] {
   if (depth > 4) return [];
   const blocks: Block[] = [];
-  root.children().each((_, el) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (root as any).children().each((_: number, el: unknown) => {
     const node = el as unknown as { tagName?: string };
     const tag = node.tagName?.toLowerCase();
     if (!tag) return;
-    const $el = $(el as cheerio.Element);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const $el = $(el as any);
     if (tag === "p") {
       const text = $el.text().trim();
       if (text) blocks.push({ type: "p", text });

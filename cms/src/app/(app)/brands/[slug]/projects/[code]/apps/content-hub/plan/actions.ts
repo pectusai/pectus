@@ -59,7 +59,11 @@ export async function generateWeeklyAnalysis(
   revalidatePath(`/projects/${code}/apps/content-hub/plan`);
   revalidatePath(`/projects/${code}`);
 
-  return { ok: true, output: result.output, runId: result.runId };
+  return {
+    ok: true,
+    output: String(result.output ?? ""),
+    runId: result.runId,
+  };
 }
 
 /* Force re-interpretation of every connected app's data. Wired to a button

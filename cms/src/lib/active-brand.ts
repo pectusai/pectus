@@ -15,6 +15,11 @@ export type Brand = {
   sitemap_url: string | null;
   colors: Record<string, string>;
   fonts: Record<string, unknown>;
+  image_model: string | null;
+  image_guidelines_md: string | null;
+  reference_image_urls: unknown;
+  cameras: unknown;
+  example_photo_categories: unknown;
   created_at: string;
   updated_at: string;
 };

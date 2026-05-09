@@ -1,9 +1,18 @@
+import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { getBrandBySlug } from "@/lib/active-brand";
 import { isAppActiveForProject } from "@/lib/apps";
 import { ActivateAppPointer } from "@/app/components/ActivateAppPointer";
 import { notFound } from "next/navigation";
 import { ImportForm } from "./ImportForm";
+
+const STATUS_STYLES: Record<string, string> = {
+  imported: "bg-zinc-100 text-zinc-700",
+  draft: "bg-amber-50 text-amber-800",
+  review: "bg-blue-50 text-blue-800",
+  published: "bg-emerald-50 text-emerald-800",
+  archived: "bg-zinc-100 text-zinc-500",
+};
 
 export default async function Page({
   params,
@@ -27,12 +36,11 @@ export default async function Page({
 
   const { data: articles } = await supabase
     .from("articles")
-    .select("slug, title, category, date_published, word_count, status, source")
+    .select("slug, title, category, date_published, word_count, status, source, hero_image, author")
     .eq("project_id", ws.id)
-    .order("date_published", { ascending: false })
+    .order("date_modified", { ascending: false, nullsFirst: false })
     .limit(200);
 
-  /* Pre-fill the sitemap field with the brand's configured sitemap_url. */
   const { data: brandRow } = await supabase
     .from("brands")
     .select("sitemap_url")
@@ -41,75 +49,88 @@ export default async function Page({
 
   const defaultSitemap = brandRow?.sitemap_url ?? "";
   const list = articles ?? [];
+  const articleBase = `/brands/${slug}/projects/${code}/apps/content-hub/articles`;
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
-      <h1 className="text-2xl font-semibold tracking-tight">Articles</h1>
-      <p className="mt-1 text-sm text-gray-600">
-        A read-only inventory of articles already published on your existing site.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Articles</h1>
+          <p className="mt-1 text-sm text-zinc-600">
+            Write new articles, edit existing ones, and import what&apos;s already
+            on your site so the analysis knows what you&apos;ve covered.
+          </p>
+        </div>
+        <Link
+          href={`${articleBase}/new`}
+          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
+        >
+          New article
+        </Link>
+      </div>
 
-      <aside className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-        <p className="font-semibold">What are these used for?</p>
-        <p className="mt-1">
-          Articles imported here are reference material, not drafts. The weekly
-          analysis skill reads them to understand what you&apos;ve already written
-          (so it doesn&apos;t suggest topics you covered last quarter), to spot
-          which existing posts are rising in Search Console, and to ground its
-          suggestions in your actual voice.
-        </p>
-        <p className="mt-2">
-          You don&apos;t edit or republish from this page. Publishing happens
-          through the page builder, where you create new pages (pulling
-          inspiration from the analysis output) and ship them to your content-hub
-          repo. Set up the content-hub when you&apos;re ready to publish; until
-          then, imported articles still feed the analysis.
-        </p>
-      </aside>
-
-      <section className="mt-8 rounded-lg border border-gray-200 p-5">
-        <h2 className="text-base font-semibold">Import from sitemap</h2>
-        <p className="mt-1 text-sm text-gray-600">
-          Pectus reads your sitemap, fetches each URL, parses the HTML for title,
-          description, body, and dates, and upserts into your articles table.
-          Re-running is safe; articles are matched on slug.
+      <details className="mt-6 rounded-lg border border-zinc-200 bg-white p-5">
+        <summary className="cursor-pointer text-sm font-semibold">
+          Import from your existing site
+        </summary>
+        <p className="mt-2 text-sm text-zinc-600">
+          Pectus reads your sitemap, fetches each URL, parses the HTML, and
+          upserts into your articles table. Imported articles are reference
+          material the weekly analysis reads to know what you&apos;ve already
+          covered. Re-running is safe; articles are matched on slug.
         </p>
         <div className="mt-4">
           <ImportForm projectCode={code} defaultSitemap={defaultSitemap} />
         </div>
-      </section>
+      </details>
 
       <section className="mt-10">
         <h2 className="text-base font-semibold">
           {list.length} {list.length === 1 ? "article" : "articles"}
         </h2>
         {list.length === 0 ? (
-          <p className="mt-3 text-sm text-gray-500">
-            No articles yet. Use the import above to populate from your existing site.
+          <p className="mt-3 text-sm text-zinc-500">
+            No articles yet. Click <strong>New article</strong> above to draft one,
+            or open the importer to pull in your existing site.
           </p>
         ) : (
-          <ul className="mt-3 divide-y divide-gray-200">
-            {list.map((a) => (
-              <li key={a.slug} className="py-3">
-                <p className="font-medium">{a.title}</p>
-                <p className="mt-1 text-xs text-gray-500">
-                  {a.category} · {a.date_published?.slice(0, 10)} · {a.word_count} words
-                  {a.source ? (
-                    <>
-                      {" · "}
-                      <a
-                        href={a.source}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:underline"
-                      >
-                        source
-                      </a>
-                    </>
-                  ) : null}
-                </p>
-              </li>
-            ))}
+          <ul className="mt-3 divide-y divide-zinc-200 rounded-lg border border-zinc-200 bg-white">
+            {list.map((a) => {
+              const status = (a.status as string | null) ?? "draft";
+              return (
+                <li key={a.slug} className="flex items-center gap-3 p-3">
+                  {a.hero_image ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={a.hero_image}
+                      alt=""
+                      className="h-12 w-20 shrink-0 rounded object-cover"
+                    />
+                  ) : (
+                    <div className="h-12 w-20 shrink-0 rounded bg-zinc-100" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <Link
+                      href={`${articleBase}/${a.slug}`}
+                      className="block truncate font-medium hover:underline"
+                    >
+                      {a.title}
+                    </Link>
+                    <p className="mt-0.5 text-xs text-zinc-500">
+                      {a.category ? `${a.category} · ` : ""}
+                      {a.author ? `${a.author} · ` : ""}
+                      {a.date_published?.slice(0, 10) ?? "no date"} ·{" "}
+                      {a.word_count ?? 0} words
+                    </p>
+                  </div>
+                  <span
+                    className={`rounded px-2 py-0.5 text-[11px] font-medium ${STATUS_STYLES[status] ?? STATUS_STYLES.draft}`}
+                  >
+                    {status}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
