@@ -2,6 +2,15 @@ import { createServerClient } from "@pectus/supabase";
 import { getProjectByCode } from "@/lib/project";
 import { getBrandBySlug } from "@/lib/active-brand";
 import { isAppActiveForProject } from "@/lib/apps";
+import type {
+  AnalysisStage1,
+  AnalysisStage2,
+  PostSuggestion,
+} from "@/lib/insights/schemas";
+import { RunAnalysisButton } from "./RunAnalysisButton";
+import { RenewButton } from "./RenewButton";
+import { IdeaCard } from "./IdeaCard";
+import { DataSummary } from "./DataSummary";
 
 export const dynamic = "force-dynamic";
 
@@ -22,38 +31,61 @@ function formatWeekOf(d: Date): string {
   });
 }
 
-const SAMPLE_IDEAS: Array<{
-  title: string;
-  angle: string;
-  keyword: string;
-  type: string;
+type GenerationRow = {
+  id: string;
+  generated_at: string;
+  ideas: AnalysisStage2 | null;
+};
+
+type DismissalRow = {
+  generation_id: string;
+  post_index: number;
+};
+
+type CardRecord = {
+  generationId: string;
+  postIndex: number;
+  post: PostSuggestion;
   isNew: boolean;
-}> = [
-  {
-    title: "Why your applicant tracking system feels slow at 50 employees",
-    angle:
-      "The exact six friction points that turn a stage-2 startup ATS into a hiring bottleneck — and the lightest possible fixes.",
-    keyword: "applicant tracking system",
-    type: "long form guide",
-    isNew: true,
-  },
-  {
-    title: "Greenhouse vs. Workable vs. Teamtailor for 50–200 employees",
-    angle:
-      "A side-by-side comparison aimed at the buying committee that already knows the category.",
-    keyword: "greenhouse vs workable",
-    type: "comparison",
-    isNew: true,
-  },
-  {
-    title: "How to write a job ad that actually filters",
-    angle:
-      "Templates and three-line tests for whether the ad is screening anyone in or just collecting clicks.",
-    keyword: "job ad examples",
-    type: "how to",
-    isNew: false,
-  },
-];
+};
+
+function buildCards(
+  generations: GenerationRow[],
+  dismissals: DismissalRow[],
+): { cards: CardRecord[]; latestTrafficTable: AnalysisStage2["suggested_articles_by_traffic"] | null; latestGeneratedAt: string | null } {
+  if (generations.length === 0) {
+    return { cards: [], latestTrafficTable: null, latestGeneratedAt: null };
+  }
+  const dismissed = new Set(
+    dismissals.map((d) => `${d.generation_id}:${d.post_index}`),
+  );
+  const sorted = [...generations].sort(
+    (a, b) =>
+      new Date(b.generated_at).getTime() - new Date(a.generated_at).getTime(),
+  );
+  const latestGenId = sorted[0].id;
+  const latestGeneratedAt = sorted[0].generated_at;
+  const latestTrafficTable =
+    sorted[0].ideas?.suggested_articles_by_traffic ?? null;
+
+  const cards: CardRecord[] = [];
+  const seenTitles = new Set<string>();
+  for (const g of sorted) {
+    if (!g.ideas?.post_suggestions) continue;
+    g.ideas.post_suggestions.forEach((post, idx) => {
+      if (dismissed.has(`${g.id}:${idx}`)) return;
+      if (seenTitles.has(post.title.toLowerCase())) return;
+      seenTitles.add(post.title.toLowerCase());
+      cards.push({
+        generationId: g.id,
+        postIndex: idx,
+        post,
+        isNew: g.id === latestGenId,
+      });
+    });
+  }
+  return { cards, latestTrafficTable, latestGeneratedAt };
+}
 
 export default async function InsightsPage({
   params,
@@ -87,7 +119,7 @@ export default async function InsightsPage({
         .eq("project_id", project.id),
       supabase
         .from("data_interpretations")
-        .select("id, interpreted_at, status")
+        .select("id, interpreted_at, interpretation")
         .eq("project_id", project.id)
         .eq("status", "done")
         .order("interpreted_at", { ascending: false })
@@ -100,8 +132,36 @@ export default async function InsightsPage({
     articles: articleCount.count ?? 0,
     atp: atpCount.count ?? 0,
   };
+  const interpretationRow = latestInterpretation.data as
+    | { id: string; interpreted_at: string; interpretation: AnalysisStage1 }
+    | null;
 
-  const hasInterpretation = !!latestInterpretation.data;
+  let cards: CardRecord[] = [];
+  let latestTrafficTable: AnalysisStage2["suggested_articles_by_traffic"] | null =
+    null;
+  let latestGeneratedAt: string | null = null;
+
+  if (interpretationRow) {
+    const [genRows, dismissalRows] = await Promise.all([
+      supabase
+        .from("idea_generations")
+        .select("id, generated_at, ideas")
+        .eq("interpretation_id", interpretationRow.id)
+        .eq("status", "done"),
+      supabase
+        .from("idea_post_dismissals")
+        .select("generation_id, post_index")
+        .eq("project_id", project.id),
+    ]);
+    const built = buildCards(
+      (genRows.data ?? []) as GenerationRow[],
+      (dismissalRows.data ?? []) as DismissalRow[],
+    );
+    cards = built.cards;
+    latestTrafficTable = built.latestTrafficTable;
+    latestGeneratedAt = built.latestGeneratedAt;
+  }
+
   const noInputData =
     counts.keywords === 0 && counts.articles === 0 && !ga4Active && !gscActive;
 
@@ -114,8 +174,8 @@ export default async function InsightsPage({
         <h1>Insights</h1>
         <p className="pectus-insights-lede">
           {brand.name} · {project.name}. The smart CMS reads your GA4, Search
-          Console, and keyword data to find the gaps in your existing content
-          and tell you what to write next.
+          Console, and keyword data, finds the gaps in your existing content,
+          and tells you what to write next.
         </p>
 
         <dl className="pectus-insights-counters">
@@ -134,144 +194,151 @@ export default async function InsightsPage({
         </dl>
       </header>
 
-      <section className="pectus-insights-section">
-        <div className="pectus-insights-section-head">
-          <div>
-            <span className="pectus-insights-eyebrow">This week&apos;s ideas</span>
-            <h2 className="pectus-insights-section-title">
-              {hasInterpretation
-                ? "Ready to generate."
-                : "Five article ideas, generated from your data."}
-            </h2>
-          </div>
-        </div>
-
-        <div className="pectus-insights-hero">
-          {noInputData ? (
-            <>
-              <h2>No data to analyse yet.</h2>
-              <p>
-                Insights needs at least one of: keywords, GA4 traffic, or
-                Search Console queries. Activate the inbound apps you have
-                access to, or paste a keyword list under Project settings →
-                Keywords.
-              </p>
-              <div className="pectus-insights-hero-actions">
-                <a
-                  className="pectus-insights-button-primary"
-                  href={`${base}/apps`}
-                >
-                  Browse inbound apps →
-                </a>
-                <a
-                  className="pectus-insights-button-secondary"
-                  href={`${base}/keywords`}
-                >
-                  Add keywords
-                </a>
-              </div>
-            </>
-          ) : !hasInterpretation ? (
-            <>
-              <h2>Ready when you are.</h2>
-              <p>
-                Click run, and Pectus snapshots your data, asks Claude Opus 4.7
-                to interpret it (rising keywords, gaps, clusters, categories
-                worth claiming), then asks Opus to produce five concrete article
-                ideas you can draft from in one click.
-              </p>
-              <p className="pectus-insights-hero-meta">
-                One run takes 30 to 45 seconds. Costs ~$0.30 in Claude tokens.
-                Wired up in the next update.
-              </p>
-              <div className="pectus-insights-hero-actions">
-                <button
-                  type="button"
-                  disabled
-                  className="pectus-insights-button-primary"
-                  title="Wired up in the next push."
-                >
-                  ↻ Run first analysis
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <h2>Analysis is ready, idea cards land in the next push.</h2>
-              <p>
-                Latest interpretation:{" "}
-                {new Date(
-                  latestInterpretation.data!.interpreted_at as string,
-                ).toLocaleString("en-US")}
-                . The card grid, Renew button, dismissal, and traffic potential
-                table arrive in the next update.
-              </p>
-            </>
-          )}
-
-          <div className="pectus-insights-pipeline">
-            <div className="pectus-insights-pipeline-step">
-              <span className="pectus-insights-pipeline-num">1</span>
-              <span className="pectus-insights-pipeline-name">Snapshot</span>
-              <span className="pectus-insights-pipeline-desc">
-                Counts keywords, articles, ATP entries. If GA4 or Search Console
-                are connected, fetches fresh impressions and traffic.
-              </span>
-            </div>
-            <div className="pectus-insights-pipeline-step">
-              <span className="pectus-insights-pipeline-num">2</span>
-              <span className="pectus-insights-pipeline-name">Interpret</span>
-              <span className="pectus-insights-pipeline-desc">
-                Opus 4.7 reads the snapshot and outputs structured findings:
-                rising keywords, posts gaining traffic, clusters, categories,
-                negatives.
-              </span>
-            </div>
-            <div className="pectus-insights-pipeline-step">
-              <span className="pectus-insights-pipeline-num">3</span>
-              <span className="pectus-insights-pipeline-name">Generate</span>
-              <span className="pectus-insights-pipeline-desc">
-                Opus 4.7 turns the findings into exactly five ranked post ideas.
-                Renew swaps in five fresh angles whenever you want.
-              </span>
+      {noInputData ? (
+        <section className="pectus-insights-section">
+          <div className="pectus-insights-empty-card">
+            <h2>No data to analyse yet.</h2>
+            <p>
+              Insights needs at least one of: keywords, GA4 traffic, or Search
+              Console queries. Activate the inbound apps you have access to, or
+              add some keywords under Project settings → Keywords.
+            </p>
+            <div className="pectus-insights-hero-actions">
+              <a
+                className="pectus-insights-button-primary"
+                href={`${base}/apps`}
+              >
+                Browse inbound apps →
+              </a>
+              <a
+                className="pectus-insights-button-secondary"
+                href={`${base}/keywords`}
+              >
+                Add keywords
+              </a>
             </div>
           </div>
-        </div>
-
-        {!hasInterpretation && !noInputData ? (
-          <div className="pectus-insights-preview">
-            <div className="pectus-insights-preview-label">
-              Sample of what idea cards look like
-            </div>
-            <div className="pectus-insights-preview-grid">
-              {SAMPLE_IDEAS.map((idea) => (
-                <article
-                  key={idea.title}
-                  className="pectus-insights-idea-ghost"
-                >
-                  {idea.isNew ? (
-                    <span className="pectus-insights-idea-ghost-new">NEW</span>
-                  ) : null}
-                  <div className="pectus-insights-idea-ghost-title">
-                    {idea.title}
-                  </div>
-                  <p className="pectus-insights-idea-ghost-angle">
-                    {idea.angle}
+        </section>
+      ) : !interpretationRow ? (
+        <section className="pectus-insights-section">
+          <div className="pectus-insights-empty-card">
+            <h2>Ready when you are.</h2>
+            <p>
+              Click run, and Pectus snapshots your data, asks Claude Opus to
+              read it, then asks Opus to produce five concrete article ideas
+              you can draft from in one click.
+            </p>
+            <p className="pectus-insights-hero-meta">
+              Takes 30 to 60 seconds. Costs roughly $0.30 in Claude tokens.
+            </p>
+            <RunAnalysisButton
+              projectId={project.id}
+              label="↻ Run first analysis"
+            />
+          </div>
+        </section>
+      ) : (
+        <>
+          <section className="pectus-insights-section">
+            <div className="pectus-insights-section-head">
+              <div>
+                <span className="pectus-insights-eyebrow">
+                  This week&apos;s ideas
+                </span>
+                <h2 className="pectus-insights-section-title">
+                  {cards.length === 0
+                    ? "All ideas dismissed."
+                    : `${cards.length} idea${cards.length === 1 ? "" : "s"} in the queue.`}
+                </h2>
+                {latestGeneratedAt ? (
+                  <p className="pectus-insights-section-meta">
+                    Last generated{" "}
+                    {new Date(latestGeneratedAt).toLocaleString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </p>
-                  <div className="pectus-insights-idea-ghost-pills">
-                    <span className="pectus-insights-idea-pill pectus-insights-idea-pill-kw">
-                      {idea.keyword}
-                    </span>
-                    <span className="pectus-insights-idea-pill pectus-insights-idea-pill-type">
-                      {idea.type}
-                    </span>
-                  </div>
-                </article>
-              ))}
+                ) : null}
+              </div>
+              <RenewButton projectId={project.id} />
             </div>
-          </div>
-        ) : null}
-      </section>
+
+            <div className="pectus-insights-cards">
+              {cards.length === 0 ? (
+                <div className="pectus-insights-empty-card">
+                  <p>
+                    Nothing in the queue. Click Renew to generate five fresh
+                    angles from the same interpretation, or update your data
+                    and run a full analysis.
+                  </p>
+                </div>
+              ) : (
+                cards.map((c) => (
+                  <IdeaCard
+                    key={`${c.generationId}:${c.postIndex}`}
+                    idea={c.post}
+                    generationId={c.generationId}
+                    postIndex={c.postIndex}
+                    isNew={c.isNew}
+                    base={base}
+                    projectId={project.id}
+                  />
+                ))
+              )}
+            </div>
+          </section>
+
+          {latestTrafficTable && latestTrafficTable.length > 0 ? (
+            <section className="pectus-insights-section">
+              <header className="pectus-insights-subsection-head">
+                <span className="pectus-insights-eyebrow">
+                  Traffic potential
+                </span>
+                <h2 className="pectus-insights-section-title">
+                  Articles ranked by what they could pull in.
+                </h2>
+                <p className="pectus-insights-subsection-subtitle">
+                  From the most recent generation. Projected monthly sessions
+                  if each ranks in the top five.
+                </p>
+              </header>
+              <table className="pectus-insights-table">
+                <thead>
+                  <tr>
+                    <th>Topic</th>
+                    <th>Primary keyword</th>
+                    <th className="num">Monthly visits</th>
+                    <th>Why</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {latestTrafficTable.map((row, i) => (
+                    <tr key={i}>
+                      <td>{row.topic}</td>
+                      <td>
+                        <span className="pectus-idea-pill pectus-idea-pill-kw">
+                          {row.primary_keyword}
+                        </span>
+                      </td>
+                      <td className="num">
+                        {row.projected_monthly_traffic.toLocaleString("en-US")}
+                      </td>
+                      <td>{row.reasoning}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+          ) : null}
+
+          <DataSummary
+            interpretation={interpretationRow.interpretation}
+            interpretedAt={interpretationRow.interpreted_at}
+          />
+        </>
+      )}
     </div>
   );
 }

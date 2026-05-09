@@ -668,48 +668,35 @@ body {
   color: #71717a;
 }
 
-/* ── Hero CTA card (empty state before any analysis has run) ───────────── */
+/* ── Empty / first-run card ────────────────────────────────────────────── */
 
-.pectus-insights-hero {
+.pectus-insights-empty-card {
   border-radius: 1rem;
   border: 1px solid var(--pectus-border);
-  background:
-    radial-gradient(
-      ellipse at top right,
-      rgba(244, 63, 133, 0.08),
-      transparent 60%
-    ),
-    radial-gradient(
-      ellipse at bottom left,
-      rgba(249, 115, 22, 0.06),
-      transparent 55%
-    ),
-    white;
-  padding: 2rem 2.25rem;
+  background: white;
+  padding: 1.875rem 2.125rem;
   max-width: 52rem;
-  position: relative;
-  overflow: hidden;
 }
 
-.pectus-insights-hero h2 {
-  font-size: 1.375rem;
+.pectus-insights-empty-card h2 {
+  font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: -0.015em;
-  margin: 0 0 0.625rem;
+  margin: 0 0 0.5rem;
   color: #1a1a1a;
 }
 
-.pectus-insights-hero p {
+.pectus-insights-empty-card p {
   color: #3f3f46;
-  margin: 0 0 1.125rem;
-  line-height: 1.65;
+  margin: 0 0 0.875rem;
+  line-height: 1.6;
   max-width: 56ch;
 }
 
-.pectus-insights-hero-meta {
+.pectus-insights-empty-card .pectus-insights-hero-meta {
   color: #71717a;
   font-size: 0.8125rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 
 .pectus-insights-hero-actions {
@@ -718,137 +705,919 @@ body {
   gap: 0.625rem;
 }
 
-/* ── Pipeline mini-diagram ─────────────────────────────────────────────── */
+/* ── Run analysis button + spinner ─────────────────────────────────────── */
 
-.pectus-insights-pipeline {
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #f4f4f5;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.75rem;
-}
-
-@media (max-width: 640px) {
-  .pectus-insights-pipeline {
-    grid-template-columns: 1fr;
-  }
-}
-
-.pectus-insights-pipeline-step {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.pectus-insights-pipeline-num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 0.375rem;
-  background: rgba(244, 63, 133, 0.12);
-  color: #db2777;
-  font-size: 0.75rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.pectus-insights-pipeline-name {
-  font-weight: 600;
-  font-size: 0.875rem;
-  color: #1a1a1a;
-}
-
-.pectus-insights-pipeline-desc {
-  font-size: 0.8125rem;
-  color: #71717a;
-  line-height: 1.45;
-}
-
-/* ── Sample ghost idea cards (preview of what's coming) ────────────────── */
-
-.pectus-insights-preview {
-  margin-top: 2rem;
-}
-
-.pectus-insights-preview-label {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #a1a1aa;
-  margin-bottom: 0.75rem;
-}
-
-.pectus-insights-preview-grid {
+.pectus-insights-run {
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
-  filter: blur(0.4px);
-  opacity: 0.65;
-  pointer-events: none;
+  align-items: flex-start;
 }
 
-.pectus-insights-idea-ghost {
-  border: 1px solid var(--pectus-border);
-  border-radius: 0.625rem;
-  padding: 1rem 1.125rem;
-  background: white;
-  position: relative;
-}
-
-.pectus-insights-idea-ghost-title {
-  font-weight: 700;
-  font-size: 0.9375rem;
-  margin-bottom: 0.4rem;
-  color: #db2777;
-}
-
-.pectus-insights-idea-ghost-angle {
-  font-size: 0.8125rem;
-  color: #52525b;
-  margin-bottom: 0.625rem;
-  line-height: 1.5;
-}
-
-.pectus-insights-idea-ghost-pills {
+.pectus-insights-renew {
   display: flex;
-  gap: 0.4rem;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.pectus-insights-run-error {
+  color: #b91c1c;
+  font-size: 0.8125rem;
+  margin: 0;
+  max-width: 48ch;
+}
+
+.pectus-insights-run-meta {
+  color: #71717a;
+  font-size: 0.8125rem;
+  margin: 0;
+}
+
+.pectus-insights-spinner {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-right-color: white;
+  display: inline-block;
+  animation: pectus-spin 0.75s linear infinite;
+}
+
+@keyframes pectus-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Idea cards ────────────────────────────────────────────────────────── */
+
+.pectus-insights-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pectus-idea {
+  position: relative;
+  border: 1px solid var(--pectus-border);
+  border-radius: 0.75rem;
+  padding: 1.125rem 1.25rem;
+  background: white;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pectus-idea:hover {
+  border-color: #b6004f;
+}
+
+.pectus-idea-new {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.875rem;
+  background: linear-gradient(90deg, #db2777, #f97316);
+  color: white;
+  font-size: 0.625rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.25rem;
+  letter-spacing: 0.1em;
+}
+
+.pectus-idea-title-link {
+  text-decoration: none;
+}
+
+.pectus-idea-title {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  margin: 0 0 0.375rem;
+  color: #db2777;
+  letter-spacing: -0.01em;
+  padding-right: 4rem;
+  line-height: 1.3;
+}
+
+.pectus-idea-title-link:hover .pectus-idea-title {
+  text-decoration: underline;
+}
+
+.pectus-idea-angle {
+  color: #3f3f46;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  margin: 0 0 0.625rem;
+}
+
+.pectus-idea-pills {
+  display: flex;
+  gap: 0.375rem;
   flex-wrap: wrap;
 }
 
-.pectus-insights-idea-pill {
+.pectus-idea-pill {
   font-size: 0.6875rem;
   font-weight: 600;
   padding: 0.15rem 0.55rem;
   border-radius: 999px;
   background: #f4f4f5;
   color: #52525b;
+  white-space: nowrap;
 }
 
-.pectus-insights-idea-pill-kw {
+.pectus-idea-pill-kw {
   background: #fef3c7;
   color: #92400e;
 }
 
-.pectus-insights-idea-pill-type {
+.pectus-idea-pill-type {
+  background: #dbeafe;
+  color: #1e40af;
+  text-transform: capitalize;
+}
+
+.pectus-idea-rationale {
+  color: #52525b;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  margin: 0.75rem 0 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f4f4f5;
+}
+
+.pectus-idea-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.pectus-idea-foot-meta {
+  font-size: 0.75rem;
+  color: #71717a;
+}
+
+.pectus-idea-foot-meta strong {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.pectus-idea-foot-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.pectus-idea-draft-button {
+  display: inline-flex;
+  align-items: center;
+  background: #18181b;
+  color: white;
+  border: none;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.875rem;
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-family: inherit;
+}
+
+.pectus-idea-draft-button:hover {
+  background: #000;
+}
+
+.pectus-idea-dismiss {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #a1a1aa;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pectus-idea-dismiss:hover {
+  background: #f4f4f5;
+  color: #1a1a1a;
+}
+
+/* ── Tables ─────────────────────────────────────────────────────────────── */
+
+.pectus-insights-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  background: white;
+  border: 1px solid var(--pectus-border);
+  border-radius: 0.625rem;
+  overflow: hidden;
+}
+
+.pectus-insights-table thead tr {
+  background: #fafafa;
+}
+
+.pectus-insights-table th {
+  text-align: left;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #71717a;
+  border-bottom: 1px solid var(--pectus-border);
+}
+
+.pectus-insights-table th.num {
+  text-align: right;
+}
+
+.pectus-insights-table td {
+  padding: 0.75rem 0.875rem;
+  vertical-align: top;
+  color: #3f3f46;
+  border-top: 1px solid #f4f4f5;
+}
+
+.pectus-insights-table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.pectus-insights-table td.accent {
+  color: #b6004f;
+  font-weight: 500;
+}
+
+/* ── Data summary section ──────────────────────────────────────────────── */
+
+.pectus-insights-summary {
+  margin-top: 2.5rem;
+  padding-top: 2.5rem;
+  border-top: 1px solid var(--pectus-border);
+}
+
+.pectus-insights-summary-head {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pectus-insights-summary-meta {
+  font-size: 0.75rem;
+  color: #71717a;
+}
+
+.pectus-insights-summary-prose {
+  columns: 2;
+  column-gap: 2rem;
+  margin: 1rem 0 2rem;
+  color: #3f3f46;
+  font-size: 0.9375rem;
+  line-height: 1.7;
+}
+
+.pectus-insights-summary-prose p {
+  break-inside: avoid;
+  margin: 0 0 0.875rem;
+}
+
+@media (max-width: 768px) {
+  .pectus-insights-summary-prose {
+    columns: 1;
+  }
+}
+
+/* ── Sub-sections inside data summary ──────────────────────────────────── */
+
+.pectus-insights-subsection {
+  margin: 2rem 0;
+}
+
+.pectus-insights-subsection-head {
+  margin-bottom: 1rem;
+}
+
+.pectus-insights-subsection-subtitle {
+  color: #71717a;
+  font-size: 0.875rem;
+  margin: 0.375rem 0 0;
+  max-width: 64ch;
+  line-height: 1.55;
+}
+
+/* ── Cluster grid ──────────────────────────────────────────────────────── */
+
+.pectus-insights-cluster-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.875rem;
+}
+
+@media (max-width: 800px) {
+  .pectus-insights-cluster-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pectus-insights-cluster {
+  border: 1px solid var(--pectus-border);
+  border-radius: 0.75rem;
+  padding: 1rem 1.125rem;
+  background: white;
+}
+
+.pectus-insights-cluster-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.625rem;
+}
+
+.pectus-insights-cluster-head h3 {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  margin: 0;
+  color: #1a1a1a;
+}
+
+.pectus-insights-cluster-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.pectus-insights-cluster-rec {
+  margin: 0.75rem 0 0;
+  font-size: 0.8125rem;
+  color: #52525b;
+  line-height: 1.55;
+}
+
+.pectus-insights-cluster-rec strong {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+/* ── Suggested categories ──────────────────────────────────────────────── */
+
+.pectus-insights-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.pectus-insights-category {
+  border: 1px solid var(--pectus-border);
+  border-radius: 0.75rem;
+  padding: 1rem 1.125rem;
+  background: white;
+}
+
+.pectus-insights-category h3 {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  margin: 0 0 0.375rem;
+  color: #1a1a1a;
+}
+
+.pectus-insights-category p {
+  margin: 0 0 0.625rem;
+  font-size: 0.8125rem;
+  color: #52525b;
+  line-height: 1.55;
+}
+
+/* =============================================================================
+ * Content Hub > New article (mode tabs, AI Write form, Suggest from gaps).
+ * ========================================================================= */
+
+.pectus-new-article {
+  max-width: 56rem;
+}
+
+.pectus-new-article-back {
+  font-size: 0.75rem;
+  color: #71717a;
+  text-decoration: none;
+}
+
+.pectus-new-article-back:hover {
+  color: #1a1a1a;
+}
+
+.pectus-new-article-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0.5rem 0 0.5rem;
+  color: #1a1a1a;
+}
+
+.pectus-new-article-lede {
+  color: #555;
+  margin: 0 0 1.5rem;
+  line-height: 1.55;
+  max-width: 60ch;
+}
+
+.pectus-new-article-warning {
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: #78350f;
+  margin: 1rem 0;
+  line-height: 1.55;
+}
+
+.pectus-new-article-warning-link {
+  color: #b6004f;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.pectus-new-article-warning-link:hover {
+  text-decoration: underline;
+}
+
+.pectus-new-article-card {
+  border: 1px solid var(--pectus-border);
+  border-radius: 0.875rem;
+  padding: 1.5rem 1.625rem;
+  background: white;
+  margin-top: 1.25rem;
+}
+
+.pectus-mode-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 1.25rem;
+  border-bottom: 1px solid var(--pectus-border);
+}
+
+.pectus-mode-tab {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #71717a;
+  text-decoration: none;
+  padding: 0.5rem 0.875rem;
+  border-radius: 0.375rem 0.375rem 0 0;
+  position: relative;
+  bottom: -1px;
+  border-bottom: 2px solid transparent;
+}
+
+.pectus-mode-tab:hover {
+  color: #1a1a1a;
+}
+
+.pectus-mode-tab.is-active {
+  color: #1a1a1a;
+  font-weight: 600;
+  border-bottom-color: #b6004f;
+}
+
+/* ── Write form ─────────────────────────────────────────────────────────── */
+
+.pectus-write-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.pectus-write-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.pectus-write-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.pectus-write-optional {
+  font-weight: 400;
+  color: #71717a;
+}
+
+.pectus-write-input,
+.pectus-write-textarea {
+  border: 1px solid var(--pectus-border);
+  border-radius: 0.375rem;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: #1a1a1a;
+  background: white;
+  width: 100%;
+}
+
+.pectus-write-textarea {
+  min-height: 5rem;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.pectus-write-input:focus,
+.pectus-write-textarea:focus {
+  outline: none;
+  border-color: #b6004f;
+  box-shadow: 0 0 0 3px rgba(182, 0, 79, 0.15);
+}
+
+.pectus-write-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.875rem;
+}
+
+@media (max-width: 600px) {
+  .pectus-write-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pectus-write-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.pectus-write-pending {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--pectus-border);
+}
+
+.pectus-write-pending-meta {
+  font-size: 0.8125rem;
+  color: #71717a;
+  margin: 0 0 0.5rem;
+}
+
+.pectus-write-pending-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #71717a;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pectus-write-empty {
+  color: #555;
+  line-height: 1.6;
+  font-size: 0.9375rem;
+}
+
+/* ── Gaps list ──────────────────────────────────────────────────────────── */
+
+.pectus-gaps-lede {
+  color: #555;
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.pectus-gaps-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pectus-gap-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  color: #1a1a1a;
+  border: 1px solid transparent;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.pectus-gap-row:hover {
+  background: #fafafa;
+  border-color: var(--pectus-border);
+}
+
+.pectus-gap-keyword {
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.pectus-gap-meta {
+  color: #71717a;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.pectus-gap-arrow {
+  color: #b6004f;
+  font-weight: 500;
+}
+
+/* =============================================================================
+ * Article detail page (status workflow + history).
+ * ========================================================================= */
+
+.pectus-article-page {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 0 0 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.pectus-article-back {
+  font-size: 0.75rem;
+  color: #71717a;
+  text-decoration: none;
+}
+
+.pectus-article-back:hover {
+  color: #1a1a1a;
+}
+
+.pectus-article-header {
+  margin-bottom: 0.5rem;
+}
+
+.pectus-article-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.5rem;
+  color: #1a1a1a;
+  line-height: 1.2;
+}
+
+.pectus-article-meta {
+  font-size: 0.8125rem;
+  color: #71717a;
+  margin: 0;
+}
+
+.pectus-status-bar {
+  background: white;
+  border: 1px solid var(--pectus-border);
+  border-radius: 0.75rem;
+  padding: 1rem 1.125rem;
+}
+
+.pectus-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.pectus-status-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+}
+
+.pectus-status-pill-imported {
+  background: #f4f4f5;
+  color: #52525b;
+}
+
+.pectus-status-pill-draft {
+  background: #f4f4f5;
+  color: #52525b;
+}
+
+.pectus-status-pill-brand {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.pectus-status-pill-mkt {
   background: #dbeafe;
   color: #1e40af;
 }
 
-.pectus-insights-idea-ghost-new {
-  position: absolute;
-  top: 0.625rem;
-  right: 0.875rem;
-  background: linear-gradient(90deg, #db2777, #f97316);
+.pectus-status-pill-pub {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.pectus-status-pill-arch {
+  background: #f4f4f5;
+  color: #71717a;
+}
+
+.pectus-status-button-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #18181b;
   color: white;
-  font-size: 0.5625rem;
+  border: none;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  padding: 0.45rem 0.875rem;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.pectus-status-button-primary:hover:not(:disabled) {
+  background: #000;
+}
+
+.pectus-status-button-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.pectus-status-button-secondary {
+  display: inline-flex;
+  align-items: center;
+  background: white;
+  color: #1a1a1a;
+  border: 1px solid var(--pectus-border);
+  font-weight: 500;
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.pectus-status-button-secondary:hover:not(:disabled) {
+  border-color: #999;
+}
+
+.pectus-status-button-secondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.pectus-status-terminal {
+  font-size: 0.8125rem;
+  color: #71717a;
+  font-style: italic;
+}
+
+.pectus-status-confirm {
+  margin-top: 0.875rem;
+  padding-top: 0.875rem;
+  border-top: 1px solid #f4f4f5;
+}
+
+.pectus-status-confirm p {
+  font-size: 0.875rem;
+  color: #3f3f46;
+  margin: 0 0 0.5rem;
+  line-height: 1.5;
+}
+
+.pectus-status-confirm-textarea {
+  border: 1px solid var(--pectus-border);
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  width: 100%;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.pectus-status-confirm-textarea:focus {
+  outline: none;
+  border-color: #b6004f;
+  box-shadow: 0 0 0 3px rgba(182, 0, 79, 0.15);
+}
+
+.pectus-status-confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.625rem;
+}
+
+.pectus-status-error {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: #b91c1c;
+}
+
+/* ── History timeline ──────────────────────────────────────────────────── */
+
+.pectus-article-history {
+  border-top: 1px solid var(--pectus-border);
+  padding-top: 1.5rem;
+  margin-top: 1rem;
+}
+
+.pectus-article-history-title {
+  font-size: 0.75rem;
   font-weight: 700;
-  padding: 0.15rem 0.45rem;
-  border-radius: 0.25rem;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #71717a;
+  margin: 0 0 0.875rem;
+}
+
+.pectus-history {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.pectus-history-row {
+  border-left: 2px solid #e4e4e7;
+  padding: 0.25rem 0 0.25rem 0.875rem;
+  position: relative;
+}
+
+.pectus-history-line {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+}
+
+.pectus-history-dot {
+  position: absolute;
+  left: -0.4rem;
+  top: 0.7rem;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #b6004f;
+}
+
+.pectus-history-line-text {
+  font-size: 0.875rem;
+  color: #1a1a1a;
+}
+
+.pectus-history-from {
+  color: #71717a;
+}
+
+.pectus-history-arrow {
+  color: #a1a1aa;
+}
+
+.pectus-history-to {
+  font-weight: 600;
+}
+
+.pectus-history-meta {
+  font-size: 0.75rem;
+  color: #71717a;
+}
+
+.pectus-history-note {
+  font-size: 0.8125rem;
+  color: #52525b;
+  margin: 0.25rem 0 0;
+  line-height: 1.5;
+}
+
+.pectus-history-empty {
+  font-size: 0.875rem;
+  color: #71717a;
+  font-style: italic;
 }
 
 /* ── Buttons (Insights-scoped) ──────────────────────────────────────────── */

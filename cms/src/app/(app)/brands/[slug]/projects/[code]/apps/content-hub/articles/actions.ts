@@ -140,6 +140,90 @@ export async function setArticleStatus(formData: FormData): Promise<void> {
   );
 }
 
+import {
+  ALLOWED_TRANSITIONS,
+  isStatus,
+  type ArticleStatus,
+} from "@/lib/article-status";
+
+export type TransitionResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+export async function transitionArticleStatus(
+  brandSlug: string,
+  code: string,
+  articleId: string,
+  toStatus: string,
+  note: string,
+): Promise<TransitionResult> {
+  if (!brandSlug || !code || !articleId) {
+    return { ok: false, error: "Missing project or article context." };
+  }
+  if (!isStatus(toStatus)) {
+    return { ok: false, error: `Unknown status: ${toStatus}` };
+  }
+  const { user } = await requireUser();
+  const { projectId } = await resolveProject({ brandSlug, code });
+  const service = createServiceClient();
+
+  const { data: article } = await service
+    .from("articles")
+    .select("status, slug")
+    .eq("id", articleId)
+    .eq("project_id", projectId)
+    .maybeSingle();
+  if (!article) return { ok: false, error: "Article not found." };
+
+  const fromStatus = (article.status as string | null) ?? "draft";
+  if (!isStatus(fromStatus)) {
+    return { ok: false, error: `Article is in unknown status: ${fromStatus}` };
+  }
+  const allowed = ALLOWED_TRANSITIONS[fromStatus as ArticleStatus];
+  if (!allowed.some((t) => t.to === toStatus)) {
+    return {
+      ok: false,
+      error: `Can't move from ${fromStatus} to ${toStatus}.`,
+    };
+  }
+
+  const update: Record<string, unknown> = {
+    status: toStatus,
+    updated_at: new Date().toISOString(),
+  };
+  if (toStatus === "published") {
+    update.date_published = new Date().toISOString();
+  }
+
+  const { error: updateErr } = await service
+    .from("articles")
+    .update(update)
+    .eq("id", articleId);
+  if (updateErr) return { ok: false, error: updateErr.message };
+
+  const { error: logErr } = await service.from("article_transitions").insert({
+    article_id: articleId,
+    from_status: fromStatus,
+    to_status: toStatus,
+    note: note || null,
+    actor: user.id,
+  });
+  if (logErr) {
+    return {
+      ok: false,
+      error: `Status updated but transition log failed: ${logErr.message}`,
+    };
+  }
+
+  revalidatePath(
+    `/brands/${brandSlug}/projects/${code}/apps/content-hub/articles/${article.slug}`,
+  );
+  revalidatePath(
+    `/brands/${brandSlug}/projects/${code}/apps/content-hub/articles`,
+  );
+  return { ok: true };
+}
+
 // ──────────────────────────────────────────────────────────────────────────
 // Hero image
 // ──────────────────────────────────────────────────────────────────────────

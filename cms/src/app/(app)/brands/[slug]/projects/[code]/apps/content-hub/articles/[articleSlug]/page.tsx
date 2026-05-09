@@ -5,24 +5,11 @@ import { getBrandBySlug } from "@/lib/active-brand";
 import { isAppActiveForProject } from "@/lib/apps";
 import { ActivateAppPointer } from "@/app/components/ActivateAppPointer";
 import { ArticleEditor } from "./ArticleEditor";
+import { StatusBar } from "./StatusBar";
+import { HistoryTimeline, type TransitionEntry } from "./HistoryTimeline";
+import { isStatus, type ArticleStatus } from "@/lib/article-status";
 import type { Camera, ExamplePhotoCategory } from "@/lib/brand-types";
 import type { Block } from "./RichTextEditor";
-
-const STATUS_LABELS: Record<string, string> = {
-  imported: "Imported",
-  draft: "Draft",
-  review: "In review",
-  published: "Published",
-  archived: "Archived",
-};
-
-const STATUS_STYLES: Record<string, string> = {
-  imported: "bg-zinc-100 text-zinc-700 border-zinc-200",
-  draft: "bg-amber-50 text-amber-800 border-amber-200",
-  review: "bg-blue-50 text-blue-800 border-blue-200",
-  published: "bg-emerald-50 text-emerald-800 border-emerald-200",
-  archived: "bg-zinc-100 text-zinc-500 border-zinc-200",
-};
 
 export default async function ArticleDetailPage({
   params,
@@ -95,38 +82,75 @@ export default async function ArticleDetailPage({
     })
     .filter((b): b is Block => b !== null);
 
-  const status = (article.status as string | null) ?? "draft";
+  const rawStatus = (article.status as string | null) ?? "draft";
+  const status: ArticleStatus = isStatus(rawStatus)
+    ? (rawStatus as ArticleStatus)
+    : "draft";
+
+  const { data: transitionRows } = await supabase
+    .from("article_transitions")
+    .select("id, from_status, to_status, note, actor, created_at")
+    .eq("article_id", article.id)
+    .order("created_at", { ascending: false });
+
+  const actorIds = Array.from(
+    new Set(
+      (transitionRows ?? [])
+        .map((t) => t.actor as string | null)
+        .filter((id): id is string => !!id),
+    ),
+  );
+  const actorMap = new Map<string, string>();
+  if (actorIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, full_name, email")
+      .in("id", actorIds);
+    for (const p of profiles ?? []) {
+      actorMap.set(
+        p.id as string,
+        ((p.full_name as string) || (p.email as string) || "Someone").trim(),
+      );
+    }
+  }
+
+  const historyEntries: TransitionEntry[] = (transitionRows ?? []).map(
+    (t) => ({
+      id: t.id as string,
+      from_status: t.from_status as string | null,
+      to_status: t.to_status as string,
+      note: t.note as string | null,
+      actor_label: t.actor ? actorMap.get(t.actor as string) ?? null : null,
+      created_at: t.created_at as string,
+    }),
+  );
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8 px-6 py-8">
-      <div>
-        <Link
-          href={`/brands/${slug}/projects/${code}/apps/content-hub/articles`}
-          className="text-xs text-zinc-500 hover:text-zinc-900"
-        >
-          ← All articles
-        </Link>
-        <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              {article.title}
-            </h1>
-            <p className="mt-1 text-xs text-zinc-500">
-              {article.category ?? "Uncategorised"} ·{" "}
-              {article.author ?? "No author"} ·{" "}
-              {article.date_published
-                ? new Date(article.date_published).toLocaleDateString()
-                : "Not published"}{" "}
-              · {article.word_count ?? 0} words
-            </p>
-          </div>
-          <span
-            className={`rounded-md border px-2 py-1 text-xs font-medium ${STATUS_STYLES[status] ?? STATUS_STYLES.draft}`}
-          >
-            {STATUS_LABELS[status] ?? status}
-          </span>
-        </div>
-      </div>
+    <div className="pectus-article-page">
+      <Link
+        href={`/brands/${slug}/projects/${code}/apps/content-hub/articles`}
+        className="pectus-article-back"
+      >
+        ← All articles
+      </Link>
+      <header className="pectus-article-header">
+        <h1 className="pectus-article-title">{article.title}</h1>
+        <p className="pectus-article-meta">
+          {article.category ?? "Uncategorised"} ·{" "}
+          {article.author ?? "No author"} ·{" "}
+          {article.date_published
+            ? new Date(article.date_published).toLocaleDateString()
+            : "Not published"}{" "}
+          · {article.word_count ?? 0} words
+        </p>
+      </header>
+
+      <StatusBar
+        brandSlug={slug}
+        code={code}
+        articleId={article.id as string}
+        status={status}
+      />
 
       <ArticleEditor
         brandSlug={slug}
@@ -147,6 +171,11 @@ export default async function ArticleDetailPage({
           blocks,
         }}
       />
+
+      <section className="pectus-article-history">
+        <h2 className="pectus-article-history-title">History</h2>
+        <HistoryTimeline entries={historyEntries} />
+      </section>
     </div>
   );
 }
