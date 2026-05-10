@@ -27,6 +27,7 @@ type LocalCategory = {
   id: string;
   label: string;
   photos: LocalPhoto[];
+  isLegacy?: boolean;
 };
 
 let idSeq = 0;
@@ -152,7 +153,7 @@ export function BrandPhotosManager({
     );
     if (legacyReferenceUrls.length > 0) {
       seeded.push({
-        id: "_legacy_refs",
+        id: crypto.randomUUID(),
         label: "Uncategorized",
         photos: legacyReferenceUrls.map((url) => ({
           id: newLocalId("ph"),
@@ -160,6 +161,7 @@ export function BrandPhotosManager({
           storage_path: "",
           description: "",
         })),
+        isLegacy: true,
       });
     }
     return seeded;
@@ -310,11 +312,11 @@ export function BrandPhotosManager({
     // Persist immediately — no need to click Save for the photo to remain.
     const cat = categories.find((c) => c.id === categoryId);
     const labelToSend =
-      cat?.label?.trim() || (categoryId === "_legacy_refs" ? "Uncategorized" : "");
+      cat?.label?.trim() || (cat?.isLegacy ? "Uncategorized" : "");
     if (labelToSend) {
       const persisted = await addPhotoToCategory(
         brandSlug,
-        categoryId === "_legacy_refs" ? "" : categoryId,
+        cat?.isLegacy ? "" : categoryId,
         labelToSend,
         {
           url: signed.publicUrl,
@@ -360,7 +362,7 @@ export function BrandPhotosManager({
     if (list.length === 0) return;
     const cat = categories.find((c) => c.id === categoryId);
     if (!cat) return;
-    if (!cat.label.trim() && cat.id !== "_legacy_refs") {
+    if (!cat.label.trim() && !cat.isLegacy) {
       setSaveError(
         "Give this category a name before adding photos to it.",
       );
@@ -463,12 +465,13 @@ export function BrandPhotosManager({
     setSaveError(null);
     setSavedFlash(false);
 
-    // Strip the synthetic legacy bucket; users should rename/move it.
+    // Strip the synthetic legacy bucket if it ended up empty; otherwise the
+    // server side picks up its photos under the "Uncategorized" label.
     const payload: ExampleSaveCategory[] = categories
-      .filter((c) => c.id !== "_legacy_refs" || c.photos.length > 0)
+      .filter((c) => !c.isLegacy || c.photos.length > 0)
       .map((c) => ({
-        id: c.id === "_legacy_refs" ? undefined : c.id,
-        label: c.label.trim() || (c.id === "_legacy_refs" ? "Uncategorized" : ""),
+        id: c.isLegacy ? undefined : c.id,
+        label: c.label.trim() || (c.isLegacy ? "Uncategorized" : ""),
         photos: c.photos.map((p) => ({
           id: p.id,
           url: p.url,
@@ -517,7 +520,7 @@ export function BrandPhotosManager({
         </div>
       </div>
 
-      <div className="mt-4">
+      <div id="brand-api-keys" className="mt-4 scroll-mt-6">
         <ApiKeysPanel
           brandSlug={brandSlug}
           apiKeyMasked={apiKeyMasked}
@@ -582,6 +585,7 @@ export function BrandPhotosManager({
               ?.photos.find((p) => p.id === drawer.photoId) ?? null
           }
           error={drawerError}
+          hasApiKey={Boolean(apiKeyMasked)}
           onClose={closeDrawer}
           onChangeText={(text) => setDrawer({ ...drawer, text })}
           onApply={applyDrawerDescription}
@@ -723,6 +727,7 @@ function DescriptionDrawer({
   drawer,
   photo,
   error,
+  hasApiKey,
   onClose,
   onChangeText,
   onApply,
@@ -736,6 +741,7 @@ function DescriptionDrawer({
   };
   photo: LocalPhoto | null;
   error: string | null;
+  hasApiKey: boolean;
   onClose: () => void;
   onChangeText: (text: string) => void;
   onApply: () => void;
@@ -797,7 +803,12 @@ function DescriptionDrawer({
           <button
             type="button"
             onClick={onGenerate}
-            disabled={drawer.describing}
+            disabled={drawer.describing || !hasApiKey}
+            title={
+              hasApiKey
+                ? undefined
+                : "Add your Google AI API key in the API keys panel above first."
+            }
             className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium hover:border-zinc-400 disabled:opacity-60"
           >
             {drawer.describing
@@ -806,6 +817,14 @@ function DescriptionDrawer({
                 ? "Re-describe with Gemini"
                 : "Generate description"}
           </button>
+          {!hasApiKey ? (
+            <a
+              href="#brand-api-keys"
+              className="text-[11px] font-medium text-pink-700 underline"
+            >
+              Add Google AI key
+            </a>
+          ) : null}
           <button
             type="button"
             onClick={onApply}

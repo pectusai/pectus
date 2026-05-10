@@ -1,8 +1,8 @@
 ---
 name: content-hub
 type: outbound
-description: The bundled public-facing site. Static Astro build that renders your published articles and pages with brand-aware design.
-version: 0.3.0
+description: The bundled smart CMS. Insights pipeline (GA4 + Search Console + keyword snapshot → Opus interpretation → ranked ideas), AI article authoring with image generation (Google Imagen + Gemini, fal.ai Flux Pro, Replicate Flux/Recraft), plus pages, sources, reviews. Publishes to a static Astro site keyed off articles + pages.
+version: 0.4.13
 needs:
   project: [mount_slug]
 config:

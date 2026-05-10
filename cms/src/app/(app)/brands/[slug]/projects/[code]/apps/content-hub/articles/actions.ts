@@ -118,32 +118,6 @@ export async function updateArticleBlocks(formData: FormData): Promise<void> {
   );
 }
 
-export async function setArticleStatus(formData: FormData): Promise<void> {
-  const brandSlug = String(formData.get("brand_slug") ?? "");
-  const code = String(formData.get("code") ?? "");
-  const id = String(formData.get("id") ?? "");
-  const status = String(formData.get("status") ?? "").trim();
-  if (!brandSlug || !code || !id || !status) return;
-
-  const { projectId } = await resolveProject({ brandSlug, code });
-  const { supabase } = await requireUser();
-
-  const update: Record<string, unknown> = { status };
-  if (status === "published") {
-    update.date_published = new Date().toISOString();
-  }
-
-  await supabase
-    .from("articles")
-    .update(update)
-    .eq("project_id", projectId)
-    .eq("id", id);
-
-  revalidatePath(
-    `/brands/${brandSlug}/projects/${code}/apps/content-hub/articles`,
-  );
-}
-
 import {
   ALLOWED_TRANSITIONS,
   isStatus,

@@ -27,8 +27,6 @@ async function recordDecision(
 
   if (!item) return { ok: false, error: "Review item not found." };
 
-  /* Insert the approval. The unique constraint prevents double-voting from
-   * the same role; the route swallows that as a no-op. */
   const { error: approvalError } = await supabase
     .from("review_approvals")
     .insert({
@@ -47,11 +45,10 @@ async function recordDecision(
       .from("review_queue_items")
       .update({ state: "rejected" })
       .eq("id", itemId);
-    revalidatePath("/apps/content-hub/reviews");
+    revalidatePath("/reviews");
     return { ok: true, state: "rejected" };
   }
 
-  /* For approvals, check whether we hit threshold. */
   const { data: policy } = await supabase
     .from("review_policy")
     .select("required_roles, min_approvals")
@@ -80,7 +77,7 @@ async function recordDecision(
       .from("review_queue_items")
       .update({ state: "approved" })
       .eq("id", itemId);
-    revalidatePath("/apps/content-hub/reviews");
+    revalidatePath("/reviews");
     return { ok: true, state: "approved" };
   }
 

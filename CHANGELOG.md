@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.4.4 → v0.4.13.x — Migration runner, Insights, Articles authoring
+
+In-CMS migration runner (`/settings/updates`). Pasting `0001_pectus_v04.sql` is the one-time bootstrap; subsequent migrations apply via the Supabase Management API on the user's behalf, with copy-paste fallback. New migration `0002_content_hub.sql` adds insights, idea generations, dismissals, articles, brand example photo categories, brand image-gen API keys (`google_genai`, `fal`, `replicate`), and the `_pectus_migrations` ledger.
+
+Content Hub end-to-end:
+- **Insights** lands the Content Hub. Run analysis runs Stage 1 (Opus interpretation of GA4 / Search Console / keywords / articles snapshot) and Stage 2 (Opus 5 ranked ideas). Idea cards offer one-click Draft → AI Write → Sonnet 4.6 generated draft → article editor with status workflow → Publish.
+- **Articles** index rebuilt: table with search, status filter, categories chip line, per-row Archive / Delete, bulk-select with action dropdown, Import for shells. AI Write fields persist across tab switches. Generate-article modal walks 8 stages with progress dots.
+- **Article editor** with TipTap: H2/H3, B/I/S, link via inline popover (no more `window.prompt`), bullet/ordered/quote, undo/redo, image upload + AI image generation through Google (Imagen 4, Gemini 3 Pro), fal.ai (Flux Pro 1.1 Ultra), and Replicate (Flux Dev, Recraft v3). Empty-state placeholder via `@tiptap/extension-placeholder`. TipTap body typography (h2/h3/p/lists/blockquote/links/images) restored after Tailwind preflight stripped it.
+- **Status workflow**: `draft → brand_review → market_lead_review → published | archived`, transitions through `transitionArticleStatus`. StatusBar at top owns transitions.
+- **Brand example photos** rebuilt per spec: categories with descriptions, drawer with Gemini 3 Flash describe, parallel upload of 5 with thumbnails + per-file XHR progress, auto-save on upload. Synthetic legacy bucket migrates `reference_image_urls` automatically on first save (now keyed by UUID + `isLegacy` flag, no more `_legacy_refs` sentinel).
+- **API keys** (Google AI / fal.ai / Replicate) live in a power-up panel inside the brand profile's Image generation card. Stored in `integrations` per brand, jsonb `service_account_json: {"api_key": "..."}`. Photo describe drawer disables the Generate button + shows an "Add Google AI key" link to the keys-panel anchor when no key is set; 401/403 from Gemini surfaces a friendly message.
+- **Article slug collisions** now use incrementing `-2`, `-3` suffixes via `uniqueSlug()` instead of timestamp-base36. Articles list null-status rows are no longer excluded from the no-filter total.
+- **CSS hygiene**: cms/CLAUDE.md documents the Tailwind-utilities-first policy. ~95 dead `.pectus-*` rules (~890 lines) removed from `globals.css` after a build-time cascade audit confirmed the remaining 97 unique selectors all resolve to live JSX usages.
+
 ## v0.4.2 — Connector framing + IA refactor
 
 **Wipe-and-reinstall required.** v0.4.2 squashes every previous migration (`0001`–`0008`) into a single `0001_pectus_v04.sql`, renames `workspaces` → `projects` everywhere (DB, routes, CLI), and re-keys app activation per-project. There is no automatic upgrade path. To move from v0.4.1: drop / reset your Supabase project, re-clone or re-`npx pectus init`, paste the squashed migration via `/settings/updates`, then re-run install.

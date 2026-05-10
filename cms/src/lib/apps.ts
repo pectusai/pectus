@@ -40,19 +40,7 @@ export const APP_SIDEBAR_MANIFESTS: Record<string, AppSidebarManifest> = {
       { label: "Articles", href: (b) => `${b}/apps/content-hub/articles` },
       { label: "Pages", href: (b) => `${b}/apps/content-hub/pages` },
       { label: "Sources", href: (b) => `${b}/apps/content-hub/sources` },
-      { label: "Reviews", href: (b) => `${b}/apps/content-hub/reviews` },
-      {
-        label: "Site URL",
-        href: (b) => `${b}/apps/content-hub/settings/site-url`,
-      },
-      {
-        label: "Redirects",
-        href: (b) => `${b}/apps/content-hub/settings/redirects`,
-      },
-      {
-        label: "Review policy",
-        href: (b) => `${b}/apps/content-hub/settings/review-policy`,
-      },
+      { label: "Settings", href: (b) => `${b}/apps/content-hub/settings` },
     ],
   },
   ga4: {
@@ -198,6 +186,23 @@ export async function listActivatedAppsWithTypeForProject(
     name,
     type: byName.get(name)?.type ?? "unknown",
   }));
+}
+
+export async function isAppActiveForAnyProject(
+  appName: string,
+): Promise<boolean> {
+  const supabase = await createServerClient();
+  try {
+    const { data } = await supabase
+      .from("activated_apps")
+      .select("project_id")
+      .eq("app_name", appName)
+      .eq("status", "active")
+      .limit(1);
+    return (data ?? []).length > 0;
+  } catch {
+    return false;
+  }
 }
 
 export async function getAppConfig<T = Record<string, unknown>>(

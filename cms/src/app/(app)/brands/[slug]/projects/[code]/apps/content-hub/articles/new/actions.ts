@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { getBrandBySlug } from "@/lib/active-brand";
 import { createServiceClient } from "@pectus/supabase";
-import { slugify } from "@/lib/slugify";
+import { slugify, uniqueSlug } from "@/lib/slugify";
 import { structuredCall } from "@/lib/insights/structured-call";
 import { ArticleDraftSchema, type ArticleDraft } from "@/lib/insights/schemas";
 
@@ -33,14 +33,14 @@ export async function createBlankArticle(
     .maybeSingle();
   if (!project) return { ok: false, error: `Project ${code} not found.` };
 
-  let slug = slugify(title) || `article-${Date.now()}`;
-  const { data: existing } = await supabase
+  const base = slugify(title) || `article-${Date.now()}`;
+  const { data: takenRows } = await supabase
     .from("articles")
-    .select("id")
+    .select("slug")
     .eq("project_id", project.id)
-    .eq("slug", slug)
-    .maybeSingle();
-  if (existing) slug = `${slug}-${Date.now().toString(36)}`;
+    .like("slug", `${base}%`);
+  const taken = new Set((takenRows ?? []).map((r) => r.slug as string));
+  const slug = uniqueSlug(base, taken);
 
   const { error: insertErr } = await supabase.from("articles").insert({
     project_id: project.id,
@@ -266,14 +266,14 @@ export async function generateArticle(
     };
   }
 
-  let slug = slugify(draft.title) || `article-${Date.now()}`;
-  const { data: existing } = await supabase
+  const base = slugify(draft.title) || `article-${Date.now()}`;
+  const { data: takenRows } = await supabase
     .from("articles")
-    .select("id")
+    .select("slug")
     .eq("project_id", project.id)
-    .eq("slug", slug)
-    .maybeSingle();
-  if (existing) slug = `${slug}-${Date.now().toString(36)}`;
+    .like("slug", `${base}%`);
+  const taken = new Set((takenRows ?? []).map((r) => r.slug as string));
+  const slug = uniqueSlug(base, taken);
 
   const wordCount = blocksToWordCount(draft.blocks);
 

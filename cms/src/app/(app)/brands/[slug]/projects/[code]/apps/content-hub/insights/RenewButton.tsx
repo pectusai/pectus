@@ -3,6 +3,15 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { renewIdeas } from "@/lib/insights/actions";
+import { RunAnalysisModal } from "./RunAnalysisModal";
+
+const STAGES = [
+  "Reading this week's idea pool",
+  "Asking Opus 4.7 for fresh angles",
+  "Picking five new ones",
+  "Ranking by traffic potential",
+  "Final pass",
+];
 
 export function RenewButton({ projectId }: { projectId: string }) {
   const router = useRouter();
@@ -38,11 +47,17 @@ export function RenewButton({ projectId }: { projectId: string }) {
         disabled={isBusy}
         className="pectus-insights-button-secondary"
       >
-        {isBusy ? "Generating…" : "↻ Renew · 5 fresh angles"}
+        ↻ Renew · 5 fresh angles
       </button>
       {error ? (
         <span className="pectus-insights-run-error">{error}</span>
       ) : null}
+      <RunAnalysisModal
+        open={isBusy}
+        title="Generating five fresh angles"
+        stages={STAGES}
+        approxSeconds={45}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createServerClient } from "@pectus/supabase";
 import { signOut } from "../login/actions";
 import { listBrands, readLastBrandSlug } from "@/lib/active-brand";
+import { isAppActiveForAnyProject } from "@/lib/apps";
 import { BrandSwitcher } from "./BrandSwitcher";
 
 export async function NavBar() {
@@ -24,6 +25,7 @@ export async function NavBar() {
       ? cookieSlug
       : (brands[0]?.slug ?? null);
   const base = activeSlug ? `/brands/${activeSlug}` : "/brands";
+  const showReviews = await isAppActiveForAnyProject("content-hub");
 
   return (
     <header className="pectus-nav">
@@ -43,6 +45,7 @@ export async function NavBar() {
             <Link href="/brands">Brands</Link>
           )}
           <Link href="/apps">Apps</Link>
+          {showReviews ? <Link href="/reviews">Reviews</Link> : null}
           <Link href="/settings">Settings</Link>
         </nav>
 

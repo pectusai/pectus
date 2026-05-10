@@ -88,7 +88,7 @@ export default async function ArticlesIndexPage({
       .from("articles")
       .select(baseSelect, { count: "exact" })
       .eq("project_id", project.id)
-      .neq("status", "draft")
+      .or("status.neq.draft,status.is.null")
       .order("date_published", { ascending: false, nullsFirst: false })
       .order("date_modified", { ascending: false, nullsFirst: false })
       .limit(PAGE_LIMIT);

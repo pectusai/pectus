@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { runFullAnalysis } from "@/lib/insights/actions";
+import { RunAnalysisModal } from "./RunAnalysisModal";
 
 const STAGES = [
   "Counting your keywords, articles, and audience questions",
@@ -25,19 +26,13 @@ export function RunAnalysisButton({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [running, setRunning] = useState(false);
-  const [stageIndex, setStageIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const onClick = async () => {
     setRunning(true);
     setError(null);
-    setStageIndex(0);
-    const interval = setInterval(() => {
-      setStageIndex((i) => Math.min(i + 1, STAGES.length - 1));
-    }, 7500);
     try {
       const res = await runFullAnalysis(projectId);
-      clearInterval(interval);
       if (!res.ok) {
         setError(res.error);
         setRunning(false);
@@ -46,7 +41,6 @@ export function RunAnalysisButton({
       startTransition(() => router.refresh());
       setRunning(false);
     } catch (e) {
-      clearInterval(interval);
       setError(e instanceof Error ? e.message : "Unknown error");
       setRunning(false);
     }
@@ -66,23 +60,15 @@ export function RunAnalysisButton({
         disabled={isBusy}
         className={className}
       >
-        {isBusy ? (
-          <>
-            <span className="pectus-insights-spinner" aria-hidden />
-            <span>{STAGES[stageIndex]}…</span>
-          </>
-        ) : (
-          <>{label ?? "↻ Run analysis"}</>
-        )}
+        {label ?? "↻ Run analysis"}
       </button>
-      {error ? (
-        <p className="pectus-insights-run-error">{error}</p>
-      ) : null}
-      {isBusy ? (
-        <p className="pectus-insights-run-meta">
-          One run usually takes 30 to 60 seconds. Don&apos;t reload the page.
-        </p>
-      ) : null}
+      {error ? <p className="pectus-insights-run-error">{error}</p> : null}
+      <RunAnalysisModal
+        open={isBusy}
+        title="Reading this week's data"
+        stages={STAGES}
+        approxSeconds={60}
+      />
     </div>
   );
 }

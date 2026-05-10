@@ -61,6 +61,11 @@ export async function describeImageFromUrl(
   });
   if (!res.ok) {
     const text = await res.text();
+    if (res.status === 401 || res.status === 403) {
+      throw new Error(
+        "Google rejected the AI key on this brand. Open the brand profile page and check the Google AI key in the API keys panel.",
+      );
+    }
     throw new Error(
       `Gemini Flash describe failed (${res.status}): ${text.slice(0, 400)}`,
     );

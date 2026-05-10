@@ -4,6 +4,7 @@ import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import LinkExt from "@tiptap/extension-link";
+import Placeholder from "@tiptap/extension-placeholder";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
   createInlineImageUploadUrl,
@@ -155,6 +156,9 @@ export function RichTextEditor({
           class: "underline",
         },
       }),
+      Placeholder.configure({
+        placeholder: "Start writing, or click AI image to drop in a hero…",
+      }),
     ],
     content: blocksToHtml(initialBlocks),
     editable,
@@ -176,6 +180,33 @@ export function RichTextEditor({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, startUpload] = useTransition();
   const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [linkDraft, setLinkDraft] = useState("");
+  const linkInputRef = useRef<HTMLInputElement | null>(null);
+
+  const openLinkPopover = () => {
+    if (!editor) return;
+    const previous = (editor.getAttributes("link").href as string | undefined) ?? "";
+    setLinkDraft(previous || "https://");
+    setLinkOpen(true);
+    setTimeout(() => linkInputRef.current?.select(), 0);
+  };
+  const applyLink = () => {
+    if (!editor) return;
+    const url = linkDraft.trim();
+    if (url === "") {
+      editor.chain().focus().extendMarkRange("link").unsetLink().run();
+    } else {
+      editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+    }
+    setLinkOpen(false);
+  };
+  const removeLink = () => {
+    if (!editor) return;
+    editor.chain().focus().extendMarkRange("link").unsetLink().run();
+    setLinkOpen(false);
+  };
 
   const [showAiPanel, setShowAiPanel] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
@@ -313,33 +344,60 @@ export function RichTextEditor({
           >
             <s>S</s>
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              const previous = editor.getAttributes("link").href as
-                | string
-                | undefined;
-              const url = window.prompt(
-                "Link URL (leave empty to remove)",
-                previous ?? "https://",
-              );
-              if (url === null) return;
-              if (url === "") {
-                editor.chain().focus().extendMarkRange("link").unsetLink().run();
-                return;
-              }
-              editor
-                .chain()
-                .focus()
-                .extendMarkRange("link")
-                .setLink({ href: url })
-                .run();
-            }}
-            className={btn(editor.isActive("link"))}
-            title="Insert/remove link"
-          >
-            Link
-          </button>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={openLinkPopover}
+              className={btn(editor.isActive("link"))}
+              title="Insert or edit link"
+            >
+              Link
+            </button>
+            {linkOpen ? (
+              <div className="absolute left-0 top-[calc(100%+4px)] z-20 flex items-center gap-1 rounded-md border border-zinc-200 bg-white p-1.5 shadow-md">
+                <input
+                  ref={linkInputRef}
+                  type="url"
+                  value={linkDraft}
+                  onChange={(e) => setLinkDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      applyLink();
+                    } else if (e.key === "Escape") {
+                      setLinkOpen(false);
+                    }
+                  }}
+                  placeholder="https://"
+                  className="h-7 w-64 rounded border border-zinc-300 px-2 text-xs focus:border-zinc-500 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={applyLink}
+                  className="h-7 rounded bg-zinc-900 px-2 text-xs font-medium text-white hover:bg-zinc-700"
+                >
+                  Apply
+                </button>
+                {editor.isActive("link") ? (
+                  <button
+                    type="button"
+                    onClick={removeLink}
+                    className="h-7 rounded border border-zinc-300 px-2 text-xs hover:bg-zinc-50"
+                  >
+                    Remove
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => setLinkOpen(false)}
+                  aria-label="Close"
+                  className="h-7 rounded px-2 text-xs text-zinc-500 hover:text-zinc-900"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : null}
+          </div>
           <span className="mx-1 h-4 w-px bg-zinc-200" />
           <button
             type="button"
