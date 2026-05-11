@@ -529,13 +529,29 @@ export async function updateVariantSlug(args: {
   variantId: string;
   slug: string;
 }): Promise<{ ok: true; slug: string } | { ok: false; error: string }> {
-  const slug = slugify(args.slug);
-  if (!slug) {
-    return { ok: false, error: "Slug must contain at least one letter or digit." };
-  }
-
   await requireUser();
   const supabase = await createServerClient();
+
+  const { data: variantRow, error: variantErr } = await supabase
+    .from("page_variants")
+    .select("page:pages!inner(purpose)")
+    .eq("id", args.variantId)
+    .single();
+  if (variantErr || !variantRow) {
+    return { ok: false, error: variantErr?.message ?? "Variant not found." };
+  }
+  const pageRow = Array.isArray(variantRow.page)
+    ? variantRow.page[0]
+    : variantRow.page;
+  const isHomepage = pageRow?.purpose === "home";
+
+  const slug = args.slug.trim() ? slugify(args.slug) : "";
+  if (!isHomepage && !slug) {
+    return {
+      ok: false,
+      error: "Slug must contain at least one letter or digit.",
+    };
+  }
 
   const { error } = await supabase
     .from("page_variants")

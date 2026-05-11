@@ -49,9 +49,10 @@ export async function createPage(args: {
     return { ok: false, error: pageErr?.message ?? "Failed to create page." };
   }
 
-  /* Insert default-locale variant. */
+  /* Insert default-locale variant. Homepage variants get an empty slug so
+   * they publish at the root URL (/) — the URL resolver supports that. */
   const locale = ws.default_locale ?? ws.locale ?? "en";
-  const slug = slugify(node.title);
+  const slug = args.purpose === "home" ? "" : slugify(node.title);
   /* Pre-fill the hero block's title with the node title for convenience. */
   const initialBlocks = template.default_blocks.map((b) => {
     if (b.type === "hero" && b.props && typeof b.props === "object") {

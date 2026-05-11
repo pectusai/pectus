@@ -43,7 +43,7 @@ export function PreviewFrame({
         id={iframeId}
         src={src}
         title="Page preview"
-        className="hidden h-[calc(100vh-12rem)] min-h-[640px] w-full rounded border border-zinc-200 bg-white lg:block"
+        className="hidden h-[calc(100vh-14rem)] min-h-[560px] w-full rounded border border-zinc-200 bg-white lg:block"
       />
       {reachable !== true && (
         <div className="pointer-events-none absolute inset-0 hidden items-center justify-center rounded bg-zinc-900/70 p-6 backdrop-blur-sm lg:flex">

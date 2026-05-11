@@ -43,6 +43,17 @@ export default async function BuilderPage({
     .single();
   if (!page || page.project_id !== ws.id) notFound();
 
+  const isHomepage = page.purpose === "home";
+  /* Self-heal legacy homepage variants that were created with a non-empty
+   * slug. Homepages live at the root URL (/), so the slug must be ''. */
+  if (isHomepage && variant.slug !== "") {
+    await supabase
+      .from("page_variants")
+      .update({ slug: "" })
+      .eq("id", variant.id);
+    variant.slug = "";
+  }
+
   const template = getTemplate(page.template_id);
 
   /* All sibling variants — drives the locale switcher. */
@@ -154,6 +165,7 @@ export default async function BuilderPage({
               projectCode={code}
               variantId={variantId}
               initialSlug={variant.slug}
+              isHomepage={isHomepage}
             />
             <span aria-hidden>·</span>
             <span
@@ -187,7 +199,7 @@ export default async function BuilderPage({
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(320px,420px)_1fr] lg:items-start">
-        <section className="flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white lg:sticky lg:top-6 lg:h-[calc(100vh-7rem)] lg:max-h-[calc(100vh-7rem)]">
+        <section className="flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white lg:sticky lg:top-4 lg:h-[calc(100vh-14rem)] lg:max-h-[calc(100vh-14rem)]">
           <div className="border-b border-zinc-100 px-4 py-3">
             <h2 className="text-sm font-semibold">Chat</h2>
             <p className="mt-1 text-xs text-gray-500">
