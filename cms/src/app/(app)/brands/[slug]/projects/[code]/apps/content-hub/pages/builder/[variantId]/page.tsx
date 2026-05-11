@@ -130,10 +130,10 @@ export default async function BuilderPage({
     ancestorSlugs,
   });
 
-  const previewBase =
-    process.env.PECTUS_PREVIEW_URL?.replace(/\/$/, "") ??
-    "http://localhost:4321";
-  const previewSrc = `${previewBase}/pectus-preview/${variantId}/`;
+  /* In-CMS preview route. Same origin as the builder, so the iframe loads
+   * instantly without a second dev server. Public route (outside (app)),
+   * reads variant data via the service client. */
+  const previewSrc = `/pectus-preview/${variantId}`;
 
   return (
     <div>
@@ -236,15 +236,7 @@ export default async function BuilderPage({
               Open in new tab ↗
             </a>
           </div>
-          <PreviewFrame
-            src={previewSrc}
-            iframeId={PREVIEW_IFRAME_ID}
-            previewBase={previewBase}
-          />
-          <p className="mt-2 hidden px-2 text-xs text-zinc-500 lg:block">
-            Override the preview URL with <code>PECTUS_PREVIEW_URL</code> in{" "}
-            <code>.env.local</code>.
-          </p>
+          <PreviewFrame src={previewSrc} iframeId={PREVIEW_IFRAME_ID} />
         </section>
       </div>
     </div>

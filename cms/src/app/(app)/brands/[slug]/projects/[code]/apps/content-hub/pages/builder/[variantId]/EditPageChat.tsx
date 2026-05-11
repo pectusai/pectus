@@ -47,7 +47,7 @@ export function EditPageChat({
       const iframe = document.getElementById(
         previewIframeId,
       ) as HTMLIFrameElement | null;
-      iframe?.contentWindow?.postMessage({ type: "pectus:reload" }, "*");
+      if (iframe) iframe.src = iframe.src;
     });
   };
 
