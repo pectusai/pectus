@@ -51,7 +51,10 @@ function HeroBlock({
             {eyebrow}
           </p>
         )}
-        <h1 className="mt-3 text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl">
+        <h1
+          className="mt-3 font-bold tracking-tight text-zinc-900"
+          style={{ fontSize: "var(--brand-h1-size)" }}
+        >
           {title}
         </h1>
         {subtitle && (
@@ -114,7 +117,8 @@ function FeatureGridBlock({
     <section className="bg-zinc-50 px-6 py-16">
       <div className="mx-auto max-w-5xl">
         {heading && (
-          <h2 className="mb-10 text-center text-3xl font-bold text-zinc-900">
+          <h2 className="mb-10 text-center font-bold text-zinc-900"
+            style={{ fontSize: "var(--brand-h2-size)" }}>
             {heading}
           </h2>
         )}
@@ -130,7 +134,10 @@ function FeatureGridBlock({
                   {item.icon}
                 </span>
               )}
-              <h3 className="mt-3 text-lg font-semibold text-zinc-900">
+              <h3
+                className="mt-3 font-semibold text-zinc-900"
+                style={{ fontSize: "var(--brand-h3-size)" }}
+              >
                 {item.title}
               </h3>
               {item.description && (
@@ -196,7 +203,12 @@ function CtaBlock({
   return (
     <section className="bg-zinc-900 px-6 py-16 text-white">
       <div className="mx-auto max-w-3xl text-center">
-        <h2 className="text-3xl font-bold tracking-tight">{heading}</h2>
+        <h2
+          className="font-bold tracking-tight"
+          style={{ fontSize: "var(--brand-h2-size)" }}
+        >
+          {heading}
+        </h2>
         {body && <p className="mx-auto mt-4 max-w-xl text-zinc-300">{body}</p>}
         <a
           href={href}
@@ -247,7 +259,12 @@ function LinkListBlock({
     <section className="px-6 py-12">
       <div className="mx-auto max-w-3xl">
         {heading && (
-          <h2 className="mb-6 text-2xl font-bold text-zinc-900">{heading}</h2>
+          <h2
+            className="mb-6 font-bold text-zinc-900"
+            style={{ fontSize: "var(--brand-h2-size)" }}
+          >
+            {heading}
+          </h2>
         )}
         <ul className="divide-y divide-zinc-200 rounded-lg border border-zinc-200 bg-white">
           {items.map((item, i) => (
@@ -289,7 +306,12 @@ function FaqBlock({
     <section className="px-6 py-12">
       <div className="mx-auto max-w-3xl">
         {heading && (
-          <h2 className="mb-6 text-2xl font-bold text-zinc-900">{heading}</h2>
+          <h2
+            className="mb-6 font-bold text-zinc-900"
+            style={{ fontSize: "var(--brand-h2-size)" }}
+          >
+            {heading}
+          </h2>
         )}
         <dl className="space-y-6">
           {items.map((item, i) => (

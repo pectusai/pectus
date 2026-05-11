@@ -5,6 +5,7 @@ import {
   saveBrand,
   type BrandColors,
   type BrandFonts,
+  type BrandFontSizes,
   type BrandRadius,
   type FontSlot,
   type ImportDraft,
@@ -25,6 +26,7 @@ type InitialBrand = {
   image_model: string;
   colors: BrandColors;
   fonts: BrandFonts;
+  font_sizes: BrandFontSizes;
   radius: BrandRadius;
   imported_from: ImportedFrom | null;
 };
@@ -415,6 +417,49 @@ function BrandFormBody({
                 current={initial.fonts.body.family}
               />
             </Field>
+          </Section>
+
+          <Section title="Type sizes">
+            <p className="text-xs text-zinc-500">
+              CSS lengths. Leave blank to inherit the default. Accepts{" "}
+              <code>rem</code>, <code>px</code>, <code>em</code>,{" "}
+              <code>%</code>, or any CSS-valid length. Applies in the page
+              builder preview and in published pages.
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="H1">
+                <input
+                  name="font_size_h1"
+                  defaultValue={initial.font_sizes.h1 ?? ""}
+                  placeholder="2.25rem"
+                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-sm"
+                />
+              </Field>
+              <Field label="H2">
+                <input
+                  name="font_size_h2"
+                  defaultValue={initial.font_sizes.h2 ?? ""}
+                  placeholder="1.875rem"
+                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-sm"
+                />
+              </Field>
+              <Field label="H3">
+                <input
+                  name="font_size_h3"
+                  defaultValue={initial.font_sizes.h3 ?? ""}
+                  placeholder="1.5rem"
+                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-sm"
+                />
+              </Field>
+              <Field label="Body">
+                <input
+                  name="font_size_body"
+                  defaultValue={initial.font_sizes.body ?? ""}
+                  placeholder="1rem"
+                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-sm"
+                />
+              </Field>
+            </div>
           </Section>
 
           <Section title="Image model">

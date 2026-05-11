@@ -36,6 +36,16 @@ export type FontSlot = {
 
 export type BrandFonts = { heading: FontSlot; body: FontSlot; mono: FontSlot };
 
+/* Per-element type sizes. Stored as CSS length strings (e.g. "2.25rem",
+ * "32px") so the renderer can drop them straight into CSS variables. Any
+ * key may be absent — the renderer falls back to its built-in default. */
+export type BrandFontSizes = {
+  h1?: string;
+  h2?: string;
+  h3?: string;
+  body?: string;
+};
+
 export type BrandRadius = "sharp" | "default" | "soft";
 
 export type ImportedFrom = {
@@ -54,6 +64,7 @@ export type BrandJson = {
   logo: string;
   colors: BrandColors;
   fonts: BrandFonts;
+  font_sizes: BrandFontSizes;
   radius: BrandRadius;
   voice: string;
   tonality: string;
@@ -102,6 +113,7 @@ const DEFAULT_BRAND: BrandJson = {
     body: { ...DEFAULT_FONT_SYSTEM },
     mono: { ...DEFAULT_FONT_MONO },
   },
+  font_sizes: {},
   radius: "default",
   voice: "",
   tonality: "",
@@ -125,6 +137,7 @@ async function readBrandJson(slug: string): Promise<BrandJson> {
         body: { ...DEFAULT_BRAND.fonts.body, ...(parsed.fonts?.body ?? {}) },
         mono: { ...DEFAULT_BRAND.fonts.mono, ...(parsed.fonts?.mono ?? {}) },
       },
+      font_sizes: { ...(parsed.font_sizes ?? {}) },
     };
   } catch {
     return DEFAULT_BRAND;
@@ -198,6 +211,12 @@ export async function saveBrand(formData: FormData): Promise<SaveBrandResult> {
     mono: parseFontSlot(formData, "mono"),
   };
 
+  const font_sizes: BrandFontSizes = {};
+  for (const key of ["h1", "h2", "h3", "body"] as const) {
+    const raw = String(formData.get(`font_size_${key}`) ?? "").trim();
+    if (raw) font_sizes[key] = raw;
+  }
+
   const importedFromRaw = String(formData.get("imported_from") ?? "").trim();
   const importedFrom = parseImportedFrom(importedFromRaw);
 
@@ -210,6 +229,7 @@ export async function saveBrand(formData: FormData): Promise<SaveBrandResult> {
     sitemap_url,
     colors,
     fonts,
+    font_sizes,
     radius,
     voice,
     tonality,
@@ -228,6 +248,7 @@ export async function saveBrand(formData: FormData): Promise<SaveBrandResult> {
     image_model,
     colors,
     fonts,
+    font_sizes,
     accent_alt: colors.accent_alt,
     accent_alt_ink: colors.accent_alt_ink,
     surface_alt: colors.surface_alt,

@@ -80,6 +80,9 @@ export default async function BrandPage({
    * brand.json mirror for fields not yet persisted (or before first save). */
   const dbColors = (brandRow?.colors ?? {}) as Partial<typeof fileBrand.colors>;
   const dbFonts = (brandRow?.fonts ?? {}) as Partial<typeof fileBrand.fonts>;
+  const dbFontSizes = (brandRow?.font_sizes ?? {}) as Partial<
+    typeof fileBrand.font_sizes
+  >;
 
   const initial = {
     name: (brandRow?.name as string | null) ?? fileBrand.name,
@@ -99,6 +102,7 @@ export default async function BrandPage({
       body: { ...fileBrand.fonts.body, ...(dbFonts.body ?? {}) },
       mono: { ...fileBrand.fonts.mono, ...(dbFonts.mono ?? {}) },
     },
+    font_sizes: { ...fileBrand.font_sizes, ...dbFontSizes },
     radius:
       (brandRow?.radius as typeof fileBrand.radius | null) ?? fileBrand.radius,
     imported_from:
