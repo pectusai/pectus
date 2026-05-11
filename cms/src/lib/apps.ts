@@ -39,6 +39,7 @@ export const APP_SIDEBAR_MANIFESTS: Record<string, AppSidebarManifest> = {
       { label: "Insights", href: (b) => `${b}/apps/content-hub/insights` },
       { label: "Articles", href: (b) => `${b}/apps/content-hub/articles` },
       { label: "Pages", href: (b) => `${b}/apps/content-hub/pages` },
+      { label: "Files", href: (b) => `${b}/apps/content-hub/files` },
       { label: "Sources", href: (b) => `${b}/apps/content-hub/sources` },
       { label: "Settings", href: (b) => `${b}/apps/content-hub/settings` },
     ],
