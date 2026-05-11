@@ -6,6 +6,7 @@ import { getTemplate } from "@pectus/content-hub/templates";
 import { resolvePageUrl } from "@/lib/page-url";
 import { slugify } from "@/lib/slugify";
 import { EditPageChat } from "./EditPageChat";
+import { PreviewFrame } from "./PreviewFrame";
 import { PublishButton } from "./PublishButton";
 import { LocaleSwitcher, type LocaleVariantStub } from "./LocaleSwitcher";
 import { SlugEditor } from "./SlugEditor";
@@ -121,7 +122,7 @@ export default async function BuilderPage({
   const previewBase =
     process.env.PECTUS_PREVIEW_URL?.replace(/\/$/, "") ??
     "http://localhost:4321";
-  const previewSrc = `${previewBase}/pectus-preview/${variantId}`;
+  const previewSrc = `${previewBase}/pectus-preview/${variantId}/`;
 
   return (
     <div>
@@ -223,17 +224,14 @@ export default async function BuilderPage({
               Open in new tab ↗
             </a>
           </div>
-          <iframe
-            id={PREVIEW_IFRAME_ID}
+          <PreviewFrame
             src={previewSrc}
-            title="Page preview"
-            className="hidden h-[calc(100vh-12rem)] min-h-[640px] w-full rounded border border-zinc-200 bg-white lg:block"
+            iframeId={PREVIEW_IFRAME_ID}
+            previewBase={previewBase}
           />
           <p className="mt-2 hidden px-2 text-xs text-zinc-500 lg:block">
-            Preview points at <code>{previewBase}</code>. In a second terminal,
-            run <code>npm run dev -w @pectus/content-hub</code> from the repo
-            root so the iframe has something to load. Override the URL with{" "}
-            <code>PECTUS_PREVIEW_URL</code> in <code>.env.local</code>.
+            Override the preview URL with <code>PECTUS_PREVIEW_URL</code> in{" "}
+            <code>.env.local</code>.
           </p>
         </section>
       </div>
