@@ -130,7 +130,7 @@ export default async function BuilderPage({
           <h1 className="text-2xl font-semibold tracking-tight">
             {variant.title}
           </h1>
-          <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
             <span
               title={`Template: defines the page's default block composition. ${template?.description ?? ""}`}
             >
@@ -164,7 +164,7 @@ export default async function BuilderPage({
             >
               {variant.status}
             </span>
-          </p>
+          </div>
         </div>
         <div className="flex flex-col items-end gap-3">
           <Link
