@@ -16,7 +16,10 @@ export function PreviewFrame({
 
   useEffect(() => {
     let cancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
     const check = async () => {
+      if (cancelled) return;
       try {
         await fetch(previewBase, { mode: "no-cors", cache: "no-store" });
         if (cancelled) return;
@@ -24,15 +27,19 @@ export function PreviewFrame({
           if (prev === false) setReloadKey((k) => k + 1);
           return true;
         });
+        /* Server is up. Stop polling — no need to keep hitting it. If the
+         * user kills the dev server later, a page refresh will retry. */
       } catch {
-        if (!cancelled) setReachable(false);
+        if (cancelled) return;
+        setReachable(false);
+        timeoutId = setTimeout(check, 4000);
       }
     };
     check();
-    const id = setInterval(check, 3000);
+
     return () => {
       cancelled = true;
-      clearInterval(id);
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, [previewBase]);
 

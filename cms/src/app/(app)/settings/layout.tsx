@@ -35,6 +35,13 @@ export default async function SettingsLayout({
             </Link>
           </>
         ) : null}
+        <Link
+          href="/settings/environment"
+          className="hover:text-zinc-900"
+          title="Set Supabase, Anthropic, Google, and other secrets. Single source of truth for every Pectus app on this machine."
+        >
+          Environment
+        </Link>
         <Link href="/settings/updates" className="hover:text-zinc-900">
           Updates
         </Link>
