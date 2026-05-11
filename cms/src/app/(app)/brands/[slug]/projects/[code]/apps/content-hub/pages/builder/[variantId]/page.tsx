@@ -185,20 +185,20 @@ export default async function BuilderPage({
         </div>
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(320px,420px)_1fr]">
-        <section className="rounded-lg border border-gray-200 p-4">
-          <h2 className="text-sm font-semibold">Chat</h2>
-          <p className="mt-1 text-xs text-gray-500">
-            Each instruction calls the <code>edit-page</code> skill and rewrites
-            the draft blocks. The preview on the right reloads after each edit.
-          </p>
-          <div className="mt-3">
-            <EditPageChat
-              projectCode={code}
-              variantId={variantId}
-              previewIframeId={PREVIEW_IFRAME_ID}
-            />
+      <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(320px,420px)_1fr] lg:items-start">
+        <section className="flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white lg:sticky lg:top-6 lg:h-[calc(100vh-7rem)] lg:max-h-[calc(100vh-7rem)]">
+          <div className="border-b border-zinc-100 px-4 py-3">
+            <h2 className="text-sm font-semibold">Chat</h2>
+            <p className="mt-1 text-xs text-gray-500">
+              Each instruction calls the <code>edit-page</code> skill and
+              rewrites the draft blocks. The preview reloads after each edit.
+            </p>
           </div>
+          <EditPageChat
+            projectCode={code}
+            variantId={variantId}
+            previewIframeId={PREVIEW_IFRAME_ID}
+          />
         </section>
 
         <section className="rounded-lg border border-gray-200 p-2 lg:p-3">
@@ -227,12 +227,12 @@ export default async function BuilderPage({
             id={PREVIEW_IFRAME_ID}
             src={previewSrc}
             title="Page preview"
-            className="hidden h-[70vh] w-full rounded border border-zinc-200 bg-white lg:block"
+            className="hidden h-[calc(100vh-12rem)] min-h-[640px] w-full rounded border border-zinc-200 bg-white lg:block"
           />
           <p className="mt-2 hidden px-2 text-xs text-zinc-500 lg:block">
-            Preview points at <code>{previewBase}</code>. Run{" "}
-            <code>npm --project @pectus/content-hub run dev</code> in another
-            terminal so the iframe has something to load. Override with{" "}
+            Preview points at <code>{previewBase}</code>. In a second terminal,
+            run <code>npm run dev -w @pectus/content-hub</code> from the repo
+            root so the iframe has something to load. Override the URL with{" "}
             <code>PECTUS_PREVIEW_URL</code> in <code>.env.local</code>.
           </p>
         </section>

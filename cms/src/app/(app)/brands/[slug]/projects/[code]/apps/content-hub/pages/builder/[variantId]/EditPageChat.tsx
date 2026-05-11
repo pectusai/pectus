@@ -17,14 +17,12 @@ export function EditPageChat({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const send = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
+  const submit = () => {
+    if (!input.trim() || pending) return;
     const instruction = input.trim();
     setInput("");
     setError(null);
 
-    /* Optimistic: add the user turn immediately. */
     const nextHistory: ChatTurn[] = [
       ...history,
       { role: "user", text: instruction },
@@ -53,9 +51,21 @@ export function EditPageChat({
     });
   };
 
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    submit();
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      submit();
+    }
+  };
+
   return (
-    <div className="flex h-full min-h-[400px] flex-col">
-      <ul className="flex-1 space-y-3 overflow-y-auto pr-2">
+    <div className="flex h-full min-h-0 flex-1 flex-col">
+      <ul className="flex-1 min-h-0 space-y-3 overflow-y-auto px-4 py-4">
         {history.length === 0 && (
           <li className="text-sm text-zinc-500">
             Ask for a change to start. Try &ldquo;make the hero shorter&rdquo;
@@ -82,24 +92,28 @@ export function EditPageChat({
       </ul>
 
       {error && (
-        <p className="mt-2 text-xs text-red-600">{error}</p>
+        <p className="mx-4 text-xs text-red-600">{error}</p>
       )}
 
-      <form onSubmit={send} className="mt-4 flex gap-2">
-        <input
-          type="text"
+      <form
+        onSubmit={onSubmit}
+        className="flex flex-col gap-2 border-t border-zinc-200 bg-zinc-50 px-4 py-3"
+      >
+        <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="What should change?"
+          onKeyDown={onKeyDown}
+          placeholder="What should change? Enter sends, Shift+Enter adds a new line."
           disabled={pending}
-          className="flex-1 rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none"
+          rows={3}
+          className="resize-none rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 disabled:opacity-60"
         />
         <button
           type="submit"
-          disabled={pending || !input.trim()}
-          className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50"
+          disabled={pending}
+          className="self-stretch rounded-md bg-zinc-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-zinc-700 disabled:cursor-wait disabled:bg-zinc-700 disabled:opacity-100"
         >
-          Send
+          {pending ? "Sending…" : "Send"}
         </button>
       </form>
     </div>
