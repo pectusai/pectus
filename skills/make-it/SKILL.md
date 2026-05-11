@@ -45,8 +45,43 @@ A `ScaffoldSpec` object containing:
 
 1. `APP.md` — frontmatter with `name`, `description`, `type` (`inbound` or `outbound`), `version: 1.0.0`, `needs` (which core blocks the app consumes: `brand`, `project`, `knowledge`), `inputs`, `outputs`, `config` (env vars), `schema: ./schema.ts`. Body is the prompt body, written core-aware.
 2. `schema.ts` — Zod schema for the app's structured output.
-3. `provision.ts` — CLI-callable setup skeleton if the app has `config`. Stub-level for v1: export an async `provision()` function that prompts for the env vars and writes them to `.env.local`. If the app has no external API surface (rare for apps, common for skills), skip this file.
+3. `provision.ts` — CLI-callable setup skeleton if the app has `config`. Stub-level for v1: export an async `provision()` function that prompts for the env vars and writes them to **`cms/.env.local`** (the canonical Pectus env file) via the CLI's `writeEnvLocal` helper from `@pectus/cli/lib/env-file`. Never write to a per-app `.env.local`. If the app has no external API surface (rare for apps, common for skills), skip this file.
 4. `README.md` — overview, env vars required, how the app is invoked.
+
+## Environment variables (load-bearing)
+
+Pectus has **one** env file, period: `cms/.env.local`. Every app and skill that needs credentials reads from there. Never invent a per-app `.env`, `.env.local`, or `.env.example`. Never instruct the user to copy values between files.
+
+The CMS reads `cms/.env.local` natively. The settings UI at `/settings/environment` lets the user edit values. A boot-time hook (`cms/src/instrumentation.ts`) snapshots whatever's currently in `process.env` into the file so it stays populated.
+
+If your app introduces new env keys:
+
+- Surface each new key in the brief's `config` array AND register it in `cms/src/app/(app)/settings/environment/schema.ts` so the user can edit it from the CMS Settings UI. Add a `validation_note` reminding the user to apply that registration after the CLI writes the scaffold.
+- The `provision.ts` (if your app has one) writes the new values to `cms/.env.local` via `writeEnvLocal({ KEY: value })` from `@pectus/cli/lib/env-file`. Do not write to disk yourself outside this helper.
+
+If your app only reads existing Pectus env keys (Supabase, Anthropic, Google), you do not need a `provision.ts` at all.
+
+## Apps with their own runtime
+
+Most apps run inside the CMS process — they ship routes, skills, or modules consumed by `cms/`. Those apps share CMS's `process.env` automatically and need no env wiring.
+
+A small minority of apps need their own server (Astro, Vite, a long-running Node service, etc.). For those, generate a runtime config file (`astro.config.mjs`, `vite.config.ts`, `server.mjs`, whichever the runtime uses) that loads the canonical Pectus env at startup:
+
+```js
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { loadPectusEnv } from "../../scripts/load-pectus-env.mjs";
+
+loadPectusEnv({
+  appDir: path.dirname(fileURLToPath(import.meta.url)),
+});
+```
+
+This reads `cms/.env.local` and populates `process.env` before the runtime serves its first request. Same source of truth as the CMS. No duplicate env, no symlink, no copy step.
+
+Emit this config file with `role: "reference"`. Do not generate `.env.local`, `.env.example`, or shell snippets for the app's own folder. If the user wants per-app overrides, the loader already supports a per-app `.env.local` as the lowest-priority fallback — don't pre-create one.
+
+If the app needs a way to be reached by the CMS (e.g. an iframe URL, a webhook target), prefer keeping the surface inside the CMS rather than wiring a second hostname. The Pages builder used to point at an Astro dev server and now renders preview inside the CMS itself — same pattern applies to anything you scaffold. Cross-process URL coordination is a smell.
 
 ## Validation rules
 
