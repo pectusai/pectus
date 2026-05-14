@@ -21,7 +21,7 @@ Everything user-configurable lives in `pectus.config.ts`:
 
 - Site URL, name, description
 - Org name, URL, logo
-- Brand tokens (read from `brand/brand.json`, can override here)
+- Brand tokens (read from `brands/<slug>/brand.json` selected via `PECTUS_BRAND_SLUG` env, or the first brand dir found; can override here)
 - Nav links + footer columns
 - Hero copy + CTA destination
 - Article type tab labels
@@ -56,4 +56,4 @@ apps/content-hub/src/
 
 ## Default design
 
-Light mode, neutral palette, content-first typography. No dark blocks, no decorative accents, no opinionated copy. Customize via `pectus.config.ts` and `brand/brand.json`.
+Light mode, neutral palette, content-first typography. No dark blocks, no decorative accents, no opinionated copy. Customize via `pectus.config.ts` and `brands/<slug>/brand.json`.

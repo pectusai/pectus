@@ -24,6 +24,7 @@ export function MigrationRow({
     startTransition(async () => {
       const res = await applyMigration(formData);
       setResult(res);
+      if (!res.ok) setShowManual(true);
     });
   };
 

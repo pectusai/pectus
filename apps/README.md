@@ -12,7 +12,7 @@ Apps are not infrastructure. Infrastructure (Supabase, Anthropic API, OAuth) liv
 When the runner invokes any app, it composes the system prompt as:
 
 ```
-[1] Brand block       → voice, name, colors, tagline (from brand/brand.json)
+[1] Brand block       → voice, name, colors, tagline (from brands/<slug>/brand.json)
 [2] Project block   → ICP, market, locale, keywords (from active project)
 [3] Knowledge block   → digested insights (from knowledge/insights.md)
 [4] App block         → only "what to do", never "how to sound"

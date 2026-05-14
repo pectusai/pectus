@@ -206,7 +206,16 @@ function ConnectionPanel({
           → <strong>Create new key</strong> → <strong>JSON</strong>.
         </li>
         <li>
-          Enable two APIs in the same Google Cloud project:{" "}
+          Enable <strong>three</strong> APIs in the same Google Cloud project:{" "}
+          <a
+            href="https://console.cloud.google.com/apis/library/analyticsadmin.googleapis.com"
+            target="_blank"
+            rel="noreferrer"
+            className="text-blue-600 hover:text-blue-800"
+          >
+            Analytics Admin API
+          </a>
+          ,{" "}
           <a
             href="https://console.cloud.google.com/apis/library/analyticsdata.googleapis.com"
             target="_blank"
@@ -214,8 +223,8 @@ function ConnectionPanel({
             className="text-blue-600 hover:text-blue-800"
           >
             Analytics Data API
-          </a>{" "}
-          and{" "}
+          </a>
+          , and{" "}
           <a
             href="https://console.cloud.google.com/apis/library/searchconsole.googleapis.com"
             target="_blank"
@@ -224,7 +233,8 @@ function ConnectionPanel({
           >
             Search Console API
           </a>
-          .
+          . The Admin API is the easy one to skip and the one GA4 needs to
+          recognize the service account in its user-management UI.
         </li>
         <li>
           In GA4 (Admin → Property access), add the service account email as a{" "}
@@ -233,6 +243,20 @@ function ConnectionPanel({
         </li>
         <li>Upload the JSON below or paste its contents.</li>
       </ol>
+
+      <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+        <strong>Heads-up: Google sometimes rejects a brand-new service-account email.</strong>{" "}
+        GA4 and Search Console can show <em>&ldquo;The email does not match a Google
+        Account&rdquo;</em> or <em>&ldquo;Failed to add user: email not found&rdquo;</em> for
+        30 to 60 minutes after the account is created (occasionally longer).
+        It&apos;s a Google principal-propagation lag, not a Pectus or credential
+        bug. Wait an hour and retry. If it persists past a few hours: for GA4,
+        the OAuth Playground + GA Admin API v1alpha workaround works; for
+        Search Console there&apos;s no public user-management API, so the
+        DNS-TXT verification path is the fallback (coming soon as a built-in
+        flow).
+      </div>
+
       <GoogleSAForm brandSlug={brandSlug} />
     </section>
   );

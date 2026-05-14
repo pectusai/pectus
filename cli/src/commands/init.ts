@@ -45,15 +45,34 @@ async function run(): Promise<void> {
     });
   }
 
-  // 3. Brand setup if needed.
-  const brandFile = path.join(repo, "brand", "brand.json");
-  let needsBrand = !fs.existsSync(brandFile);
-  if (!needsBrand) {
+  // 3. Brand setup if needed. v0.4 stores brands at brands/<slug>/brand.json
+  // (multi-brand). Older installs keep brand/brand.json (single-brand) which
+  // the connect/sync flow auto-migrates.
+  const brandsRoot = path.join(repo, "brands");
+  const legacyBrandFile = path.join(repo, "brand", "brand.json");
+  let needsBrand = true;
+  if (fs.existsSync(brandsRoot)) {
+    for (const ent of fs.readdirSync(brandsRoot, { withFileTypes: true })) {
+      if (!ent.isDirectory()) continue;
+      const f = path.join(brandsRoot, ent.name, "brand.json");
+      if (!fs.existsSync(f)) continue;
+      try {
+        const b = JSON.parse(fs.readFileSync(f, "utf8"));
+        if (b.name && b.name !== "Your Brand") {
+          needsBrand = false;
+          break;
+        }
+      } catch {
+        /* try the next dir */
+      }
+    }
+  }
+  if (needsBrand && fs.existsSync(legacyBrandFile)) {
     try {
-      const brand = JSON.parse(fs.readFileSync(brandFile, "utf8"));
-      needsBrand = !brand.name || brand.name === "Your Brand";
+      const b = JSON.parse(fs.readFileSync(legacyBrandFile, "utf8"));
+      if (b.name && b.name !== "Your Brand") needsBrand = false;
     } catch {
-      needsBrand = true;
+      /* fall through to brand setup */
     }
   }
   if (needsBrand) {

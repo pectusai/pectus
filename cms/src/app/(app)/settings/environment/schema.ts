@@ -27,12 +27,12 @@ export const KNOWN_ENV_KEYS: EnvGroup[] = [
     keys: [
       {
         key: "NEXT_PUBLIC_SUPABASE_URL",
-        label: "Project URL",
+        label: "Project URL or ref",
         description:
-          "The HTTPS URL of your Supabase project. Find it under Project Settings → API.",
+          "Paste either the full HTTPS URL (https://<ref>.supabase.co) or just the project ID/ref shown in your dashboard URL. Pectus normalizes either form on save.",
         secret: false,
         required: true,
-        placeholder: "https://xxxxxxxxxxxx.supabase.co",
+        placeholder: "https://xxxxxxxxxxxx.supabase.co  or  xxxxxxxxxxxx",
       },
       {
         key: "NEXT_PUBLIC_SUPABASE_ANON_KEY",

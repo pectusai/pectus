@@ -1,6 +1,12 @@
-/* Read brand/brand.json and emit a CSS string that sets the raw `--brand-*`
- * inputs on :root. Consumed by BaseLayout. Null fields are dropped so the
- * fallback in brand-tokens.css applies. */
+/* Read the active brand's brand.json and emit a CSS string that sets the raw
+ * `--brand-*` inputs on :root. Consumed by BaseLayout. Null fields are dropped
+ * so the fallback in brand-tokens.css applies.
+ *
+ * Resolution order:
+ *   1. PECTUS_BRAND_SLUG env → brands/<slug>/brand.json  (multi-brand build)
+ *   2. first directory under brands/ that has brand.json  (single-brand v0.4)
+ *   3. brand/brand.json                                   (legacy v0.3 layout)
+ */
 
 import fs from "node:fs";
 import path from "node:path";
@@ -8,7 +14,26 @@ import { fileURLToPath } from "node:url";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 /* lib → src → content-hub → apps → repo */
-const BRAND_JSON_PATH = path.resolve(HERE, "..", "..", "..", "..", "brand", "brand.json");
+const REPO_ROOT = path.resolve(HERE, "..", "..", "..", "..");
+
+function resolveBrandJsonPath(): string {
+  const slug = process.env.PECTUS_BRAND_SLUG?.trim();
+  if (slug) {
+    const explicit = path.join(REPO_ROOT, "brands", slug, "brand.json");
+    if (fs.existsSync(explicit)) return explicit;
+  }
+  const brandsRoot = path.join(REPO_ROOT, "brands");
+  if (fs.existsSync(brandsRoot)) {
+    for (const ent of fs.readdirSync(brandsRoot, { withFileTypes: true })) {
+      if (!ent.isDirectory()) continue;
+      const candidate = path.join(brandsRoot, ent.name, "brand.json");
+      if (fs.existsSync(candidate)) return candidate;
+    }
+  }
+  return path.join(REPO_ROOT, "brand", "brand.json");
+}
+
+const BRAND_JSON_PATH = resolveBrandJsonPath();
 
 type BrandColors = Record<string, string | null | undefined>;
 type FontSlot = { family?: string | null; google_url?: string | null };

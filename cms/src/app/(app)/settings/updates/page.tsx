@@ -3,6 +3,7 @@ import { createServerClient } from "@pectus/supabase";
 import { requireAdmin } from "@/lib/auth";
 import { listMigrations, type Migration } from "@/lib/migrations-list";
 import { MigrationRow } from "./MigrationRow";
+import { ApplyAllButton } from "./ApplyAllButton";
 
 export const dynamic = "force-dynamic";
 
@@ -62,11 +63,14 @@ export default async function UpdatesPage() {
         {pending.length === 0 ? (
           <p className="pectus-updates-empty">Nothing to apply. You&apos;re up to date.</p>
         ) : (
-          <ul className="pectus-updates-list">
-            {pending.map((m) => (
-              <MigrationRow key={m.id} migration={m} status="pending" />
-            ))}
-          </ul>
+          <>
+            <ApplyAllButton pendingCount={pending.length} />
+            <ul className="pectus-updates-list">
+              {pending.map((m) => (
+                <MigrationRow key={m.id} migration={m} status="pending" />
+              ))}
+            </ul>
+          </>
         )}
       </section>
 

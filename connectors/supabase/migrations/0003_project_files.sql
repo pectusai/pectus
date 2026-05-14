@@ -9,3 +9,7 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('project-files', 'project-files', true)
 ON CONFLICT (id) DO UPDATE
   SET public = EXCLUDED.public;
+
+insert into public._pectus_migrations (filename)
+values ('0003_project_files.sql')
+on conflict (filename) do nothing;

@@ -193,13 +193,28 @@ export async function run(): Promise<void> {
     }
   }
 
-  // 9. brand/brand.json exists
+  // 9. at least one brands/<slug>/brand.json exists (or legacy brand/brand.json)
   if (repo) {
-    const brandFile = path.join(repo, "brand/brand.json");
+    const brandsRoot = path.join(repo, "brands");
+    const found: string[] = [];
+    if (fs.existsSync(brandsRoot)) {
+      for (const ent of fs.readdirSync(brandsRoot, { withFileTypes: true })) {
+        if (!ent.isDirectory()) continue;
+        const f = path.join(brandsRoot, ent.name, "brand.json");
+        if (fs.existsSync(f)) found.push(`brands/${ent.name}/brand.json`);
+      }
+    }
+    const legacy = path.join(repo, "brand", "brand.json");
+    if (found.length === 0 && fs.existsSync(legacy)) {
+      found.push("brand/brand.json (legacy single-brand layout)");
+    }
     checks.push({
-      label: "brand/brand.json",
-      ok: fs.existsSync(brandFile),
-      detail: brandFile,
+      label: "brand profile on disk",
+      ok: found.length > 0,
+      detail:
+        found.length === 0
+          ? "missing — run `npx pectus brand`"
+          : found.join(", "),
       critical: true,
     });
   }

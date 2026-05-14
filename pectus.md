@@ -21,13 +21,24 @@ You are Claude Code. The user just downloaded this file because they want to wak
  ╰──────────────────────────────────────────────╯
 ```
 
-> Hi. I'm going to wake Pectus up on your laptop. Plan for 60 to 90 minutes total. About 90% of that is signing up for and verifying accounts (Supabase, Anthropic, Google Cloud, optionally Vercel and GitHub). The actual setup work between accounts is short. When I need something from you I'll tell you exactly what to click or paste.
+> Hi. I'm going to wake Pectus up on your laptop. Plan for 30 to 60 minutes. Most of that is signing up for and verifying accounts (Supabase, Anthropic, optionally Vercel and GitHub). The actual setup work between accounts is short. When I need something from you I'll tell you exactly what to click or paste.
+>
+> Two quick orientation questions before we start, so I tailor the rest:
+>
+> 1. **Are you starting from scratch, or do you already have a website running** (with Google Analytics, Search Console, and a domain)? If you have an existing site, Pectus can either sit alongside it (publishing under a path like `/insights/`) or replace it. Either's fine; the answer just changes a couple of later steps.
+> 2. **Do you want Pectus to publish a public site,** or are you using it for analysis and content production only (drafts and reports stay inside Pectus)?
+>
+> If you're not sure yet, "starting fresh, will publish" is the most common path. We can change course later.
 >
 > If you don't know what to do at any point — what something means, why I'm asking, whether your answer is good enough — just ask me like a friend. There are no dumb questions here. I'd rather pause and explain than have you click through something you weren't sure about.
 >
 > Ready?
 
-Wait for them to say yes. Then walk them through the steps below in order. Don't skip steps. Don't reorder them. If a step fails, show the error exactly as it came back and stop. Don't silently retry.
+Wait for them to answer the two orientation questions and confirm ready. Note their answers — you'll reference them in step 7 (Vercel/GitHub) and step 10 (Activate apps).
+
+Then walk them through the steps below in order. Don't skip steps. Don't reorder them. If a step fails, show the error exactly as it came back and stop. Don't silently retry.
+
+**Note on Google (Search Console + Analytics).** Google connection used to live in this install flow as a required step. It is now deferred to the moment the user activates the GSC or GA4 app inside the CMS. That keeps the install short and means the user only does the Google Cloud + service-account setup if and when they actually need it. If the user asks about Google during the install, tell them: "We'll wire that up later, when you turn on the Search Console or Analytics app inside Pectus. The install flow no longer makes you do it upfront."
 
 **Critical rule: never advance to the next step unless EITHER (a) the current step is verifiably complete, with every sub-action done and every expected output confirmed, OR (b) the user has explicitly told you it's OK to move on.** Both paths are valid; one of them must hold. Don't decide on the user's behalf that something "can be dealt with later". Don't infer completion from context. If a step has multiple sub-actions, all of them have to land before you treat (a) as satisfied. If you're tempted to "circle back later" to anything in the current step, stop and ask the user instead. Optional sub-steps still need an explicit user call to skip; that call is theirs to make, not yours.
 
@@ -49,7 +60,7 @@ Speak to the user like a person who has installed maybe one or two dev tools bef
 
 Print to the user verbatim:
 
-> **Step 1 of 13: prerequisites.** Quick check that your laptop has the basic tools Pectus needs to run (Node, npm, git). 30 seconds.
+> **Step 1 of 12: prerequisites.** Quick check that your laptop has the basic tools Pectus needs to run (Node, npm, git). 30 seconds.
 
 Then run:
 
@@ -63,7 +74,7 @@ You need Node.js 20.19 or later, npm 10+, and git. The 20.19 floor is set by Vit
 
 Print to the user verbatim:
 
-> **Step 2 of 13: downloading Pectus.** I'm putting the Pectus code on your laptop so you can run it locally. Takes about a minute.
+> **Step 2 of 12: downloading Pectus.** I'm putting the Pectus code on your laptop so you can run it locally. Takes about a minute.
 
 First, figure out whether the user already has the repo on disk.
 
@@ -99,7 +110,7 @@ If the target path already exists but is not a Pectus clone (no `apps/`, `cms/`,
 
 Print to the user verbatim:
 
-> **Step 3 of 13: installing the building blocks.** Pulling down the libraries Pectus uses. About 60 to 90 seconds.
+> **Step 3 of 12: installing the building blocks.** Pulling down the libraries Pectus uses. About 60 to 90 seconds.
 
 Run:
 
@@ -155,7 +166,7 @@ Once they're happy, mention briefly: "If you want a richer design system later (
 
 Print to the user verbatim:
 
-> **Step 5 of 13: signing up for the services Pectus connects to.** Supabase, Anthropic, Google Cloud (and optionally Vercel + GitHub). Most of the install time happens here — accounts, verification emails, copy-pasting keys. I'll walk you through one at a time.
+> **Step 5 of 12: signing up for the services Pectus connects to.** Supabase and Anthropic are required (and optionally Vercel + GitHub if you said you'll publish). Most of the install time happens here — accounts, verification emails, copy-pasting keys. I'll walk you through one at a time. Google (Search Console + Analytics) is deferred to inside the CMS, so you'll only set that up if and when you activate those apps.
 
 Then check in:
 
@@ -173,33 +184,28 @@ Three services are required to boot Pectus. Two more are optional. Walk the user
   1. In the dashboard, click **New Project**. Pick an organization, name the project (anything, e.g. `pectus-<brand-slug>`), pick a region close to them, and set a database password (12+ characters, into the password manager now).
   2. Wait around 2 minutes for the project to provision.
   3. Open **Project Settings → API**. Three values to copy and paste back to you, one at a time:
-     - **Project URL** (looks like `https://xyzabc.supabase.co`). On the first page of the API settings.
+     - **Project URL or ref**. Look for either of these: a full URL like `https://xyzabc.supabase.co`, or just the project ref/ID (the short string in the dashboard URL `https://supabase.com/dashboard/project/<ref>`). Recent Supabase UI revisions sometimes show only the ref/ID and not the full URL. Either form is fine — paste whichever you find. Pectus accepts both.
      - **anon (public) key** (a long string starting with `eyJ...`). Important: in the current Supabase UI the first page of API settings shows new "publishable" / "secret" keys that Pectus does not use. The `anon` and `service_role` keys live on a second tab (look for "Legacy API keys", "JWT-based keys", or similar). Tell the user explicitly: do not paste the first two keys they see on the landing tab; switch tabs first and look for the keys named `anon` and `service_role`.
      - **service_role (secret) key** (also starts with `eyJ...`, on the same second tab as `anon`, keep this one private).
   4. Open https://supabase.com/dashboard/account/tokens (a separate page from the project — it lives on the user's account, not inside the project). Click **Generate new token**, name it anything (e.g. `pectus`), copy the value (starts with `sbp_`). Pectus needs this to apply schema migrations and other Management-API operations on the user's behalf.
   Write all four into `cms/.env.local` as `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ACCESS_TOKEN`. The first three are project-scoped; the access token is account-scoped and authenticates Pectus to the Supabase Management API.
-- **Anthropic** — https://console.anthropic.com. This is what powers Claude inside Pectus. After signup, click "API keys" in the sidebar, then "Create key". The value starts with `sk-ant-`. Paste it here.
-- **Google Cloud** — https://console.cloud.google.com. This unlocks Google Analytics and Google Search Console data. There are four sub-steps inside the Google Cloud console; walk the user through them one at a time:
-  1. Create a new project (top bar dropdown → "New Project"). Any name is fine. Note that Google generates the project ID with a numeric or random suffix (e.g. a project named `acme-corp` becomes ID `acme-corp-412345`). The user can't change this; it's what shows up in service-account emails later.
-  2. Enable **three** APIs. For each: APIs & Services → Library, search the name, click **Enable**, wait until the page flips to "API enabled". Don't skip any of these; missing the Admin API is what makes GA4 reject the service account with "this user doesn't exist" errors when the user later tries to add it under Property access management.
-     - **Google Analytics Admin API** (lets the service account be recognized as a valid principal in GA4's user management UI)
-     - **Google Analytics Data API** (lets Pectus read the actual GA4 report data)
-     - **Google Search Console API** (reads Search Console performance data)
-  3. Create an OAuth 2.0 client: APIs & Services → Credentials → "Create Credentials" → OAuth client ID → "Web application". Add `http://localhost:3000/auth/callback` as an authorized redirect URI. (Only `localhost` goes here. Don't add the user's public site domain. The OAuth handshake runs between Pectus on their laptop and Google. The public site is downstream and never participates in this flow.)
-  4. Copy the client ID and client secret. Paste both here.
+- **Anthropic** — https://console.anthropic.com. This is what powers Claude inside Pectus. After signup, click "API keys" in the sidebar, then "Create key". The value starts with `sk-ant-`. Paste it here. **Heads-up on cost**: a full first-time install with one project ranges from $5 to $15 in Anthropic credits depending on how many analyses the user runs. Tell the user to load $20 to be safe; they can top up later.
 
 **Optional (skippable)**
 
-- **Vercel** — https://vercel.com. Only needed when the user is ready to publish their content-hub site to a public URL. Create a token at https://vercel.com/account/tokens. Skip if they're staying local-only for now.
-- **GitHub** — https://github.com. Used by the publish flow to commit pages to a content-hub repo. Pectus will help set this up in step 9.
+- **Vercel** — https://vercel.com. Only needed when the user is ready to publish their content-hub site to a public URL. Create a token at https://vercel.com/account/tokens. Skip if they're staying local-only for now or if they answered "analysis only" to the welcome question.
+- **GitHub** — https://github.com. Used by the publish flow to commit pages to a content-hub repo. Pectus will help set this up later in the Vercel/GitHub step.
 
-If the user wants to analyze ad spend later (Google Ads, Meta, LinkedIn), the LinkedIn Marketing Developer Platform application takes 1 to 3 weeks to be approved. Suggest they apply on day one at https://www.linkedin.com/developers — it doesn't block anything else, and it'll be ready when those connectors ship.
+**Deferred until you need them** (do not collect now):
+
+- **Google Cloud (Search Console + Analytics)**. The user will set this up inside the CMS when they activate the GSC or GA4 app. The CMS walks them through enabling the three Google APIs, creating a service account, downloading the JSON key, and adding the service account email as a Viewer in GA4 + Search Console. Don't ask for any of this now.
+- **Google Ads / Meta / LinkedIn ad spend**. Same pattern — wired up per-app when activated. The LinkedIn Marketing Developer Platform application does take 1 to 3 weeks to approve, so if the user knows they want LinkedIn ad data eventually, mention they can apply early at https://www.linkedin.com/developers; it doesn't block anything.
 
 ## 6. Provision Supabase
 
 Print this to the user verbatim before doing anything else in this step:
 
-> **Step 6 of 13: provisioning Supabase.** This is the longest step in the install — plan for 5-10 minutes. You'll be flipping between this terminal and the Supabase dashboard a few times: pasting two pieces of SQL into Supabase's SQL editor (one to wipe the schema clean, one to lay down the Pectus tables), creating your admin login inside Supabase, saving that login somewhere safe, and then letting Pectus push your brand profile into the new database. I'll walk you through each piece, one at a time, and tell you what to do at each stop. Ready?
+> **Step 6 of 12: provisioning Supabase.** This is the longest step in the install — plan for 5-10 minutes. You'll be flipping between this terminal and the Supabase dashboard a few times: pasting two pieces of SQL into Supabase's SQL editor (one to wipe the schema clean, one to lay down the Pectus tables), creating your admin login inside Supabase, saving that login somewhere safe, and then letting Pectus push your brand profile into the new database. I'll walk you through each piece, one at a time, and tell you what to do at each stop. Ready?
 
 The user already created the project themselves in step 5 and the URL plus keys are in `.env.local`. Now we add the schema and create the admin login. **Do not run `npx pectus connect supabase`.** That command was built for an older flow that called the Supabase Management API. The supported flow now: you hand the user a SQL file they paste into Supabase's own SQL editor. The user keeps full control of their project.
 
@@ -243,11 +249,11 @@ Still in plain words:
 
 Wait until they confirm they've created the user. Then **don't move on yet**. Ask them this verbatim:
 
-> "Before we continue, save both of these somewhere you can recover them later (password manager, secure notes, etc.). I'll wait. The password specifically: I won't have it stored anywhere, neither will Pectus. The only way to log in to your CMS in step 9 is the password you just set, and the only way to recover a lost password is to reset it from the Supabase dashboard. Tell me 'saved' once you've put both in your password manager, and tell me the email so I can remember it for step 9."
+> "Before we continue, save both of these somewhere you can recover them later (password manager, secure notes, etc.). I'll wait. The password specifically: I won't have it stored anywhere, neither will Pectus. The only way to log in to your CMS in step 8 is the password you just set, and the only way to recover a lost password is to reset it from the Supabase dashboard. Tell me 'saved' once you've put both in your password manager, and tell me the email so I can remember it for step 8."
 
 Wait for the explicit "saved" signal before advancing. Don't accept "ok" or "got it"; require the word that confirms the action was actually taken. This is one of the most-forgotten install steps and locks users out of their own CMS later.
 
-Once they say saved and give you the email, remember it for step 9. You don't need their password.
+Once they say saved and give you the email, remember it for step 8. You don't need their password.
 
 ### 6d. Sync the brand row to Supabase
 
@@ -265,57 +271,27 @@ The database has the Pectus schema, the brand row exists, the user has an admin 
 
 **Do not roll into step 7 automatically.** After `pectus brand sync` succeeds, tell the user step 6 is complete and ask permission before moving on. Print this verbatim:
 
-> Step 6 is done — Supabase has the schema, your brand row is in place, and your admin login is created. Ready to move on to step 7 (connecting Google for Search Console and Analytics data)?
+> Step 6 is done — Supabase has the schema, your brand row is in place, and your admin login is created. Ready to move on to step 7 (Vercel and GitHub for publishing — optional)?
 
 Wait for an explicit yes before printing the step 7 preamble. If the user says "skip" or "later," go straight to step 8 instead.
 
-## 7. Connect Google (Search Console + Analytics)
+## 7. Vercel and GitHub (optional at this stage)
 
 Print to the user verbatim:
 
-> **Step 7 of 13: hooking up Google.** This lets Pectus read your Search Console queries and Google Analytics traffic so the content recommendations are grounded in real data. Skippable — Pectus runs fine without it.
+> **Step 7 of 12: Vercel and GitHub** (only if you said you'll publish — skip otherwise). Vercel serves your published site to visitors; GitHub stores the page files. Both free. Skippable at install time; required before publishing.
 
-Then check in:
+If the user said "analysis only" in the welcome, **skip this whole step** and jump to step 8. If they said "will publish" (or are unsure), check in:
 
-> "Want to do this now, or skip it for later?"
+> "Want to set up Vercel and GitHub now, or skip and come back to it before your first publish?"
 
-If they say skip, jump to step 8. If they want to do it: walk them through the steps below one item at a time, with a check-in between each.
-
-This step pulls in Search Console and Google Analytics data. There are two outside-the-terminal pieces:
-
-1. **Create a service account in the user's Google Cloud project** (the same project from step 5). In the Google Cloud Console: IAM & Admin → Service Accounts → Create Service Account. Name it anything (e.g. `pectus-reader`). Skip the "Grant access" role step (no IAM role is needed for GA4/GSC reads). Click Done.
-2. **Create and download a JSON key for the service account.** On the service account's Details page → Keys tab → Add Key → Create new key → JSON → Create. The browser downloads a `.json` file. Tell the user to put it somewhere safe and to give you the absolute path to the file.
-3. **Add the service account email as a Viewer in GA4 and Search Console.** Walk the user through the GA4 add (Admin → Property access management → +Add users → paste service account email → role Viewer → untick "Notify by email" → Add) and the Search Console add (Settings → Users and permissions → Add user → paste email → Restricted permission).
-
-### Heads-up: Google sometimes won't accept the service account immediately
-
-This is a known Google quirk, not a Pectus bug. Even when the project ID is correct, the relevant APIs are enabled (Admin, Data, Search Console), and the email is copied directly from the service account's Details page, GA4 and Search Console will sometimes reject the email with "this user doesn't exist" for 30 to 60 minutes (occasionally longer). Incognito mode, waiting, and re-pasting often don't help. There's no good public explanation for it; it's just Google's principal-lookup edge cache being slow.
-
-If this happens, **don't block the install**. Tell the user something like:
-
-> "Google's being weird about recognizing your service account. This happens; not your fault. The credentials you already have (the JSON key file and the email) are fine; Google just hasn't finished propagating them yet. We'll skip this step for now. When GA4 and Search Console finally accept the email (usually within an hour or two), come back and run `npx pectus connect google`. It'll prompt you to paste the JSON, ask which GA4 property and Search Console site to track, test both connections, and save everything. Until then, Pectus runs fine without Google data; the dashboard just marks suggestions as 'no traffic data'."
-
-Make sure the user has the JSON key file saved somewhere safe (note the path in your chat to them so they can find it later) and **move on to step 8**. Don't write Google credentials to `.env.local`; Pectus stores the service-account JSON in the Supabase `integrations` table via `npx pectus connect google`, not in env vars.
-
-### When it works first try
-
-If GA4 and Search Console accept the email straight away (most users): run `npx pectus connect google`. It's interactive: it asks the user to paste the full service-account JSON, asks for a GA4 property ID and a Search Console site URL, then tests both connections live. If either test fails, surface the error and stop. The most common cause is the user adding the service account in GA4 but not Search Console (or vice versa); have them double-check both. On success the command writes the JSON, property ID, and site URL into the `integrations` table in Supabase.
-
-## 8. Vercel and GitHub (optional at this stage)
-
-This step gets the user a public URL for the site Pectus will publish to. Both services are free. Skippable at install time; required before publishing.
-
-Print to the user verbatim:
-
-> **Step 8 of 13: Vercel and GitHub.** Vercel is what helps people reach your site while keeping your files protected. GitHub is the place outside your computer where your files are stored. To make them work you'll generate a "token" on each site — a long string Pectus uses to talk to them on your behalf. Both accounts are free. This is optional, but if you intend to go live with any of your projects we suggest you do this now. **Want to proceed?**
-
-If the user says skip → jump to step 9. If yes, print this expectation-setter verbatim before starting:
+If they say skip → jump to step 8. If yes, print this expectation-setter verbatim before starting:
 
 > Heads up — this takes 15-20 minutes because we'll set up two accounts (if you don't already have them), create a GitHub repo for your published site, point a Vercel project at it, and generate two tokens. I'll walk you through each piece, one at a time.
 
 Walk through GitHub first, then Vercel. The Vercel project needs the GitHub repo to already exist, so doing it in this order avoids backtracking.
 
-### 8a. GitHub
+### 7a. GitHub
 
 Tell the user, in plain words:
 
@@ -328,7 +304,7 @@ Walk them through these one at a time, with a check-in between each:
 3. **Generate a personal access token.** Top-right avatar → Settings → Developer settings (bottom of left sidebar) → Personal access tokens → Tokens (classic) → Generate new token (classic). Name it `Pectus`. Expiration: pick 90 days or No expiration. Scopes: tick `repo` (full) and `workflow`. Click Generate token. **Copy it immediately — GitHub only shows it once.**
 4. **Have the user paste the token back.** Save it to `cms/.env.local` as `GITHUB_TOKEN=<value>`. Use the env-file write helper in the CLI (or have the user open `cms/.env.local` and add the line themselves) — never write it to a different file.
 
-### 8b. Vercel
+### 7b. Vercel
 
 Tell the user, in plain words:
 
@@ -337,25 +313,25 @@ Tell the user, in plain words:
 Walk them through these one at a time, with a check-in between each:
 
 1. **Create a Vercel account if they don't have one.** Go to https://vercel.com/signup. Easiest path: click "Continue with GitHub" and authorize — that links the two accounts and saves a step later. Free Hobby tier is fine.
-2. **Import the GitHub repo as a Vercel project.** Vercel dashboard → Add New → Project → Import Git Repository → pick the repo from step 8a → Deploy. Vercel will build an empty project (the repo is empty until first publish, which is fine — the build will finish in seconds). Note the production URL Vercel assigns (e.g. `your-repo.vercel.app`).
+2. **Import the GitHub repo as a Vercel project.** Vercel dashboard → Add New → Project → Import Git Repository → pick the repo from step 7a → Deploy. Vercel will build an empty project (the repo is empty until first publish, which is fine — the build will finish in seconds). Note the production URL Vercel assigns (e.g. `your-repo.vercel.app`).
 3. **Generate a Vercel token.** Avatar (top-right) → Settings → Tokens → Create Token. Name it `Pectus`. Scope: Full Account. Expiration: default fine. Click Create. **Copy it immediately — Vercel only shows it once.**
 4. **Have the user paste the token back.** Save it to `cms/.env.local` as `VERCEL_TOKEN=<value>`.
 
-### 8c. Done
+### 7c. Done
 
 Tell the user:
 
 > Both tokens are saved. Once Pectus is running you'll connect this published site to a project from the Content Hub settings page in the CMS — that's where you'll paste the GitHub repo URL and pick which Vercel project gets the deploy.
 
-Move on to step 9.
+Move on to step 8.
 
-## 9. Start the CMS
+## 8. Start the CMS
 
 Print to the user verbatim:
 
-> **Step 9 of 13: turning Pectus on.** Booting the admin app on your laptop so you can sign in and start using it. About 30 seconds.
+> **Step 8 of 12: turning Pectus on.** Booting the admin app on your laptop so you can sign in and start using it. About 30 seconds.
 
-### 9a. Verify `cms/.env.local` before starting the dev server
+### 8a. Verify `cms/.env.local` before starting the dev server
 
 Before running `npm run dev`, confirm that `cms/.env.local` (not the install root) has the values the CMS needs. The Next.js dev server reads env at startup; if env is missing, named wrong, or written to the wrong path, the CMS crashes at first request with `Your project's URL and Key are required to create a Supabase client!` (or similar).
 
@@ -363,13 +339,14 @@ Read `.env.example` at the install root. It is the canonical list of variable na
 
 - All three Supabase entries exist with non-empty values and the **exact** names from `.env.example`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
 - `ANTHROPIC_API_KEY` exists with a value starting with `sk-ant-`.
-- `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET` exist if the user completed step 5's Google sub-steps. (They can be empty strings if the user is deferring all Google setup.)
+
+(Google OAuth env vars are no longer collected during install — they get set inside the CMS when the user activates the GSC or GA4 app.)
 
 If any required Supabase or Anthropic value is missing, fix it before starting the dev server. Don't paraphrase variable names from memory; use the names exactly as they appear in `.env.example`.
 
 If a `npm run dev` is already running from earlier, tell the user to stop it (Ctrl-C in that terminal) before starting again. Next.js does not hot-reload `.env.local` changes; a stale dev server will keep using the env it had at boot.
 
-### 9b. Start the dev server
+### 8b. Start the dev server
 
 ```
 npm run dev
@@ -385,19 +362,19 @@ PORT=3001 npm run dev
 
 Then load `http://localhost:3001`. Tell the user which port their CMS is on so they can re-open the right one later.
 
-## 10. Create the first project
+## 9. Create the first project
 
 Print to the user verbatim:
 
-> **Step 10 of 13: creating your first project.** A project is one market or audience — most people only ever have one called something like "main". It normally takes about two minutes to set up, and you do it through the CMS you just installed. If you'd rather set it up here in the terminal via the CLI, I can take you through that instead. **Want to set it up in the CMS or the CLI? Type CMS or CLI.**
+> **Step 9 of 12: creating your first project.** A project is one market or audience — most people only ever have one called something like "main". It normally takes about two minutes to set up, and you do it through the CMS you just installed. If you'd rather set it up here in the terminal via the CLI, I can take you through that instead. **Want to set it up in the CMS or the CLI? Type CMS or CLI.**
 
 A project is one market or audience segment. If the user only sells in one country, one project is enough. If they have separate sites for the UK, US, and Sweden, that's three projects. Branch on what the user typed:
 
-### 10a. CMS path (recommended)
+### 9a. CMS path (recommended)
 
 Tell the user, in plain words:
 
-> Easiest path. The CMS is already running from step 9. In your browser, open `http://localhost:3000/brands/<brand-slug>` (replace `<brand-slug>` with the slug from step 4 — e.g. `http://localhost:3000/brands/acme`). You'll see a page with an **Add project** button at the top. Click it. A small form opens asking for three things:
+> Easiest path. The CMS is already running from step 8. In your browser, open `http://localhost:3000/brands/<brand-slug>` (replace `<brand-slug>` with the slug from step 4 — e.g. `http://localhost:3000/brands/acme`). You'll see a page with an **Add project** button at the top. Click it. A small form opens asking for three things:
 >
 > 1. **Name** — a human label like "Main", "Primary", or the brand name itself. For a single-market install, anything descriptive works.
 > 2. **Code** — short identifier used in URLs (lowercase letters, digits, hyphens). The CMS auto-fills this from Name. For most installs, `main` is the standard pick.
@@ -409,11 +386,11 @@ When the user confirms it's created, **the install is complete**. Print this ver
 
 > You're set up. Pectus is running at `http://localhost:3000`. From here you activate apps, configure them, and run analyses all from the CMS — no more terminal needed. Close this terminal whenever you're ready.
 
-Do not continue to steps 11-13 on this path. Those are CLI-flow steps and don't apply when the user is driving from the CMS.
+Do not continue to steps 10-12 on this path. Those are CLI-flow steps and don't apply when the user is driving from the CMS.
 
-### 10b. CLI path
+### 9b. CLI path
 
-The wizard at `npx pectus project create` is **interactive** — it uses arrow-key prompts and a paste textarea that need a real terminal. The install agent (you) cannot drive these prompts from inside this session because there's no TTY attached. **Don't try to run it yourself, and don't offer to bypass the wizard by writing the project row directly into Supabase** — the official path is the wizard. If the user really doesn't want to open a terminal, suggest they switch to the CMS path (10a) instead.
+The wizard at `npx pectus project create` is **interactive** — it uses arrow-key prompts and a paste textarea that need a real terminal. The install agent (you) cannot drive these prompts from inside this session because there's no TTY attached. **Don't try to run it yourself, and don't offer to bypass the wizard by writing the project row directly into Supabase** — the official path is the wizard. If the user really doesn't want to open a terminal, suggest they switch to the CMS path (9a) instead.
 
 Tell the user, in plain words:
 
@@ -438,17 +415,17 @@ The command creates the project row (under the brand from step 4), sets a defaul
 
 > **What happened to the site shape and GitHub repo questions?** They moved into the Content Hub settings page in the CMS (next step). The base project just captures identity now; the publish-target details live with the app that uses them.
 
-## 11. Activate apps for the project
+## 10. Activate apps for the project
 
 Print to the user verbatim:
 
-> **Step 11 of 13: turning on the apps you want to use.** A project starts blank and you switch on the apps that fit. Most people switch on Content Hub (the bundled publish-to-a-public-site app) right away.
+> **Step 10 of 12: turning on the apps you want to use.** A project starts blank and you switch on the apps that fit. Most people switch on Content Hub (the bundled publish-to-a-public-site app) right away.
 
 In v0.4.2 every project starts with no apps active — the user picks. Walk them through activating Content Hub if they want a public site (most users do):
 
 1. Open `http://localhost:3000/brands/<slug>/projects/<code>/apps` in their browser. (Or just click **Apps** in the project's sidebar.)
-2. Find the **content-hub** row and click **Activate**. The badge flips to "Active". The Content Hub group appears in the project sidebar with Pages, Articles, Plan, Gap, Sources, Reviews, and Settings (Site URL / Redirects / Review policy) as children.
-3. **Configure the publish target.** Click **Site URL** in the Content Hub sidebar group. Fill in:
+2. Find the **content-hub** row and click **Activate**. The badge flips to "Active". The Content Hub group appears in the project sidebar with **Insights, Articles, Pages, Files, Sources, Settings** as children. (If the group doesn't appear immediately, ask the user to refresh the page once.)
+3. **Configure the publish target** — only if the user said "will publish" in the welcome. Click **Settings** in the Content Hub sidebar group, then the **Site URL** sub-tab. Fill in:
    - **Mount slug** — `/` if Pectus runs the whole site, `/insights/` (or similar) if Pectus only adds a section under an existing site.
    - **GitHub repo** — where Pectus pushes built pages. The user should:
      1. Open github.com → **New repository** → name it (something like `<their-brand>-pectus`) → don't tick README/license/gitignore → **Create repository**.
@@ -456,29 +433,37 @@ In v0.4.2 every project starts with no apps active — the user picks. Walk them
      3. Paste it into the form. It accepts the full URL, the short `github.com/yourname/yourrepo` form, or the bare `yourname/yourrepo` form.
      4. Or leave blank — the project still works for authoring; only Publish needs the repo set, and the publish button shows an inline CTA to come back here.
 
-   **Important if the user already has a website on Vercel + GitHub.** If they want Pectus to replace their existing site (most common scenario), tell them: don't reuse the existing site's repo. Use a fresh empty repo. After install, they'll switch their Vercel project's git source to the new repo. Full details at https://pectus.ai/docs/faq/install/replace-or-add-to-existing-site.
+   **Important if the user already has a website on Vercel + GitHub** (the "existing site" path from the welcome). If they want Pectus to replace the existing site (most common scenario), tell them: don't reuse the existing site's repo. Use a fresh empty repo. After install, they'll switch their Vercel project's git source to the new repo. Full details at https://pectus.ai/docs/faq/install/replace-or-add-to-existing-site.
 
-If the user is installing Pectus for analysis only (no public site), skip steps 11.2 and 11.3. They can activate Content Hub later from the project's Apps page whenever they decide to publish.
+If the user said "analysis only" in the welcome, skip step 10.3. They can activate Content Hub publishing later from the same Settings page whenever they decide to publish.
 
-Other apps the user might want to activate now or later (each from the same Apps page): **gsc** for Search Console queries, **ga4** for Google Analytics traffic, **seed-keywords** for a manual keyword list. Activation just adds the surface to the sidebar; per-app config (Google service account, GA4 property, Search Console site) lives under brand Settings → Google integration.
+**Activating Search Console (gsc) or Google Analytics (ga4).** If the user wants either, walk them through this in the same Apps page:
 
-## 12. Run the first analysis
+1. Find the **gsc** or **ga4** row → **Activate**.
+2. The first time the user opens that app's surface, it will prompt for Google credentials. The CMS guides them through enabling the three Google APIs (Search Console API for gsc, Analytics Admin + Analytics Data for ga4), creating a service account in Google Cloud, downloading the JSON key, and pasting the service-account email into Search Console / GA4 as a Viewer. This is the deferred step from step 5 — done now, only if the user is actually turning the app on.
+3. **Heads-up to give the user**: Google sometimes won't accept a brand-new service-account email immediately ("this user doesn't exist" error in GA4 / Search Console UIs, even though the email is correct). This is a known Google quirk — the principal can take 30 to 60 minutes to propagate. The credentials are fine; come back and retry the in-app connection later. Pectus runs without the data in the meantime; the dashboard just shows "no traffic data" placeholders.
+
+The other inbound app worth knowing about now: **seed-keywords** for a manual keyword list (paste 5 to 30 phrases). It has no external dependencies — activate it and start typing.
+
+## 11. Run the first analysis
 
 Print to the user verbatim:
 
-> **Step 12 of 13: running your first analysis.** Pectus reads everything you've given it (keywords, ICP, brand voice, traffic if connected) and asks Claude to produce a content plan ranked by projected traffic. Takes a minute.
+> **Step 11 of 12: running your first analysis.** Pectus reads everything you've given it (keywords, ICP, brand voice, traffic if connected) and asks Claude to produce a content plan ranked by projected traffic. Takes a minute.
+
+**Recommended path:** open the dashboard at `http://localhost:3000/brands/<slug>/projects/<code>/apps/content-hub/insights` and click **Run first analysis**. The button walks through Snapshot → Stage 1 (Opus interpretation) → Stage 2 (Opus ideas) and renders the result inline when it finishes — same data the dashboard then keeps.
+
+If the user prefers the CLI:
 
 ```
-npx pectus analyze --project <code> --skill weekly-analysis
+cd <install path> && npx pectus analyze --project <code> --skill weekly-analysis
 ```
 
-(Or have the user click "Run weekly analysis" on the dashboard — same effect.)
-
-This runs the `weekly-analysis` skill. It gathers everything Pectus knows about the project (keywords, existing articles, the ICP, brand voice, knowledge insights) and asks Claude to produce a content plan: what to write next, ranked by projected traffic.
+The CLI path runs the same skill but writes a `skill_runs` row instead of populating the dashboard's interpretation/generation tables. **Result: nothing appears on the Insights page even though the analysis ran.** Use the CMS button as the primary path. The CLI is fine for scripting and for dumping a one-shot text output, but the dashboard surfaces only what the in-CMS Run button produces.
 
 Wait for it to finish (typically 30 to 90 seconds). When it returns, summarize the result for the user in plain words: how many post suggestions came back, the top three topics by score, any of their existing posts the analysis flagged as rising. Then point them at the dashboard to read the full output.
 
-## 13. Pectus is awake. Pick a door.
+## 12. Pectus is awake. Pick a door.
 
 The CMS is running at `http://localhost:3000`, signed in as the admin from step 6. The first project exists. The first analysis has run. Pectus knows who they are, what they care about, and what data they have.
 
@@ -494,7 +479,7 @@ Both doors can run in parallel. The choice is just "what do you want to try firs
 
 Then, regardless of which door they pick, give them the operational basics in one tight list:
 
-- **Re-open Pectus**: terminal → `cd <install path from step 2>` → `npm run dev` (or `PORT=3001 npm run dev` if you assigned a non-default port in step 9) → sign in with the email and password from step 6. If the user has multiple brands' Pectus installs on the machine, remind them which folder + port belongs to this brand.
+- **Re-open Pectus**: terminal → `cd <install path from step 2>` → `npm run dev` (or `PORT=3001 npm run dev` if you assigned a non-default port in step 8) → sign in with the email and password from step 6. If the user has multiple brands' Pectus installs on the machine, remind them which folder + port belongs to this brand.
 - **Add your own data**: drop files (CSVs, BigQuery exports, audience research PDFs, anything) into `<install path>/knowledge/raw/`, then `npx pectus knowledge digest`. The digest turns the pile into structured insights every other skill consumes.
 - **Pull updates**: `npx pectus update`. Rebases on upstream and runs new migrations. The skills and apps they've edited or written are not overwritten.
 - **Something broke?**: `npx pectus doctor` checks env vars, reachability, config. Most "it broke" reports are a stale token; doctor catches that first.

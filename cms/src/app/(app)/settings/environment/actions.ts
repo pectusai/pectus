@@ -3,9 +3,19 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { readEnvLocal, writeEnvLocal } from "@/lib/env-file";
+import { projectRefFromUrl } from "@/lib/management-api";
 import { KNOWN_ENV_KEYS } from "./schema";
 
 type ActionResult = { ok: true } | { ok: false; error: string };
+
+function normalizeSupabaseUrl(raw: string): string {
+  const v = raw.trim();
+  if (!v) return v;
+  if (/^https?:\/\//i.test(v)) return v;
+  const ref = projectRefFromUrl(v);
+  if (ref) return `https://${ref}.supabase.co`;
+  return v;
+}
 
 export async function saveEnvKeys(
   updates: Record<string, string>,
@@ -15,7 +25,13 @@ export async function saveEnvKeys(
   const filtered: Record<string, string> = {};
   for (const [k, v] of Object.entries(updates)) {
     if (!allowed.has(k)) continue;
-    filtered[k] = v.trim();
+    let value = v.trim();
+    if (k === "NEXT_PUBLIC_SUPABASE_URL") value = normalizeSupabaseUrl(value);
+    filtered[k] = value;
+  }
+  if (filtered.NEXT_PUBLIC_SUPABASE_URL && !filtered.SUPABASE_PROJECT_REF) {
+    const ref = projectRefFromUrl(filtered.NEXT_PUBLIC_SUPABASE_URL);
+    if (ref) filtered.SUPABASE_PROJECT_REF = ref;
   }
   if (Object.keys(filtered).length === 0) {
     return { ok: false, error: "No known keys in submission." };

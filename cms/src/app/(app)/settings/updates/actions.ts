@@ -4,9 +4,16 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { listMigrations } from "@/lib/migrations-list";
 import { runManagementSql } from "@/lib/management-api";
+import { runPendingMigrations } from "@/lib/migrations-apply";
 import { createServiceClient } from "@pectus/supabase";
 
 export type ApplyResult = { ok: boolean; message: string };
+export type ApplyAllResult = {
+  ok: boolean;
+  message: string;
+  succeeded: string[];
+  failed: { filename: string; error: string }[];
+};
 
 export async function applyMigration(formData: FormData): Promise<ApplyResult> {
   await requireAdmin();
@@ -68,4 +75,48 @@ export async function markMigrationApplied(
 
   revalidatePath("/settings/updates");
   return { ok: true, message: `Marked ${filename} as applied.` };
+}
+
+export async function applyAllPending(): Promise<ApplyAllResult> {
+  await requireAdmin();
+  const report = await runPendingMigrations();
+  revalidatePath("/settings/updates");
+  if (report.attempted === 0 && report.remaining.length === 0) {
+    return {
+      ok: true,
+      message: "Already up to date.",
+      succeeded: [],
+      failed: [],
+    };
+  }
+  if (report.attempted === 0 && report.remaining.length > 0) {
+    return {
+      ok: false,
+      message:
+        "Couldn't auto-apply: SUPABASE_ACCESS_TOKEN is missing in cms/.env.local. Generate one at https://supabase.com/dashboard/account/tokens, then restart `npm run dev`. Or paste each migration manually below.",
+      succeeded: [],
+      failed: report.remaining.map((filename) => ({
+        filename,
+        error: "Skipped — no Management API token.",
+      })),
+    };
+  }
+  const failed = report.failed.map((f) => ({
+    filename: f.filename,
+    error: f.error,
+  }));
+  if (failed.length === 0) {
+    return {
+      ok: true,
+      message: `Applied ${report.succeeded.length} migration${report.succeeded.length === 1 ? "" : "s"}.`,
+      succeeded: report.succeeded,
+      failed: [],
+    };
+  }
+  return {
+    ok: false,
+    message: `Applied ${report.succeeded.length}, then ${failed[0].filename} failed. Paste it manually below or fix the cause and retry.`,
+    succeeded: report.succeeded,
+    failed,
+  };
 }

@@ -7,8 +7,21 @@ export type SqlResult =
   | { ok: false; error: string };
 
 export function projectRefFromUrl(url: string): string | null {
-  const m = url.match(/^https?:\/\/([^.]+)\.supabase\.co/i);
-  return m ? m[1] : null;
+  const v = url.trim();
+  if (!v) return null;
+  const fromHttps = v.match(/^https?:\/\/([a-z0-9-]+)\.supabase\.co/i);
+  if (fromHttps) return fromHttps[1];
+  const fromHost = v.match(/^([a-z0-9-]+)\.supabase\.co$/i);
+  if (fromHost) return fromHost[1];
+  if (/^[a-z0-9]{16,40}$/i.test(v)) return v;
+  return null;
+}
+
+export function getSupabaseProjectRef(): string | null {
+  const direct = process.env.SUPABASE_PROJECT_REF?.trim();
+  if (direct) return direct;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  return url ? projectRefFromUrl(url) : null;
 }
 
 export async function runManagementSql(query: string): Promise<SqlResult> {
@@ -16,13 +29,13 @@ export async function runManagementSql(query: string): Promise<SqlResult> {
   if (!accessToken) {
     return { ok: false, error: "SUPABASE_ACCESS_TOKEN missing in .env.local. Generate one at https://supabase.com/dashboard/account/tokens and add it to .env.local, then restart `npm run dev`." };
   }
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!url) {
-    return { ok: false, error: "NEXT_PUBLIC_SUPABASE_URL missing in .env.local." };
-  }
-  const ref = projectRefFromUrl(url);
+  const ref = getSupabaseProjectRef();
   if (!ref) {
-    return { ok: false, error: `Could not derive project ref from NEXT_PUBLIC_SUPABASE_URL (${url}). Expected https://<ref>.supabase.co.` };
+    return {
+      ok: false,
+      error:
+        "Couldn't determine your Supabase project ref. Set SUPABASE_PROJECT_REF or NEXT_PUBLIC_SUPABASE_URL in cms/.env.local. The ref is the short ID in your Supabase dashboard URL (https://supabase.com/dashboard/project/<ref>).",
+    };
   }
   let resp: Response;
   try {

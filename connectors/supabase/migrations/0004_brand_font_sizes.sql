@@ -8,3 +8,7 @@
 
 ALTER TABLE brands
   ADD COLUMN IF NOT EXISTS font_sizes jsonb NOT NULL DEFAULT '{}'::jsonb;
+
+insert into public._pectus_migrations (filename)
+values ('0004_brand_font_sizes.sql')
+on conflict (filename) do nothing;

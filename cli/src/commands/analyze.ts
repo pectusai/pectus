@@ -90,23 +90,32 @@ export async function run(opts: AnalyzeOptions): Promise<void> {
 
   // Look up project (allow "global" as a sentinel for cross-project skills).
   let projectId: string | null = null;
+  let brandSlug: string | null = null;
   if (opts.project !== "global") {
-    const { data: ws, error: wsErr } = await supabase
+    const { data: project, error: projectErr } = await supabase
       .from("projects")
-      .select("id, code")
+      .select("id, code, brand_id")
       .eq("code", opts.project)
       .maybeSingle();
-    if (wsErr) {
-      console.error(kleur.red(`project lookup failed: ${wsErr.message}`));
+    if (projectErr) {
+      console.error(kleur.red(`project lookup failed: ${projectErr.message}`));
       process.exit(1);
     }
-    if (!ws) {
+    if (!project) {
       console.error(
         kleur.red(`No project with code "${opts.project}". Run \`pectus project create\` first.`),
       );
       process.exit(1);
     }
-    projectId = ws.id;
+    projectId = project.id;
+    if (project.brand_id) {
+      const { data: brand } = await supabase
+        .from("brands")
+        .select("slug")
+        .eq("id", project.brand_id)
+        .maybeSingle();
+      brandSlug = brand?.slug ?? null;
+    }
   }
 
   const raw = fs.readFileSync(skillFile, "utf8");
@@ -200,11 +209,31 @@ export async function run(opts: AnalyzeOptions): Promise<void> {
   console.log(kleur.bold("Top-line output"));
   console.log(preview);
   console.log("");
-  console.log(
-    kleur.dim(
-      opts.project === "global"
-        ? "Global skill complete."
-        : `See dashboard at http://localhost:3000/projects/${opts.project}/dashboard.`,
-    ),
-  );
+  if (opts.project === "global") {
+    console.log(kleur.dim("Global skill complete. Output written to skill_runs."));
+  } else {
+    console.log(
+      kleur.dim(
+        `Output written to skill_runs (CLI store). The Insights dashboard reads from a separate store (data_interpretations + idea_generations) populated by the in-CMS Run analysis button. To see this run in the UI, open:`,
+      ),
+    );
+    if (brandSlug) {
+      console.log(
+        kleur.cyan(
+          `  http://localhost:3000/brands/${brandSlug}/projects/${opts.project}/apps/content-hub/insights`,
+        ),
+      );
+    } else {
+      console.log(
+        kleur.cyan(
+          `  http://localhost:3000/brands/<your-brand-slug>/projects/${opts.project}/apps/content-hub/insights`,
+        ),
+      );
+    }
+    console.log(
+      kleur.dim(
+        `…and click "Run analysis" there. The CLI path is for scripting; the dashboard is fed by the UI button.`,
+      ),
+    );
+  }
 }

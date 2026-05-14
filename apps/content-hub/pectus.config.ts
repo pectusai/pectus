@@ -1,7 +1,7 @@
 // Pectus content-hub app configuration.
-// Read at build time. Wired to brand/brand.json for tokens; copy and structure are configured here.
-//
-// This is a placeholder. The full Astro template lands in PR5.
+// Read at build time. Wired to brands/<slug>/brand.json for tokens (selected
+// via PECTUS_BRAND_SLUG env, or the first brands/ dir found); copy and
+// structure are configured here.
 
 export const config = {
   site: {
