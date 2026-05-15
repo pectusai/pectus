@@ -162,8 +162,8 @@ export default async function InsightsPage({
     latestGeneratedAt = built.latestGeneratedAt;
   }
 
-  const noInputData =
-    counts.keywords === 0 && counts.articles === 0 && !ga4Active && !gscActive;
+  const hasDataSource = ga4Active || gscActive;
+  const hasKeywords = counts.keywords > 0;
 
   const weekOf = formatWeekOf(isoWeekStart(new Date()));
 
@@ -194,14 +194,19 @@ export default async function InsightsPage({
         </dl>
       </header>
 
-      {noInputData ? (
+      {!hasDataSource ? (
         <section className="pectus-insights-section">
           <div className="pectus-insights-empty-card">
-            <h2>No data to analyse yet.</h2>
+            <h2>Connect a data source to run analysis.</h2>
             <p>
-              Insights needs at least one of: keywords, GA4 traffic, or Search
-              Console queries. Activate the inbound apps you have access to, or
-              add some keywords under Project settings → Keywords.
+              Insights reads your real traffic and search queries to find what
+              to write next. Activate Google Search Console or GA4 to unlock
+              the weekly analysis. Both are free.
+              {hasKeywords ? (
+                <> Your {counts.keywords} keyword{counts.keywords === 1 ? "" : "s"} are saved and will be used once a data source is live.</>
+              ) : (
+                <> While accounts verify, you can also seed your keyword list under Project settings → Keywords.</>
+              )}
             </p>
             <div className="pectus-insights-hero-actions">
               <a
@@ -214,7 +219,7 @@ export default async function InsightsPage({
                 className="pectus-insights-button-secondary"
                 href={`${base}/keywords`}
               >
-                Add keywords
+                {hasKeywords ? "Edit keywords" : "Add keywords"}
               </a>
             </div>
           </div>

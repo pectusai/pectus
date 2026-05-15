@@ -189,7 +189,7 @@ Three services are required to boot Pectus. Two more are optional. Walk the user
      - **service_role (secret) key** (also starts with `eyJ...`, on the same second tab as `anon`, keep this one private).
   4. Open https://supabase.com/dashboard/account/tokens (a separate page from the project — it lives on the user's account, not inside the project). Click **Generate new token**, name it anything (e.g. `pectus`), copy the value (starts with `sbp_`). Pectus needs this to apply schema migrations and other Management-API operations on the user's behalf.
   Write all four into `cms/.env.local` as `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ACCESS_TOKEN`. The first three are project-scoped; the access token is account-scoped and authenticates Pectus to the Supabase Management API.
-- **Anthropic** — https://console.anthropic.com. This is what powers Claude inside Pectus. After signup, click "API keys" in the sidebar, then "Create key". The value starts with `sk-ant-`. Paste it here. **Heads-up on cost**: a full first-time install with one project ranges from $5 to $15 in Anthropic credits depending on how many analyses the user runs. Tell the user to load $20 to be safe; they can top up later.
+- **Anthropic** — https://console.anthropic.com. This is what powers Claude inside Pectus. After signup, click "API keys" in the sidebar, then "Create key". The value starts with `sk-ant-`. Paste it here. **Heads-up on cost**: a first analysis runs well under $1. Load the $5 minimum to get started; top up later from the same console if you run a lot of analyses.
 
 **Optional (skippable)**
 
@@ -211,13 +211,13 @@ The user already created the project themselves in step 5 and the URL plus keys 
 
 ### 6a. Confirm the migration file is on disk
 
-As of v0.4.2, Pectus ships a single squashed migration at `connectors/supabase/migrations/0001_pectus_v04.sql`. There's no longer a build step — the user pastes that file directly. Verify it exists:
+Pectus ships `0001_pectus_v04.sql` as the v0.4 baseline, plus any number of follow-up migrations (`0002_*.sql`, `0003_*.sql`, …) added in later point releases. The user pastes **only `0001_pectus_v04.sql`** here in Supabase's SQL editor. The follow-ups apply automatically through the in-CMS overlay after first boot (covered in step 8c). **Do not combine migrations into a single paste, and do not surface the multi-file detail to the user** — they paste one SQL file and move on. Verify the baseline exists:
 
 ```
 ls connectors/supabase/migrations/
 ```
 
-You should see `0001_pectus_v04.sql` and nothing else. If there are stray older `0001_initial.sql` etc. files (from a previous v0.4.1 install lying around), delete them — they don't apply to v0.4.2 and the file the user pastes must be exactly the v0.4.2 baseline.
+You should see `0001_pectus_v04.sql` (always) and optionally `0002_*.sql`, `0003_*.sql`, etc. (depending on which version of Pectus this is). If there are stray older `0001_initial.sql` etc. files (from a pre-v0.4 install lying around), delete them — only the v0.4-era migrations apply. If `0001_pectus_v04.sql` is missing, the install folder is broken; stop and ask the user to re-clone.
 
 ### 6b. Have the user reset and apply the schema in Supabase
 
@@ -361,6 +361,18 @@ PORT=3001 npm run dev
 ```
 
 Then load `http://localhost:3001`. Tell the user which port their CMS is on so they can re-open the right one later.
+
+### 8c. Apply any pending database updates
+
+Before continuing to step 9, check `connectors/supabase/migrations/` again. If there are any files beyond `0001_pectus_v04.sql` (e.g. `0002_*.sql`, `0003_*.sql`), Pectus has follow-up updates ready to apply. The baseline they pasted in step 6 didn't include these — they're applied through the CMS itself so the user doesn't have to copy SQL by hand for routine upgrades.
+
+If follow-up files exist, point the user at the overlay:
+
+> "There are a couple of database updates Pectus needs to run. Open http://localhost:3000/settings/updates (or whichever port you're on) and click **Apply all**. Should take a few seconds. Tell me when it's done."
+
+The overlay uses the `SUPABASE_ACCESS_TOKEN` from `cms/.env.local` to apply each pending migration through Supabase's Management API. If the token is missing or wrong, the overlay falls back to a copy-paste flow where the user runs each SQL block in the Supabase SQL editor — the page tells them what to do. Either path leaves them on the same finished state. Wait for the user's confirmation before moving to step 9.
+
+If only `0001_pectus_v04.sql` is present, skip this sub-step entirely — there's nothing to apply.
 
 ## 9. Create the first project
 

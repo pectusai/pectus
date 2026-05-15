@@ -830,3 +830,17 @@ create policy pectus_migrations_admin_read on public._pectus_migrations
 insert into public._pectus_migrations (filename)
 values ('0001_pectus_v04.sql')
 on conflict (filename) do nothing;
+
+-- ── Grants on public schema ────────────────────────────────────────────────
+-- The install flow drops and recreates schema public, which strips Supabase's
+-- default grants. Without these, the CLI's service_role connection cannot
+-- read or write the tables this migration just created (brand sync fails
+-- with "permission denied for table brands"). Restore grants on everything
+-- created above, and set default privileges so any follow-up migrations
+-- (0002+) inherit the same grants without each having to repeat them.
+grant all on all tables    in schema public to anon, authenticated, service_role;
+grant all on all sequences in schema public to anon, authenticated, service_role;
+grant all on all functions in schema public to anon, authenticated, service_role;
+alter default privileges in schema public grant all on tables    to anon, authenticated, service_role;
+alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
+alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
