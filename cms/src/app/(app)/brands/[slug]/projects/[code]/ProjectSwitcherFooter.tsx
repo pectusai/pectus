@@ -101,7 +101,7 @@ export function ProjectSwitcherFooter({
                 Project settings
               </span>
               <span className="pectus-project-popover-item-meta">
-                Mode, locale, content hub
+                Mode, locale, Content Insights
               </span>
             </Link>
           </div>

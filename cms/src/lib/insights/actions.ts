@@ -436,7 +436,7 @@ export async function runFullAnalysis(
   }
 
   revalidatePath(
-    `/brands/[slug]/projects/[code]/apps/content-hub/insights`,
+    `/brands/[slug]/projects/[code]/apps/content-insights/insights`,
     "page",
   );
   return { ok: true, data: { generationId } };
@@ -530,7 +530,7 @@ export async function renewIdeas(
   }
 
   revalidatePath(
-    `/brands/[slug]/projects/[code]/apps/content-hub/insights`,
+    `/brands/[slug]/projects/[code]/apps/content-insights/insights`,
     "page",
   );
   return { ok: true, data: { generationId } };

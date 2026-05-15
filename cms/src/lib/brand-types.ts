@@ -1,5 +1,5 @@
 // Shared brand types consumed by article authoring + brand profile UIs.
-// Mirrors the original content-hub-cms shape so brand.json portability holds.
+// Mirrors the original content-insights-cms shape so brand.json portability holds.
 
 export type Camera = {
   id: string;

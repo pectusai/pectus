@@ -5,7 +5,7 @@
  */
 
 import type { BlockType } from "@pectus/skills/edit-page/schema";
-import type { PageBlock } from "@pectus/content-hub/blocks";
+import type { PageBlock } from "@pectus/content-insights/blocks";
 
 /* PageBlock is the runtime type used by templates/Astro renderer + edit-page
  * skill. BlockType comes from the Zod schema and represents the same shape
@@ -40,8 +40,8 @@ export type Project = {
   enabled_locales: string[];
   default_locale_skips_prefix: boolean;
   mount_slug: string;
-  content_hub_repo: string | null;
-  content_hub_branch: string;
+  content_insights_repo: string | null;
+  content_insights_branch: string;
   created_at: string;
   updated_at: string;
 };

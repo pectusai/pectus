@@ -24,7 +24,7 @@ pectus doctor                       health check
 pectus update                       pull upstream + run migrations
 ```
 
-All commands are stubbed in v1. Implementation lands in PR5 alongside the `content-hub` app port.
+All commands are stubbed in v1. Implementation lands in PR5 alongside the `content-insights` app port.
 
 ## Run from the repo
 

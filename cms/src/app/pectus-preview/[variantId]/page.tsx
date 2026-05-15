@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import { notFound } from "next/navigation";
 import { createServiceClient } from "@pectus/supabase";
-import type { PageBlock } from "@pectus/content-hub/blocks";
+import type { PageBlock } from "@pectus/content-insights/blocks";
 import { BlockRenderer } from "./blocks";
 
 /* In-CMS preview iframe. Renders a page variant's blocks using simple

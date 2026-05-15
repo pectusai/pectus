@@ -10,7 +10,7 @@
  *   variant locale matches default_locale.
  * - Materialized path is empty for top-level nodes, otherwise '/' joined.
  *
- * Trailing slash is always present (matches the content-hub Astro config).
+ * Trailing slash is always present (matches the content-insights Astro config).
  */
 
 export type ProjectUrlConfig = {

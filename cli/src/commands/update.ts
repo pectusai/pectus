@@ -4,6 +4,7 @@ import { execSync, spawn } from "node:child_process";
 import kleur from "kleur";
 import { findRepoRoot } from "../lib/repo-root.js";
 import { reportV04Migration, runV04DiskMigration } from "../lib/disk-migration.js";
+import { checkPendingMigrations } from "../lib/pending-migrations.js";
 
 function exec(cmd: string, args: string[], cwd: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -106,11 +107,43 @@ export async function run(): Promise<void> {
 
   reportV04Migration(runV04DiskMigration(repo));
 
+  const pending = await checkPendingMigrations(repo);
   console.log("");
   console.log(kleur.green("Update complete."));
-  console.log(
-    kleur.dim(
-      "Restart `npm run dev` and open the CMS. If schema changes shipped, you'll see an Apply banner at the top — click it.",
-    ),
-  );
+
+  if (pending && pending.pending.length > 0) {
+    console.log("");
+    console.log(
+      kleur.yellow(
+        `▲ ${pending.pending.length} pending database update${pending.pending.length === 1 ? "" : "s"}:`,
+      ),
+    );
+    for (const f of pending.pending) {
+      console.log("  " + kleur.dim(f));
+    }
+    console.log("");
+    if (pending.reason === "no-env") {
+      console.log(
+        kleur.dim(
+          "Set Supabase env vars in cms/.env.local, then open the CMS and visit /settings/updates to apply.",
+        ),
+      );
+    } else if (pending.reason === "no-baseline") {
+      console.log(
+        kleur.dim(
+          "The schema baseline (0001_pectus_v04.sql) has not been applied yet. Open the CMS and visit /settings/updates to apply.",
+        ),
+      );
+    } else {
+      console.log(
+        kleur.bold("→ Open your CMS and visit /settings/updates to apply them."),
+      );
+    }
+  } else {
+    console.log(
+      kleur.dim(
+        "No pending database updates. Restart `npm run dev` and you're current.",
+      ),
+    );
+  }
 }

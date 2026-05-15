@@ -11,8 +11,8 @@ export type Project = {
   enabled_locales?: string[];
   default_locale_skips_prefix?: boolean;
   mount_slug?: string;
-  content_hub_repo?: string | null;
-  content_hub_branch?: string;
+  content_insights_repo?: string | null;
+  content_insights_branch?: string;
   created_at: string;
   updated_at: string;
 };

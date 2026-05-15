@@ -54,11 +54,11 @@
       "@pectus/cli/import-design": [
         "../cli/src/lib/import-design.ts"
       ],
-      "@pectus/content-hub/templates": [
-        "../apps/content-hub/templates/index.ts"
+      "@pectus/content-insights/templates": [
+        "../apps/content-insights/templates/index.ts"
       ],
-      "@pectus/content-hub/blocks": [
-        "../apps/content-hub/src/components/blocks/types.ts"
+      "@pectus/content-insights/blocks": [
+        "../apps/content-insights/src/components/blocks/types.ts"
       ],
       "@pectus/skills/*/schema": [
         "../skills/*/schema.ts"

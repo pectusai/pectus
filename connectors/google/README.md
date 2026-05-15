@@ -16,8 +16,8 @@ Service account JSON is uploaded via the CMS Brand page and stored in the `integ
 
 ## What's in this folder
 
-- `oauth.ts` — OAuth 2.0 authorization code flow. Ported from content-hub-cms in PR2.
-- `service-account.ts` — service account JWT minting + access token caching. Ported from content-hub-cms in PR2.
+- `oauth.ts` — OAuth 2.0 authorization code flow. Ported from content-insights-cms in PR2.
+- `service-account.ts` — service account JWT minting + access token caching. Ported from content-insights-cms in PR2.
 - `gsc.ts` — Search Console: per-URL queries, impressions, clicks, position.
 - `ga4.ts` — Analytics 4: page-level engagement and conversion metrics.
 

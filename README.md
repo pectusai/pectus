@@ -34,7 +34,7 @@ Think WordPress, but the plugin layer is an AI-shaped ecosystem instead of a PHP
    │   │ pull data IN         │       │ render surfaces       │  │
    │   │ to project tables    │       │ publish content       │  │
    │   │                      │       │                       │  │
-   │   │  gsc                 │       │  content-hub          │  │
+   │   │  gsc                 │       │  content-insights          │  │
    │   │  ga4                 │       │  your-publisher       │  │
    │   │  seed-keywords       │       │  your-dashboard       │  │
    │   │  your-importer       │       │  your-poster          │  │
@@ -89,7 +89,7 @@ Honest scope. Pectus is real but young.
 
 **Works today:**
 - Web apps that render inside the Pectus Next.js admin.
-- Static sites published through the Astro pipeline (the `content-hub` model).
+- Static sites published through the Astro pipeline (the `content-insights` model).
 - Inbound connectors that write to project-scoped Postgres tables.
 - Skills that call Claude or any other LLM/API and persist structured output.
 - Multi-brand installs (one Pectus, many brands, each with own projects).
@@ -112,7 +112,7 @@ Reference implementations. They exist to prove the contract works and to give a 
 
 | What        | Type     | What it does                                                              |
 |-------------|----------|---------------------------------------------------------------------------|
-| content-hub | outbound | Astro publisher with SEO/AEO/GEO defaults. Drafts and publishes articles. |
+| content-insights | outbound | Astro publisher with SEO/AEO/GEO defaults. Drafts and publishes articles. |
 | gsc         | inbound  | Google Search Console queries.                                            |
 | ga4         | inbound  | Google Analytics 4 sessions and traffic.                                  |
 | seed-keywords | inbound | Manually curated keyword lists.                                          |

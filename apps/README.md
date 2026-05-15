@@ -3,7 +3,7 @@
 An app is a unit of capability that plugs into Pectus. Two flavors:
 
 - **Inbound apps** bring data in (GA4, Google Ads, Meta, LinkedIn, GSC).
-- **Outbound apps** publish things out (`content-hub`, WordPress, Storyblok, ecom storefronts).
+- **Outbound apps** publish things out (`content-insights`, WordPress, Storyblok, ecom storefronts).
 
 Apps are not infrastructure. Infrastructure (Supabase, Anthropic API, OAuth) lives in `connectors/`. Apps consume connectors when they need to.
 
@@ -34,7 +34,7 @@ Every app folder ships:
 ## v1 apps
 
 **Outbound (publishers):**
-- `content-hub/` — pre-installed Astro publisher. The flagship "what Pectus can build for you" surface. Was previously a top-level `hub-template/`; now lives here as an app to demonstrate that the same pattern targets WordPress, Storyblok, etc.
+- `content-insights/` — pre-installed Astro publisher. The flagship "what Pectus can build for you" surface. Was previously a top-level `hub-template/`; now lives here as an app to demonstrate that the same pattern targets WordPress, Storyblok, etc.
 
 **Inbound (data sources):**
 - `gsc/` — Google Search Console organic performance. Auth shared with `connectors/google`. Wraps the existing API client in `connectors/google/gsc.ts`.

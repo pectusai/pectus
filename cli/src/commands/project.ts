@@ -195,7 +195,7 @@ export async function create(): Promise<void> {
   outro(
     kleur.green(
       `Project ready. Open http://localhost:3000/brands/${brand.slug}/projects/${created.code} to see it. ` +
-        `To turn on the public site (Pages, Articles, Publish), open the project's Apps page and activate Content Hub.`,
+        `To turn on the public site (Pages, Articles, Publish), open the project's Apps page and activate Content Insights.`,
     ),
   );
 }

@@ -220,13 +220,13 @@ export async function run(opts: AnalyzeOptions): Promise<void> {
     if (brandSlug) {
       console.log(
         kleur.cyan(
-          `  http://localhost:3000/brands/${brandSlug}/projects/${opts.project}/apps/content-hub/insights`,
+          `  http://localhost:3000/brands/${brandSlug}/projects/${opts.project}/apps/content-insights/insights`,
         ),
       );
     } else {
       console.log(
         kleur.cyan(
-          `  http://localhost:3000/brands/<your-brand-slug>/projects/${opts.project}/apps/content-hub/insights`,
+          `  http://localhost:3000/brands/<your-brand-slug>/projects/${opts.project}/apps/content-insights/insights`,
         ),
       );
     }

@@ -21,7 +21,7 @@ export default async function ReviewsInboxPage() {
   const { user } = await requireUser();
   const supabase = await createServerClient();
 
-  const contentHubInstalled = await isAppActiveForAnyProject("content-hub");
+  const contentInsightsInstalled = await isAppActiveForAnyProject("content-insights");
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -68,10 +68,10 @@ export default async function ReviewsInboxPage() {
         </span>
       </div>
 
-      {!contentHubInstalled ? (
+      {!contentInsightsInstalled ? (
         <p className="rounded-lg border border-dashed border-zinc-300 p-8 text-center text-sm text-zinc-500">
-          Reviews show up here once you activate Content Hub on at least one
-          project. Each project under Content Hub feeds its drafts and pages
+          Reviews show up here once you activate Content Insights on at least one
+          project. Each project under Content Insights feeds its drafts and pages
           into this inbox.
         </p>
       ) : visible.length === 0 ? (

@@ -41,7 +41,7 @@ Top 20 gaps get returned. Below that, the long tail isn't actionable in a conten
 
 ## Worked example pattern (from Teamtailor's site)
 
-The Teamtailor site has ~110 articles in /content-hub/, ~200 product news posts, ~98 integration partner pages, ~80 event pages. Keyword research surfaced demand for content that didn't exist:
+The Teamtailor site has ~110 articles in /content-insights/, ~200 product news posts, ~98 integration partner pages, ~80 event pages. Keyword research surfaced demand for content that didn't exist:
 
 1. **No dedicated buyer's guide / comparison content** — keywords like "best ATS for small business" had no matching page.
 2. **No pricing/cost education content** — "how much does an ATS cost" had no blog-level answer.

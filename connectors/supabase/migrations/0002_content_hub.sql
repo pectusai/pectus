@@ -1,5 +1,5 @@
--- 0002_content_hub.sql
--- Content Hub upgrade: status transitions, weekly analysis triplet,
+-- 0002_content_insights.sql
+-- Content Insights upgrade: status transitions, weekly analysis triplet,
 -- idea dismissals, llm usage logging, and content_sources extras.
 -- Idempotent. Safe to re-run.
 
@@ -153,5 +153,5 @@ alter table public.content_sources alter column name drop not null;
 
 -- ── self-record so the in-app updates page sees this as applied ────────────
 insert into public._pectus_migrations (filename)
-values ('0002_content_hub.sql')
+values ('0002_content_insights.sql')
 on conflict (filename) do nothing;

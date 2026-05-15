@@ -18,7 +18,7 @@ Every `connectors/<service>/` folder ships:
 - `supabase/` — database, auth, storage. Provisioning and migrations live here.
 - `google/` — shared OAuth and service-account auth used by the GSC, GA4, and Google Ads apps.
 - `anthropic/` — the Claude API wrapper used by skills and the dashboard.
-- `vercel/` — optional, for deploying the `content-hub` app or any other publisher app that targets static hosting.
+- `vercel/` — optional, for deploying the `content-insights` app or any other publisher app that targets static hosting.
 - `github/` — optional, for fork sync helpers.
 
 ## Adding a new connector

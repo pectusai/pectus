@@ -168,8 +168,8 @@ create table if not exists public.projects (
   default_locale_skips_prefix boolean not null default true,
   mount_slug text not null default '/',
   site_url text,
-  content_hub_repo text,
-  content_hub_branch text not null default 'main',
+  content_insights_repo text,
+  content_insights_branch text not null default 'main',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -412,7 +412,7 @@ create table if not exists public.review_approvals (
 create index if not exists review_approvals_item_idx on public.review_approvals (item_id);
 
 -- ============================================================================
--- 6. Topics + site plan + redirects + pages (content-hub structures)
+-- 6. Topics + site plan + redirects + pages (content-insights structures)
 -- ============================================================================
 
 create table if not exists public.topics (

@@ -2,7 +2,7 @@
  * other secrets at server-start time. The canonical Pectus env file lives
  * at cms/.env.local because Next.js (the CMS) reads that path natively
  * and the CLI's `pectus connect <service>` writes there. Other apps
- * (Astro content-hub, future apps with their own dev server) call
+ * (Astro content-insights, future apps with their own dev server) call
  * loadPectusEnv() from their config so they read the same file.
  *
  * Plain .mjs with zero deps — importable from any app config without a

@@ -3,7 +3,7 @@ import { Octokit } from "@octokit/rest";
 /* GitHub connector for Pectus.
  *
  * Used by the publish pipeline to commit page JSON, the site-plan tree, and
- * the redirect map directly to the user's content-hub repo. The repo identity
+ * the redirect map directly to the user's content-insights repo. The repo identity
  * (owner/repo/branch) lives on the project; auth is a personal access token
  * in GITHUB_TOKEN env (repo scope required).
  *

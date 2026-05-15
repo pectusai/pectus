@@ -105,7 +105,7 @@ function Grouped({
       {outbound.length > 0 ? (
         <Section
           title="Outbound apps"
-          helper="Apps that publish or present data — content-hub today, future WordPress / Storyblok / ecom storefronts."
+          helper="Apps that publish or present data — content-insights today, future WordPress / Storyblok / ecom storefronts."
           count={counts.outbound}
           manifests={outbound}
           activations={activations}

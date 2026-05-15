@@ -89,7 +89,7 @@ If the user wants to author a new app from scratch, point them at the `make-it` 
 ### Inbound vs outbound apps
 
 - **Inbound apps** (data sources): `gsc`, `ga4`, `google-ads`, `meta`, `linkedin`, `seed-keywords`. Standard shape: `APP.md` + `schema.ts` + `provision.ts` + `fetch.ts` + `README.md`. Plus an **`insights/` subfolder** containing the interpretation skill that turns this app's data into unified `Insight` rows. The subfolder has `SKILL.md` + `schema.ts` and is invoked by the skill-runner via the path-style name `<app-name>/insights` (e.g. `gsc/insights`).
-- **Outbound apps** (publishers): `content-hub`, future `wordpress`, `storyblok`. Different shape — they receive structured content to render, not data to interpret. **No `insights/` subfolder.** The on-disk shape varies per platform (content-hub is a full Astro app; WordPress would be theme files; etc.).
+- **Outbound apps** (publishers): `content-insights`, future `wordpress`, `storyblok`. Different shape — they receive structured content to render, not data to interpret. **No `insights/` subfolder.** The on-disk shape varies per platform (content-insights is a full Astro app; WordPress would be theme files; etc.).
 - **Manual-data inbound apps** (`seed-keywords` today, future CSV uploads): minimal version of the inbound shape. No `provision.ts` or `fetch.ts` because the data is user-typed and stored directly by migrations. Just `APP.md` + `insights/` + `README.md`. Reference: `apps/seed-keywords/`.
 
 ### The Insight contract

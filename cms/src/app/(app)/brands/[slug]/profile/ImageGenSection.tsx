@@ -52,7 +52,7 @@ export function ImageGenSection({
         <h2 className="text-xl font-semibold tracking-tight">Image generation</h2>
         <p className="mt-1 text-sm text-zinc-600">
           API keys, reference photos, and camera presets that drive every
-          hero and inline image generated in Content Hub. The hero section in
+          hero and inline image generated in Content Insights. The hero section in
           the article editor reads from these.
         </p>
       </div>

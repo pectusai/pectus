@@ -31,17 +31,17 @@ export type AppSidebarManifest = {
 };
 
 export const APP_SIDEBAR_MANIFESTS: Record<string, AppSidebarManifest> = {
-  "content-hub": {
-    label: "Content Hub",
+  "content-insights": {
+    label: "Content Insights",
     tooltip:
       "Smart CMS that uses GA4, Search Console, and Google Ads data to recommend what to write next.",
     items: [
-      { label: "Insights", href: (b) => `${b}/apps/content-hub/insights` },
-      { label: "Articles", href: (b) => `${b}/apps/content-hub/articles` },
-      { label: "Pages", href: (b) => `${b}/apps/content-hub/pages` },
-      { label: "Files", href: (b) => `${b}/apps/content-hub/files` },
-      { label: "Sources", href: (b) => `${b}/apps/content-hub/sources` },
-      { label: "Settings", href: (b) => `${b}/apps/content-hub/settings` },
+      { label: "Insights", href: (b) => `${b}/apps/content-insights/insights` },
+      { label: "Articles", href: (b) => `${b}/apps/content-insights/articles` },
+      { label: "Pages", href: (b) => `${b}/apps/content-insights/pages` },
+      { label: "Files", href: (b) => `${b}/apps/content-insights/files` },
+      { label: "Sources", href: (b) => `${b}/apps/content-insights/sources` },
+      { label: "Settings", href: (b) => `${b}/apps/content-insights/settings` },
     ],
   },
   ga4: {

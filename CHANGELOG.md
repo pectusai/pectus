@@ -2,10 +2,10 @@
 
 ## v0.4.4 → v0.4.13.x — Migration runner, Insights, Articles authoring
 
-In-CMS migration runner (`/settings/updates`). Pasting `0001_pectus_v04.sql` is the one-time bootstrap; subsequent migrations apply via the Supabase Management API on the user's behalf, with copy-paste fallback. New migration `0002_content_hub.sql` adds insights, idea generations, dismissals, articles, brand example photo categories, brand image-gen API keys (`google_genai`, `fal`, `replicate`), and the `_pectus_migrations` ledger.
+In-CMS migration runner (`/settings/updates`). Pasting `0001_pectus_v04.sql` is the one-time bootstrap; subsequent migrations apply via the Supabase Management API on the user's behalf, with copy-paste fallback. New migration `0002_content_insights.sql` adds insights, idea generations, dismissals, articles, brand example photo categories, brand image-gen API keys (`google_genai`, `fal`, `replicate`), and the `_pectus_migrations` ledger.
 
-Content Hub end-to-end:
-- **Insights** lands the Content Hub. Run analysis runs Stage 1 (Opus interpretation of GA4 / Search Console / keywords / articles snapshot) and Stage 2 (Opus 5 ranked ideas). Idea cards offer one-click Draft → AI Write → Sonnet 4.6 generated draft → article editor with status workflow → Publish.
+Content Insights end-to-end:
+- **Insights** lands the Content Insights. Run analysis runs Stage 1 (Opus interpretation of GA4 / Search Console / keywords / articles snapshot) and Stage 2 (Opus 5 ranked ideas). Idea cards offer one-click Draft → AI Write → Sonnet 4.6 generated draft → article editor with status workflow → Publish.
 - **Articles** index rebuilt: table with search, status filter, categories chip line, per-row Archive / Delete, bulk-select with action dropdown, Import for shells. AI Write fields persist across tab switches. Generate-article modal walks 8 stages with progress dots.
 - **Article editor** with TipTap: H2/H3, B/I/S, link via inline popover (no more `window.prompt`), bullet/ordered/quote, undo/redo, image upload + AI image generation through Google (Imagen 4, Gemini 3 Pro), fal.ai (Flux Pro 1.1 Ultra), and Replicate (Flux Dev, Recraft v3). Empty-state placeholder via `@tiptap/extension-placeholder`. TipTap body typography (h2/h3/p/lists/blockquote/links/images) restored after Tailwind preflight stripped it.
 - **Status workflow**: `draft → brand_review → market_lead_review → published | archived`, transitions through `transitionArticleStatus`. StatusBar at top owns transitions.
@@ -22,7 +22,7 @@ Pectus is now framed as a **connector framework with a UI**, not a CMS. Content-
 
 - **Schema (`0001_pectus_v04.sql`):** single squashed baseline. `workspaces` → `projects` (FK columns, indexes, RLS). `workspace_app_config` → `app_config(project_id, app_name, config)`. `activated_apps` is now keyed on `(project_id, app_name)` — apps activate per-project. `unaccent` extension + `_slugify` defined up front. `integrations` stays brand-scoped. Idempotent, paste-twice-safe.
 - **`workspace` → `project` rename:** mechanical refactor across CMS, CLI, install agent (`pectus.md`), every app's APP.md, and every skill's SKILL.md. `pectus workspace add` keeps working as an alias for `pectus project add` for one release.
-- **Smart surfaces collapse into apps:** `pages`, `articles`, `sources`, `reviews`, `plan`, `gap`, `settings/site-url`, `settings/redirects`, `settings/review-policy` all moved under `apps/content-hub/`. `settings/seed-keywords` moved under `apps/seed-keywords/settings`. `performance` moved under `apps/ga4/`. The project shell hosts only ICP, Keywords, Apps, and Settings now.
+- **Smart surfaces collapse into apps:** `pages`, `articles`, `sources`, `reviews`, `plan`, `gap`, `settings/site-url`, `settings/redirects`, `settings/review-policy` all moved under `apps/content-insights/`. `settings/seed-keywords` moved under `apps/seed-keywords/settings`. `performance` moved under `apps/ga4/`. The project shell hosts only ICP, Keywords, Apps, and Settings now.
 - **Apps page is project-level:** `/brands/<slug>/projects/<code>/apps` lists installed apps with per-row Activate / Deactivate. Brand-level apps tree retired. Per-project sidebar derives groups from each activated app's manifest in `cms/src/lib/apps.ts:APP_SIDEBAR_MANIFESTS`.
 - **Settings panel:** `/admin` and `/system/updates` retired. New `/settings` hub: `/settings/account`, `/settings/users`, `/settings/updates`, plus brand-scoped `/brands/<slug>/settings` and `/brands/<slug>/settings/integrations/google`. NavBar shows **Settings** instead of Admin / Updates.
 - **Gating with `<NeedsCard>`:** site plan, gap analysis, GA4 performance, GSC keyword sync, and Publish all gate honestly via `cms/src/lib/prereqs.ts`. Missing prerequisites render an inline CTA card with deep-links to the fix. Article authoring, page authoring, ICP, brand profile, project settings, and apps activation are explicitly never-gated.
@@ -38,7 +38,7 @@ Pectus is now framed as a **connector framework with a UI**, not a CMS. Content-
 2. `rm -rf` your local install and re-clone or `npx pectus init` from scratch.
 3. Walk through `pectus.md` to rebuild brand + first project.
 4. Apply `0001_pectus_v04.sql` via `/settings/updates`.
-5. On the project's Apps page, activate `content-hub` (or whatever apps you need). Each app's surfaces appear in the sidebar.
+5. On the project's Apps page, activate `content-insights` (or whatever apps you need). Each app's surfaces appear in the sidebar.
 
 ### Known v0.4.3 follow-ups
 
@@ -105,23 +105,23 @@ This is an alpha. The migration is destructive on schema (it renames `brand_prof
 ## v0.3.7 — Audit follow-up (auth, prompt caching, sidebar polish)
 
 - Server actions in `cms/src/app/(app)/apps/[name]/actions.ts` now call `requireUser()` before mutating state. Previously RLS was the only line of defence; the middleware only refreshes Supabase cookies.
-- `saveContentHubConfig` switched from `.single()` to `.maybeSingle()` with a fallback redirect to `/apps/content-hub` so a missing project row no longer lands on `/projects/undefined`.
+- `saveContentInsightsConfig` switched from `.single()` to `.maybeSingle()` with a fallback redirect to `/apps/content-insights` so a missing project row no longer lands on `/projects/undefined`.
 - Skill runner uses Anthropic prompt caching for stable input layers (BRAND, ICP, KNOWLEDGE INSIGHTS) and the system prompt. Successive runs in a 5-minute window read cached input tokens for the static layers instead of re-paying. Applies to both the structured (tool_use) and text-mode call paths.
 - Sidebar groups no longer flash open on first paint when the user previously closed them. The wrapper hides itself until the localStorage read finishes, then renders in its final state.
-- Tooltips added to sidebar group labels (Content Hub, Settings), the project header `code · locale` line, the Content Hub activate radios (Brand new site / Existing site), and the Mount slug + GitHub repo fields.
+- Tooltips added to sidebar group labels (Content Insights, Settings), the project header `code · locale` line, the Content Insights activate radios (Brand new site / Existing site), and the Mount slug + GitHub repo fields.
 - New shared `cms/src/app/components/InfoDot.tsx` lifted from `BrandForm.tsx`. All "?" affordances now reach for the same component.
 - Two new install FAQ entries on pectus.ai: `ga4-service-account-not-recognized.md` (propagation delay workaround via the GA4 Admin API + Search Console domain property) and `google-service-account-key-download.md` (where to find the JSON key in Cloud Console, what fields to expect).
 
 ## v0.3.5 — pectus.ai polish, identifier scrub
 
-- pectus.md install step 11 wording matches the actual `/apps/content-hub` UI ("Click the content-hub card → fill the settings form → Save and activate Content Hub").
+- pectus.md install step 11 wording matches the actual `/apps/content-insights` UI ("Click the content-insights card → fill the settings form → Save and activate Content Insights").
 - Scrubbed maintainer-specific identifiers (`jesperastrom` → `acme-corp` / `your-brand`) from all user-facing examples.
 - Brand save no longer fails on partial unique index.
 - pectus.ai docs reorg: three top-level setup walkthroughs (`/docs/setup-anthropic-account`, `/docs/setup-supabase-account`, `/docs/setup-service-account`); install.md first in "Start here" followed by the three setups; Concepts moved to "Using Pectus".
 
 ## v0.3.4 — Project sidebar nav
 
-- New left sidebar in project routes lists Dashboard + per-active-app groups (Content Hub when activated, with Pages / Articles / Site URL / Redirects) + Settings.
+- New left sidebar in project routes lists Dashboard + per-active-app groups (Content Insights when activated, with Pages / Articles / Site URL / Redirects) + Settings.
 - Bare `/projects/<code>` redirects to `/dashboard`.
 
 ## v0.3.3 — Inline errors + Google API guidance
@@ -142,38 +142,38 @@ This is an alpha. The migration is destructive on schema (it renames `brand_prof
 ## v0.3.0 — Apps as plugins (Phase 1)
 
 The CMS becomes a shell. Apps register their own surfaces. Phase 1 ships
-the activation model with content-hub as the first plugin.
+the activation model with content-insights as the first plugin.
 
 - New top-nav entry `Apps` (CMS at `/apps`). Lists every app under
   `apps/*` with status (Activated / Available), type (inbound /
   outbound), and version. Tooltips on every badge.
 - New tables `activated_apps` (install-level) and `app_config`
   (per-project), in migration `0006_activated_apps.sql`. Backfill
-  auto-activates content-hub for any v0.2 install where a project has
-  `mount_slug` or `content_hub_repo` set, so upgrading does not hide
+  auto-activates content-insights for any v0.2 install where a project has
+  `mount_slug` or `content_insights_repo` set, so upgrading does not hide
   Articles or Pages surfaces.
 - Project tabs Pages and Articles, plus Settings → Site URL and
-  Redirects, are now gated on content-hub activation. Inactive surfaces
+  Redirects, are now gated on content-insights activation. Inactive surfaces
   render an `ActivateAppPointer` linking to `/apps`.
 - New per-project activation wizard at
-  `/apps/content-hub/activate`. Captures site shape (Brand new vs
+  `/apps/content-insights/activate`. Captures site shape (Brand new vs
   Existing site), mount slug, and GitHub repo. Replaces the
   corresponding prompts in `npx pectus project create`.
 - `npx pectus project create` now collects only identity (name, code,
   locale) and seed keywords. Site shape and repo move into the
   activation wizard.
-- Project dashboard checklist makes Activate Content Hub the second
-  item (after Brand). Articles import only renders once content-hub is
+- Project dashboard checklist makes Activate Content Insights the second
+  item (after Brand). Articles import only renders once content-insights is
   active.
 - Install runbook (`pectus.md`) reorganized: step 10 collects only
-  project identity; new step 11 walks Content Hub activation in the
+  project identity; new step 11 walks Content Insights activation in the
   CMS Apps tab.
-- `apps/content-hub/APP.md` added, declaring the `cms_surfaces` it
+- `apps/content-insights/APP.md` added, declaring the `cms_surfaces` it
   contributes. Phase 1 reads only the basic frontmatter; Phase 2
   generalizes the manifest format.
 
 Backwards compat: existing v0.2 installs upgrading via
-`npx pectus update` get content-hub auto-activated and the prior
+`npx pectus update` get content-insights auto-activated and the prior
 mount_slug / repo / branch values written into
 `app_config`. Net effect: nothing disappears.
 
@@ -183,7 +183,7 @@ mount_slug / repo / branch values written into
 - Root files: `pectus.md`, `AGENTS.md`, `README.md`, `CHANGELOG.md`, `.env.example`, `.gitignore`, `package.json`.
 - Five seed skills with `SKILL.md` and stub schemas: `weekly-analysis`, `seo-strategy`, `jobs-to-be-done`, `internal-linking`, `knowledge-digest`.
 - Connector READMEs and stubs for Supabase, Google, Anthropic, Vercel, GitHub (under `connectors/`).
-- Pre-installed `content-hub` app at `apps/content-hub/` (was the standalone `hub-template/`).
+- Pre-installed `content-insights` app at `apps/content-insights/` (was the standalone `hub-template/`).
 - CLI command stubs.
 - Reference documentation hosted at https://pectus.ai/docs (architecture, skills spec, upgrading, FAQ, integrations).
 
@@ -192,7 +192,7 @@ No runnable code yet. PR2 onward lands the actual ports.
 ## v0.1.1 — Apps and connectors split
 
 - Renamed `apps/` to `connectors/` for infrastructure (Supabase, Google auth, Anthropic, Vercel, GitHub).
-- Moved `hub-template/` into `apps/content-hub/` as the first installable app, pre-shipped so a new install gets a visual surface immediately.
+- Moved `hub-template/` into `apps/content-insights/` as the first installable app, pre-shipped so a new install gets a visual surface immediately.
 - New apps model: `apps/` holds installable surfaces (data sources, publishers). Anyone can author one with the `make-it` skill.
 - Added `skills/make-it/` — meta-skill that scaffolds new skills and apps from a brief. Emits a `ScaffoldSpec` the CLI consumes to write files. Validates that app prompt bodies don't set tone, voice, colors, or copy (those belong to the core).
 - CLI surface expanded: `pectus app install`, `pectus app list`, `pectus make-it skill`, `pectus make-it app` (stubs in v1, implementation in PR6).
@@ -205,7 +205,7 @@ No runnable code yet. PR2 onward lands the actual ports.
 - Inbound apps land their data in three tables: `keywords` + `gsc_daily` (GSC), `analytics_metrics` (GA4), `ad_metrics` (Google Ads + Meta + LinkedIn, discriminated by `channel`). Migrations for the new tables land in PR6.
 - Conceptual docs added at https://pectus.ai/docs: `concepts.md` (the parts of Pectus and how they fit), `apps-spec.md` (the APP.md contract). `architecture.md` rewritten to reflect the new layered model. `skills-spec.md` updated to point at `make-it` as the authoring path.
 
-## v0.2.0 — Content Hub as website builder (in progress)
+## v0.2.0 — Content Insights as website builder (in progress)
 
 Foundations + most of the new surface. Publish pipeline (PR13) and install
 flow updates (PR14-16) still to land.
@@ -233,8 +233,8 @@ flow updates (PR14-16) still to land.
   materialized_path + auto-maintenance trigger + 3-level depth cap),
   `redirects`, `pages`, `page_variants`, `page_drafts`, `seed_keywords`.
 - Projects gain `mode` (seed/live), `default_locale`, `enabled_locales`,
-  `default_locale_skips_prefix`, `mount_slug`, `content_hub_repo`,
-  `content_hub_branch`. Existing rows backfill from the legacy `locale` field.
+  `default_locale_skips_prefix`, `mount_slug`, `content_insights_repo`,
+  `content_insights_branch`. Existing rows backfill from the legacy `locale` field.
 - TypeScript types in `cms/src/lib/types/pages.ts` mirror the schema. Pure
   helpers `buildTree` and `annotateWithPages` live with the types.
 
@@ -251,7 +251,7 @@ flow updates (PR14-16) still to land.
 **CMS — Pages surface (PR8 + PR9):**
 
 - New `Pages` entry in project nav.
-- New route `/projects/[code]/apps/content-hub/pages` renders the indented site-plan tree
+- New route `/projects/[code]/apps/content-insights/pages` renders the indented site-plan tree
   with status / template / intent badges, child counts, locale chips.
 - Plan actions: "Plan a pillar" (topic chooser dropdown) and "Plan full
   site" buttons invoke `plan-sitemap` and persist suggested nodes.
@@ -260,7 +260,7 @@ flow updates (PR14-16) still to land.
 
 **CMS — Create Page flow (PR11):**
 
-- Click a planned tree node → `/projects/[code]/apps/content-hub/pages/new?nodeId=X`.
+- Click a planned tree node → `/projects/[code]/apps/content-insights/pages/new?nodeId=X`.
 - Two-step picker: Purpose (six options) + Template (cards, with the
   plan's suggestion highlighted).
 - Submit creates `pages` + `page_variants` rows with blocks initialised from
@@ -269,7 +269,7 @@ flow updates (PR14-16) still to land.
 
 **CMS — Builder (PR12 partial):**
 
-- New route `/projects/[code]/apps/content-hub/pages/builder/[variantId]`.
+- New route `/projects/[code]/apps/content-insights/pages/builder/[variantId]`.
 - Chat sidebar wired to the `edit-page` skill via the `applyEdit` server
   action. Each turn calls Claude, validates structured output, persists to
   both `page_variants.blocks` and `page_drafts`.
@@ -278,22 +278,22 @@ flow updates (PR14-16) still to land.
 
 **Templates + shared block library (PR10):**
 
-- New `apps/content-hub/templates/pages/` with seven templates: home,
+- New `apps/content-insights/templates/pages/` with seven templates: home,
   pillar, content, landing, listing, contact, about. Each is a folder with
   `manifest.json` + `Render.astro` + `thumbnail.png` placeholder.
-- New `apps/content-hub/src/components/blocks/` with eight brand-aware
+- New `apps/content-insights/src/components/blocks/` with eight brand-aware
   Astro block components: Hero, Prose (markdown via `marked`), FeatureGrid,
   Testimonial, Cta, ImageBlock, LinkList, Faq.
 - `PageBlockRenderer.astro` dispatches by block type. Block components
   consume brand tokens via CSS variables only — never hardcode colors,
   fonts, or spacing.
-- Templates registry at `apps/content-hub/templates/index.ts`, exposed to
-  the CMS via the `@pectus/content-hub/templates` path alias for the
+- Templates registry at `apps/content-insights/templates/index.ts`, exposed to
+  the CMS via the `@pectus/content-insights/templates` path alias for the
   template chooser.
 
 **Insights architecture (PR16, redesigned via grill-me 2026-05-01):**
 
-The original "greenfield seed mode" (binary mode toggle that swapped weekly-analysis input source) was replaced with a unified Insights model. Eight grilled decisions; full design in `pectusai-private/v0.2-content-hub-plan.md` "Insights architecture" section.
+The original "greenfield seed mode" (binary mode toggle that swapped weekly-analysis input source) was replaced with a unified Insights model. Eight grilled decisions; full design in `pectusai-private/v0.2-content-insights-plan.md` "Insights architecture" section.
 
 - New migration `0003_v0_2_insights.sql` adds the `insights` table.
 - Migration `0002` updated to NOT add `project.mode` (no longer needed).
@@ -314,7 +314,7 @@ The original "greenfield seed mode" (binary mode toggle that swapped weekly-anal
 
 **What's still open in v0.2:**
 
-- PR12 finish: Astro `_preview/[draftId]` route in content-hub. Hybrid output config. Iframe in builder.
+- PR12 finish: Astro `_preview/[draftId]` route in content-insights. Hybrid output config. Iframe in builder.
 - PR13: full publish pipeline (commit-on-publish via the new GitHub connector). Convenience wrappers exist; need to wire a Publish button in the builder.
 - PR14: install flow updates for greenfield vs coexist (mount slug prompt). Project Settings → Site URL admin section.
 - PR15: locale variant management UI in the builder (locale switcher, per-variant slug, status chips on tree).
@@ -328,8 +328,8 @@ The original "greenfield seed mode" (binary mode toggle that swapped weekly-anal
 
 ## What's next (older v0.1 punch list, kept for context)
 
-- **PR2**: port `connectors/supabase/`, `connectors/google/`, `connectors/anthropic/` from content-hub-cms.
+- **PR2**: port `connectors/supabase/`, `connectors/google/`, `connectors/anthropic/` from content-insights-cms.
 - **PR3**: port the CMS (projects shell, brand, ICP, keywords, performance, admin, reviews). Generator routes stripped.
 - **PR4**: implement the five skills with full prompts and Zod schemas. Add `write-post` and `make-it` skills.
-- **PR5**: port the Astro `content-hub` app with neutral default styling. Implement the CLI commands. End-to-end install test.
+- **PR5**: port the Astro `content-insights` app with neutral default styling. Implement the CLI commands. End-to-end install test.
 - **PR6**: ship inbound apps (`ga4`, `google-ads`, `meta`, `linkedin`) and outbound apps (`wordpress`, `storyblok`).

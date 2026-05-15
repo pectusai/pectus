@@ -95,13 +95,13 @@ export async function checkPrereqs(
   if (surface === "publish") {
     const { data: project } = await supabase
       .from("projects")
-      .select("content_hub_repo")
+      .select("content_insights_repo")
       .eq("id", ctx.projectId)
       .maybeSingle();
-    if (!project?.content_hub_repo) {
+    if (!project?.content_insights_repo) {
       missing.push({
         name: "Configure GitHub publish target",
-        fixHref: `${projectBase}/apps/content-hub/settings/site-url`,
+        fixHref: `${projectBase}/apps/content-insights/settings/site-url`,
         fixLabel: "Open Site URL settings",
       });
     }

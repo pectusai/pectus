@@ -1,6 +1,6 @@
 # connectors/github
 
-Drives the **publish pipeline**. Pectus's CMS commits page JSON, the site-plan tree, and the redirect map directly into the user's content-hub repo. Vercel auto-deploys on commit, so publish-to-live is a single round-trip.
+Drives the **publish pipeline**. Pectus's CMS commits page JSON, the site-plan tree, and the redirect map directly into the user's content-insights repo. Vercel auto-deploys on commit, so publish-to-live is a single round-trip.
 
 Multi-file commits use the GitHub Git Database API (createBlob → createTree → createCommit → updateRef) so a publish lands as ONE atomic commit.
 
@@ -17,8 +17,8 @@ A personal access token with `repo` scope. Generate at https://github.com/settin
 Each project declares its target repo:
 
 ```
-projects.content_hub_repo    -- "<owner>/<repo>", e.g. "acme-corp/acme-content"
-projects.content_hub_branch  -- defaults to "main"
+projects.content_insights_repo    -- "<owner>/<repo>", e.g. "acme-corp/acme-content"
+projects.content_insights_branch  -- defaults to "main"
 ```
 
 The project can also have a different repo per project if a user has multiple sites.

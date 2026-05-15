@@ -15,5 +15,5 @@ The CMS reads `brand.json` on first run, syncs into the `brand_profile` Supabase
 
 This means:
 - Your brand survives a Supabase reset (just re-sync from `brand.json`).
-- Installed apps (the pre-installed `content-hub`, plus any community publisher) can read brand at build time without DB access.
+- Installed apps (the pre-installed `content-insights`, plus any community publisher) can read brand at build time without DB access.
 - Your fork's brand is portable (committed to git).

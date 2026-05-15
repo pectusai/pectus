@@ -25,7 +25,7 @@ export async function NavBar() {
       ? cookieSlug
       : (brands[0]?.slug ?? null);
   const base = activeSlug ? `/brands/${activeSlug}` : "/brands";
-  const showReviews = await isAppActiveForAnyProject("content-hub");
+  const showReviews = await isAppActiveForAnyProject("content-insights");
 
   return (
     <header className="pectus-nav">

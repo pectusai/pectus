@@ -1,4 +1,4 @@
-import type { PageBlock } from "@pectus/content-hub/blocks";
+import type { PageBlock } from "@pectus/content-insights/blocks";
 
 /* Simple React renderers for every PageBlock type. Used by the in-CMS
  * preview iframe — fidelity is "good enough to edit against", not

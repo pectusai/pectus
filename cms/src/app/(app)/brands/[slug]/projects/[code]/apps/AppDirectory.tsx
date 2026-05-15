@@ -124,7 +124,7 @@ function GroupedView({
       {outbound.length > 0 ? (
         <Group
           title="Outbound apps"
-          helper="Apps that publish or present data — content-hub, future WordPress / Storyblok / ecom storefronts."
+          helper="Apps that publish or present data — content-insights, future WordPress / Storyblok / ecom storefronts."
           count={counts.outbound}
           manifests={outbound}
           activeSet={activeSet}
@@ -273,7 +273,7 @@ function AppCard({
             manifest.type === "inbound"
               ? "Inbound apps pull data into Pectus (analytics, search console, ad spend)."
               : manifest.type === "outbound"
-                ? "Outbound apps publish content somewhere (e.g. content-hub renders to a static site)."
+                ? "Outbound apps publish content somewhere (e.g. content-insights renders to a static site)."
                 : "Unknown type. APP.md frontmatter is missing a type field."
           }
         />

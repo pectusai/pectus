@@ -79,7 +79,7 @@ export async function ProjectShell({
       <SidebarSection
         id="outbound"
         label="Apps"
-        tooltip="Consumer apps with their own user surfaces. Content Hub etc."
+        tooltip="Consumer apps with their own user surfaces. Content Insights etc."
         defaultOpen={true}
       >
         {outboundApps.length === 0 ? (

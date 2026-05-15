@@ -193,8 +193,8 @@ Three services are required to boot Pectus. Two more are optional. Walk the user
 
 **Optional (skippable)**
 
-- **Vercel** — https://vercel.com. Only needed when the user is ready to publish their content-hub site to a public URL. Create a token at https://vercel.com/account/tokens. Skip if they're staying local-only for now or if they answered "analysis only" to the welcome question.
-- **GitHub** — https://github.com. Used by the publish flow to commit pages to a content-hub repo. Pectus will help set this up later in the Vercel/GitHub step.
+- **Vercel** — https://vercel.com. Only needed when the user is ready to publish their content-insights site to a public URL. Create a token at https://vercel.com/account/tokens. Skip if they're staying local-only for now or if they answered "analysis only" to the welcome question.
+- **GitHub** — https://github.com. Used by the publish flow to commit pages to a content-insights repo. Pectus will help set this up later in the Vercel/GitHub step.
 
 **Deferred until you need them** (do not collect now):
 
@@ -300,7 +300,7 @@ Tell the user, in plain words:
 Walk them through these one at a time, with a check-in between each:
 
 1. **Create a GitHub account if they don't have one.** Go to https://github.com/signup. Email, username, password. Free.
-2. **Create the content-hub repo.** Once signed in, top-right `+` icon → New repository. Name it after the project (e.g. `pectus-content-hub` or `<brand>-site`). Visibility can be Public or Private — Pectus works with either. Skip the README, .gitignore, and license toggles (Pectus fills the repo on first publish). Click Create repository. Note the repo URL for later.
+2. **Create the content-insights repo.** Once signed in, top-right `+` icon → New repository. Name it after the project (e.g. `pectus-content-insights` or `<brand>-site`). Visibility can be Public or Private — Pectus works with either. Skip the README, .gitignore, and license toggles (Pectus fills the repo on first publish). Click Create repository. Note the repo URL for later.
 3. **Generate a personal access token.** Top-right avatar → Settings → Developer settings (bottom of left sidebar) → Personal access tokens → Tokens (classic) → Generate new token (classic). Name it `Pectus`. Expiration: pick 90 days or No expiration. Scopes: tick `repo` (full) and `workflow`. Click Generate token. **Copy it immediately — GitHub only shows it once.**
 4. **Have the user paste the token back.** Save it to `cms/.env.local` as `GITHUB_TOKEN=<value>`. Use the env-file write helper in the CLI (or have the user open `cms/.env.local` and add the line themselves) — never write it to a different file.
 
@@ -321,7 +321,7 @@ Walk them through these one at a time, with a check-in between each:
 
 Tell the user:
 
-> Both tokens are saved. Once Pectus is running you'll connect this published site to a project from the Content Hub settings page in the CMS — that's where you'll paste the GitHub repo URL and pick which Vercel project gets the deploy.
+> Both tokens are saved. Once Pectus is running you'll connect this published site to a project from the Content Insights settings page in the CMS — that's where you'll paste the GitHub repo URL and pick which Vercel project gets the deploy.
 
 Move on to step 8.
 
@@ -425,19 +425,19 @@ Tell the user, in plain words:
 
 The command creates the project row (under the brand from step 4), sets a default review policy, and saves the seed keywords. Open `http://localhost:3000/brands/<brand-slug>/projects/<code>` to see it.
 
-> **What happened to the site shape and GitHub repo questions?** They moved into the Content Hub settings page in the CMS (next step). The base project just captures identity now; the publish-target details live with the app that uses them.
+> **What happened to the site shape and GitHub repo questions?** They moved into the Content Insights settings page in the CMS (next step). The base project just captures identity now; the publish-target details live with the app that uses them.
 
 ## 10. Activate apps for the project
 
 Print to the user verbatim:
 
-> **Step 10 of 12: turning on the apps you want to use.** A project starts blank and you switch on the apps that fit. Most people switch on Content Hub (the bundled publish-to-a-public-site app) right away.
+> **Step 10 of 12: turning on the apps you want to use.** A project starts blank and you switch on the apps that fit. Most people switch on Content Insights (the bundled publish-to-a-public-site app) right away.
 
-In v0.4.2 every project starts with no apps active — the user picks. Walk them through activating Content Hub if they want a public site (most users do):
+In v0.4.2 every project starts with no apps active — the user picks. Walk them through activating Content Insights if they want a public site (most users do):
 
 1. Open `http://localhost:3000/brands/<slug>/projects/<code>/apps` in their browser. (Or just click **Apps** in the project's sidebar.)
-2. Find the **content-hub** row and click **Activate**. The badge flips to "Active". The Content Hub group appears in the project sidebar with **Insights, Articles, Pages, Files, Sources, Settings** as children. (If the group doesn't appear immediately, ask the user to refresh the page once.)
-3. **Configure the publish target** — only if the user said "will publish" in the welcome. Click **Settings** in the Content Hub sidebar group, then the **Site URL** sub-tab. Fill in:
+2. Find the **content-insights** row and click **Activate**. The badge flips to "Active". The Content Insights group appears in the project sidebar with **Insights, Articles, Pages, Files, Sources, Settings** as children. (If the group doesn't appear immediately, ask the user to refresh the page once.)
+3. **Configure the publish target** — only if the user said "will publish" in the welcome. Click **Settings** in the Content Insights sidebar group, then the **Site URL** sub-tab. Fill in:
    - **Mount slug** — `/` if Pectus runs the whole site, `/insights/` (or similar) if Pectus only adds a section under an existing site.
    - **GitHub repo** — where Pectus pushes built pages. The user should:
      1. Open github.com → **New repository** → name it (something like `<their-brand>-pectus`) → don't tick README/license/gitignore → **Create repository**.
@@ -447,7 +447,7 @@ In v0.4.2 every project starts with no apps active — the user picks. Walk them
 
    **Important if the user already has a website on Vercel + GitHub** (the "existing site" path from the welcome). If they want Pectus to replace the existing site (most common scenario), tell them: don't reuse the existing site's repo. Use a fresh empty repo. After install, they'll switch their Vercel project's git source to the new repo. Full details at https://pectus.ai/docs/faq/install/replace-or-add-to-existing-site.
 
-If the user said "analysis only" in the welcome, skip step 10.3. They can activate Content Hub publishing later from the same Settings page whenever they decide to publish.
+If the user said "analysis only" in the welcome, skip step 10.3. They can activate Content Insights publishing later from the same Settings page whenever they decide to publish.
 
 **Activating Search Console (gsc) or Google Analytics (ga4).** If the user wants either, walk them through this in the same Apps page:
 
@@ -463,7 +463,7 @@ Print to the user verbatim:
 
 > **Step 11 of 12: running your first analysis.** Pectus reads everything you've given it (keywords, ICP, brand voice, traffic if connected) and asks Claude to produce a content plan ranked by projected traffic. Takes a minute.
 
-**Recommended path:** open the dashboard at `http://localhost:3000/brands/<slug>/projects/<code>/apps/content-hub/insights` and click **Run first analysis**. The button walks through Snapshot → Stage 1 (Opus interpretation) → Stage 2 (Opus ideas) and renders the result inline when it finishes — same data the dashboard then keeps.
+**Recommended path:** open the dashboard at `http://localhost:3000/brands/<slug>/projects/<code>/apps/content-insights/insights` and click **Run first analysis**. The button walks through Snapshot → Stage 1 (Opus interpretation) → Stage 2 (Opus ideas) and renders the result inline when it finishes — same data the dashboard then keeps.
 
 If the user prefers the CLI:
 
@@ -481,7 +481,7 @@ The CMS is running at `http://localhost:3000`, signed in as the admin from step 
 
 Now they choose what to do first. Present both doors clearly, then let them pick:
 
-**Door A — Start producing with the bundled content-hub.**
+**Door A — Start producing with the bundled content-insights.**
 Open the dashboard. The weekly analysis has ranked content opportunities by projected traffic. Pick one, click into the page builder, draft, publish. This is the fastest path to seeing Pectus do something useful, and it's where most users start.
 
 **Door B — Teach Pectus a new trick.**

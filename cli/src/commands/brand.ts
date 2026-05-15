@@ -303,7 +303,7 @@ async function runManual(opts: { repo: string }): Promise<void> {
   const { repo } = opts;
 
   note(
-    "Answers go to brands/<slug>/brand.json. The CMS and every installed app (including the pre-installed content-hub) read from there.",
+    "Answers go to brands/<slug>/brand.json. The CMS and every installed app (including the pre-installed content-insights) read from there.",
     "What this does",
   );
 
