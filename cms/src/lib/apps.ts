@@ -9,6 +9,7 @@ export type AppManifest = {
   type: AppType;
   description: string;
   version: string;
+  comingSoon: boolean;
 };
 
 export type AppListing = AppManifest & {
@@ -40,15 +41,29 @@ export const APP_SIDEBAR_MANIFESTS: Record<string, AppSidebarManifest> = {
       { label: "Articles", href: (b) => `${b}/apps/content-insights/articles` },
       { label: "Pages", href: (b) => `${b}/apps/content-insights/pages` },
       { label: "Files", href: (b) => `${b}/apps/content-insights/files` },
-      { label: "Sources", href: (b) => `${b}/apps/content-insights/sources` },
       { label: "Settings", href: (b) => `${b}/apps/content-insights/settings` },
     ],
   },
   ga4: {
     label: "GA4",
-    tooltip: "Google Analytics 4 traffic data.",
+    tooltip: "Google Analytics 4 traffic data feed.",
     items: [
-      { label: "Performance", href: (b) => `${b}/apps/ga4/performance` },
+      { label: "Settings", href: (b) => `${b}/apps/ga4/settings` },
+    ],
+  },
+  gsc: {
+    label: "Search Console",
+    tooltip: "Google Search Console organic-search feed.",
+    items: [
+      { label: "Settings", href: (b) => `${b}/apps/gsc/settings` },
+    ],
+  },
+  sources: {
+    label: "Sources",
+    tooltip:
+      "Page and sitemap scraper that feeds first-party content into Pectus.",
+    items: [
+      { label: "Settings", href: (b) => `${b}/apps/sources/settings` },
     ],
   },
 };
@@ -83,6 +98,7 @@ async function readAppManifest(name: string): Promise<AppManifest | null> {
       type,
       description: fm.description ?? "",
       version: fm.version ?? "0.0.0",
+      comingSoon: fm.comingSoon === "true",
     };
   } catch {
     return null;

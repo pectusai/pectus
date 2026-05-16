@@ -19,6 +19,7 @@ export default async function ProjectAppsPage({
     type: m.type,
     version: m.version,
     description: m.description,
+    comingSoon: m.comingSoon,
   }));
 
   return (

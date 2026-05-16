@@ -7,6 +7,7 @@ import { listProjectsForBrand } from "@/lib/project";
 import { createServerClient } from "@pectus/supabase";
 import { SidebarFrame } from "./SidebarFrame";
 import { SidebarGroup } from "./SidebarGroup";
+import { SidebarHeadingLink } from "./SidebarHeadingLink";
 import { SidebarLink } from "./SidebarLink";
 import { SidebarSection } from "./SidebarSection";
 import { ProjectHeaderSwitcher } from "./ProjectHeaderSwitcher";
@@ -115,15 +116,22 @@ export async function ProjectShell({
   );
 
   const footer = (
-    <SidebarSection
-      id="project-settings"
-      label="Project settings"
-      tooltip="Project-wide setup. ICP feeds the AI surfaces; Keywords feeds analysis and gap detection."
-      defaultOpen={false}
-    >
-      <SidebarLink href={`${base}/icp`}>ICP</SidebarLink>
-      <SidebarLink href={`${base}/keywords`}>Keywords</SidebarLink>
-    </SidebarSection>
+    <>
+      <SidebarHeadingLink
+        href={`${base}/apps`}
+        label="Browse apps"
+        tooltip="See every inbound and outbound app available, and activate the ones you want for this project."
+      />
+      <SidebarSection
+        id="project-settings"
+        label="Project settings"
+        tooltip="Project-wide setup. ICP feeds the AI surfaces; Keywords feeds analysis and gap detection."
+        defaultOpen={false}
+      >
+        <SidebarLink href={`${base}/icp`}>ICP</SidebarLink>
+        <SidebarLink href={`${base}/keywords`}>Keywords</SidebarLink>
+      </SidebarSection>
+    </>
   );
 
   return (

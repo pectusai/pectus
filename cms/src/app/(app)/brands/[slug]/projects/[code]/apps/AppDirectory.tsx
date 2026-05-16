@@ -10,6 +10,7 @@ type Manifest = {
   type: "inbound" | "outbound" | "unknown";
   version: string;
   description: string;
+  comingSoon: boolean;
 };
 
 type Filter = "all" | "outbound" | "inbound" | "unknown";
@@ -242,8 +243,14 @@ function AppCard({
   brandSlug: string;
   projectCode: string;
 }) {
+  const soon = manifest.comingSoon;
   return (
-    <li className="flex flex-col rounded-lg border border-zinc-200 bg-white p-4">
+    <li
+      className={
+        "flex flex-col rounded-lg border bg-white p-4 " +
+        (soon ? "border-dashed border-zinc-300" : "border-zinc-200")
+      }
+    >
       <div className="flex items-baseline justify-between gap-2">
         <h3 className="font-mono text-sm font-semibold text-zinc-900">
           {manifest.name}
@@ -251,17 +258,21 @@ function AppCard({
         <span
           className={
             "rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-widest " +
-            (on
-              ? "bg-emerald-50 text-emerald-700"
-              : "bg-zinc-100 text-zinc-600")
+            (soon
+              ? "bg-amber-50 text-amber-800"
+              : on
+                ? "bg-emerald-50 text-emerald-700"
+                : "bg-zinc-100 text-zinc-600")
           }
           title={
-            on
-              ? "This app is active for this project. Its surfaces appear in the sidebar."
-              : "Available but not yet active for this project."
+            soon
+              ? "This app is announced but not yet built. You'll be able to activate it once the fetch pipeline ships."
+              : on
+                ? "This app is active for this project. Its surfaces appear in the sidebar."
+                : "Available but not yet active for this project."
           }
         >
-          {on ? "Active" : "Available"}
+          {soon ? "Coming soon" : on ? "Active" : "Available"}
         </span>
       </div>
       <div className="mt-1 flex items-center gap-1.5">
@@ -282,24 +293,35 @@ function AppCard({
       <p className="mt-2 flex-1 text-sm text-zinc-600">
         {manifest.description || "No description in APP.md frontmatter."}
       </p>
-      <form
-        action={on ? deactivateAction : activateAction}
-        className="mt-4"
-      >
-        <input type="hidden" name="app_name" value={manifest.name} />
-        <input type="hidden" name="project_code" value={projectCode} />
-        <input type="hidden" name="brand_slug" value={brandSlug} />
-        <SubmitButton
-          pendingLabel={on ? "Deactivating…" : "Activating…"}
-          className={
-            on
-              ? "rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
-              : "rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700"
-          }
+      {soon ? (
+        <button
+          type="button"
+          disabled
+          className="mt-4 cursor-not-allowed rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-medium text-zinc-400"
+          title="Coming soon. Activation opens once the fetch pipeline ships."
         >
-          {on ? "Deactivate" : "Activate"}
-        </SubmitButton>
-      </form>
+          Coming soon
+        </button>
+      ) : (
+        <form
+          action={on ? deactivateAction : activateAction}
+          className="mt-4"
+        >
+          <input type="hidden" name="app_name" value={manifest.name} />
+          <input type="hidden" name="project_code" value={projectCode} />
+          <input type="hidden" name="brand_slug" value={brandSlug} />
+          <SubmitButton
+            pendingLabel={on ? "Deactivating…" : "Activating…"}
+            className={
+              on
+                ? "rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+                : "rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700"
+            }
+          >
+            {on ? "Deactivate" : "Activate"}
+          </SubmitButton>
+        </form>
+      )}
     </li>
   );
 }

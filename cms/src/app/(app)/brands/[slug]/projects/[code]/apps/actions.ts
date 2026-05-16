@@ -3,7 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { getProjectByCode } from "@/lib/project";
-import { activateAppForProject, deactivateAppForProject } from "@/lib/apps";
+import {
+  activateAppForProject,
+  deactivateAppForProject,
+  listAppManifests,
+} from "@/lib/apps";
 
 export async function activateAction(formData: FormData) {
   await requireUser();
@@ -11,6 +15,9 @@ export async function activateAction(formData: FormData) {
   const code = String(formData.get("project_code") ?? "").trim();
   const slug = String(formData.get("brand_slug") ?? "").trim();
   if (!appName || !code) return;
+  const manifests = await listAppManifests();
+  const manifest = manifests.find((m) => m.name === appName);
+  if (manifest?.comingSoon) return;
   const project = await getProjectByCode(code);
   await activateAppForProject(project.id, appName);
   revalidatePath(`/brands/${slug}/projects/${code}/apps`);
