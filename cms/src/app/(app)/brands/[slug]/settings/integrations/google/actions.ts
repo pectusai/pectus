@@ -64,7 +64,7 @@ export async function saveGoogleServiceAccount(
   if (error) {
     return { ok: false, error: `Save failed: ${error.message}` };
   }
-  revalidatePath(`/brands/${slug}/settings/integrations/google`);
+  revalidatePath(`/brands/${slug}`, "layout");
   return { ok: true, message: `Connected as ${parsed.key.client_email}.` };
 }
 
@@ -86,7 +86,7 @@ export async function clearGoogleServiceAccount(formData: FormData) {
     })
     .eq("brand_id", brand.id)
     .eq("provider", "google");
-  revalidatePath(`/brands/${slug}/settings/integrations/google`);
+  revalidatePath(`/brands/${slug}`, "layout");
 }
 
 export async function saveGa4(
@@ -132,7 +132,7 @@ export async function saveGa4(
     .eq("brand_id", brand.id)
     .eq("provider", "google");
 
-  revalidatePath(`/brands/${slug}/settings/integrations/google`);
+  revalidatePath(`/brands/${slug}`, "layout");
   return { ok: true, message: "GA4 property saved and verified." };
 }
 
@@ -184,7 +184,7 @@ export async function saveGsc(
     .eq("brand_id", brand.id)
     .eq("provider", "google");
 
-  revalidatePath(`/brands/${slug}/settings/integrations/google`);
+  revalidatePath(`/brands/${slug}`, "layout");
   return { ok: true, message: "Search Console site saved and verified." };
 }
 
