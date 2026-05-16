@@ -37,12 +37,8 @@ Auth uses the shared Google service-account credential set up via `npx pectus co
 
 `analytics_metrics`. Columns: `project_id`, `date`, `metric_name`, `value`, `dimensions` (JSONB).
 
-Migrations land with this app at `connectors/supabase/migrations/0002_analytics_metrics.sql` (added in PR6).
+The shared `analytics_metrics` table lives in `connectors/supabase/migrations/0006_analytics_metrics.sql`. Same table is shared with future paid-media inbound apps (Google Ads, Meta, LinkedIn, Microsoft Ads) so one skill reads from all sources via `cms/src/lib/analytics.ts::readAnalyticsMetrics`.
 
 ## Invoke
 
-```
-npx pectus app fetch ga4 --project <code> --since 2026-04-01 --until 2026-04-30
-```
-
-The CMS dashboard also exposes a "Refresh GA4" button per project that calls into the same runner.
+The GA4 Settings page in the CMS exposes a "Refresh GA4 data now" button per project that runs `fetchGa4` against the brand's service account and configured property. Default lookback is 30 days. There is no CLI fetch command yet; everything runs from the CMS.

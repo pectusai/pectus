@@ -65,6 +65,18 @@
       ],
       "@pectus/apps/*/insights/schema": [
         "../apps/*/insights/schema.ts"
+      ],
+      "@pectus/apps/ga4/fetch": [
+        "../apps/ga4/fetch.ts"
+      ],
+      "@pectus/apps/ga4/schema": [
+        "../apps/ga4/schema.ts"
+      ],
+      "@pectus/apps/gsc/fetch": [
+        "../apps/gsc/fetch.ts"
+      ],
+      "@pectus/apps/gsc/schema": [
+        "../apps/gsc/schema.ts"
       ]
     }
   },

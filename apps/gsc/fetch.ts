@@ -1,24 +1,80 @@
-/**
- * fetch.ts — GSC API fetch for one project, one date range.
- *
- * Stub in v1. Real implementation lands in PR6.
- *
- * Auth via @pectus/google/service-account (shared credential). API client
- * functions already live in connectors/google/gsc.ts (fetchGscQueryRows etc).
- * This module orchestrates the calls at two grains and shapes the results.
- *
- * Returns a GscFetchResult matching ./schema.ts. The runner upserts
- * keyword_rows into keywords (matching on project_id + query) and inserts
- * gsc_daily_rows into gsc_daily.
- */
+import type {
+  GscFetchResultOutput,
+  KeywordAggregateRowOutput,
+  GscDailyRowOutput,
+} from "./schema";
+import {
+  fetchGscQueryRows,
+  fetchGscDailyByQueryPage,
+} from "../../connectors/google/gsc";
+import type { ServiceAccountKey } from "../../connectors/google/service-account";
 
-import type { GscFetchResultOutput } from "./schema.js";
+const AGGREGATE_WINDOW_DAYS = 28;
+const DAILY_WINDOW_DAYS = 7;
 
-export async function fetch(_args: {
+function formatDate(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+function daysAgo(n: number): string {
+  return formatDate(new Date(Date.now() - n * 24 * 3600 * 1000));
+}
+
+export async function fetchGsc({
+  projectId,
+  siteUrl,
+  key,
+  since,
+  until,
+}: {
   projectId: string;
   siteUrl: string;
-  since: string;
-  until: string;
+  key: ServiceAccountKey;
+  since?: string;
+  until?: string;
 }): Promise<GscFetchResultOutput> {
-  throw new Error("apps/gsc/fetch.ts is stubbed in v1. Implementation in PR6.");
+  const today = formatDate(new Date());
+  const aggregateUntil = until ?? today;
+  const aggregateSince = since ?? daysAgo(AGGREGATE_WINDOW_DAYS);
+  const dailySince = since ?? daysAgo(DAILY_WINDOW_DAYS);
+  const dailyUntil = until ?? today;
+
+  const aggregateRes = await fetchGscQueryRows(key, siteUrl, "", AGGREGATE_WINDOW_DAYS);
+  if (!aggregateRes.ok) {
+    throw new Error(aggregateRes.error);
+  }
+  const keywordRows: KeywordAggregateRowOutput[] = aggregateRes.rows.map((r) => ({
+    project_id: projectId,
+    query: r.query,
+    impressions: r.impressions,
+    clicks: r.clicks,
+    position: r.position,
+    ctr: r.ctr,
+    window_days: AGGREGATE_WINDOW_DAYS,
+  }));
+
+  const dailyRes = await fetchGscDailyByQueryPage(key, siteUrl, dailySince, dailyUntil);
+  if (!dailyRes.ok) {
+    throw new Error(dailyRes.error);
+  }
+  const dailyRows: GscDailyRowOutput[] = dailyRes.rows.map((r) => ({
+    project_id: projectId,
+    date: r.date,
+    query: r.query,
+    page: r.page,
+    impressions: r.impressions,
+    clicks: r.clicks,
+    position: r.position,
+  }));
+
+  return {
+    project_id: projectId,
+    site_url: siteUrl,
+    range: { since: aggregateSince, until: aggregateUntil },
+    keyword_rows: keywordRows,
+    gsc_daily_rows: dailyRows,
+    fetched_at: new Date().toISOString(),
+    keyword_row_count: keywordRows.length,
+    daily_row_count: dailyRows.length,
+  };
 }

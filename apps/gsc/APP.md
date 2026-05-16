@@ -44,15 +44,11 @@ Populated via `npx pectus connect gsc --project <code>` or the CMS project setti
 - `keywords` (existing) — updates the GSC-related fields on each keyword row.
 - `gsc_daily` (new in PR6) — `(project_id, date, query, page, impressions, clicks, position)`.
 
-Migrations land at `connectors/supabase/migrations/0004_gsc_daily.sql` (added in PR6). The `keywords` schema already contains the GSC fields, so no migration is required for the aggregated grain.
+The `gsc_daily` table lives in `connectors/supabase/migrations/0006_analytics_metrics.sql` alongside the cross-source `analytics_metrics` table. The aggregated grain writes into `keywords.metadata`, no schema change required.
 
 ## Invoke
 
-```
-npx pectus app fetch gsc --project <code> --since 2026-04-01 --until 2026-04-30
-```
-
-Default invocation (no args) fetches the last 28 days at the aggregated grain plus the last 7 days at the daily grain.
+The Search Console Settings page in the CMS exposes a "Refresh Search Console data now" button. Default fetch is the last 28 days at the aggregated grain plus the last 7 days at the daily grain. There is no CLI fetch command yet; everything runs from the CMS.
 
 ## Notes
 

@@ -16,6 +16,15 @@ export type GscPageRow = {
   position: number;
 };
 
+export type GscDailyRowRaw = {
+  date: string;
+  query: string;
+  page: string;
+  clicks: number;
+  impressions: number;
+  position: number;
+};
+
 export async function fetchGscQueryRows(
   key: ServiceAccountKey,
   siteUrl: string,
@@ -66,6 +75,73 @@ export async function testSearchConsoleSite(
     return { ok: true, message: "Search Console responded ok." };
   } catch (err) {
     return { ok: false, message: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export async function fetchGscDailyByQueryPage(
+  key: ServiceAccountKey,
+  siteUrl: string,
+  startDate: string,
+  endDate: string,
+): Promise<
+  { ok: true; rows: GscDailyRowRaw[] } | { ok: false; error: string }
+> {
+  try {
+    const token = await getAccessToken(key, [
+      "https://www.googleapis.com/auth/webmasters.readonly",
+    ]);
+    const encoded = encodeURIComponent(siteUrl);
+    const pageSize = 25000;
+    const maxPages = 10;
+    const all: GscDailyRowRaw[] = [];
+
+    for (let p = 0; p < maxPages; p += 1) {
+      const body = {
+        startDate,
+        endDate,
+        dimensions: ["date", "query", "page"],
+        rowLimit: pageSize,
+        startRow: p * pageSize,
+      };
+      const res = await fetch(
+        `https://searchconsole.googleapis.com/webmasters/v3/sites/${encoded}/searchAnalytics/query`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        },
+      );
+      if (!res.ok) {
+        const text = await res.text();
+        return {
+          ok: false,
+          error: `GSC daily failed (${res.status}): ${text.slice(0, 400)}`,
+        };
+      }
+      const json = (await res.json()) as { rows?: GscRawRow[] };
+      const rows = json.rows ?? [];
+      for (const r of rows) {
+        const d = r.keys?.[0];
+        const q = r.keys?.[1];
+        const pg = r.keys?.[2];
+        if (!d || !q || !pg) continue;
+        all.push({
+          date: d,
+          query: q,
+          page: pg,
+          clicks: Math.round(r.clicks ?? 0),
+          impressions: Math.round(r.impressions ?? 0),
+          position: r.position ?? 0,
+        });
+      }
+      if (rows.length < pageSize) break;
+    }
+    return { ok: true, rows: all };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
   }
 }
 

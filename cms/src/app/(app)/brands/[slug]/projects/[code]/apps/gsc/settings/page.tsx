@@ -7,6 +7,7 @@ import {
 } from "@/app/(app)/brands/[slug]/settings/integrations/google/Forms";
 import { clearGoogleServiceAccount } from "@/app/(app)/brands/[slug]/settings/integrations/google/actions";
 import { SubmitButton } from "@/app/components/SubmitButton";
+import { GscRefreshForm } from "../RefreshForm";
 
 type GoogleIntegration = {
   service_account_json: { client_email?: string } | null;
@@ -23,7 +24,7 @@ export default async function GscSettingsPage({
 }) {
   const { slug, code } = await params;
   const brand = await getBrandBySlug(slug);
-  await getProjectByCode(code);
+  const project = await getProjectByCode(code);
 
   const supabase = await createServerClient();
   const { data } = await supabase
@@ -38,6 +39,17 @@ export default async function GscSettingsPage({
   const connected = Boolean(integration?.service_account_json);
   const siteSet = Boolean(integration?.gsc_site_url);
   const ready = connected && siteSet;
+
+  const { data: freshness } = await supabase
+    .from("project_data_freshness")
+    .select("last_updated_at")
+    .eq("project_id", project.id)
+    .eq("surface", "gsc")
+    .maybeSingle();
+  const { count: dailyCount } = await supabase
+    .from("gsc_daily")
+    .select("id", { count: "exact", head: true })
+    .eq("project_id", project.id);
 
   return (
     <div className="mx-auto max-w-3xl space-y-8 px-2 py-2">
@@ -130,6 +142,33 @@ export default async function GscSettingsPage({
           </p>
         ) : null}
       </section>
+
+      {ready ? (
+        <section className="space-y-3 rounded-lg border border-zinc-200 bg-white p-5">
+          <header className="flex items-baseline justify-between gap-3">
+            <h2 className="text-sm font-semibold text-zinc-900">Data</h2>
+            <span className="text-xs text-zinc-500">
+              {(dailyCount ?? 0).toLocaleString()} rows in <code>gsc_daily</code>
+            </span>
+          </header>
+          <p className="text-sm text-zinc-700">
+            Pectus fetches 28-day aggregate stats per query (stored on each
+            keyword row) and 7-day daily rows per (date, query, page) for trend
+            analysis.
+          </p>
+          {freshness?.last_updated_at ? (
+            <p className="text-xs text-zinc-500">
+              Last fetched{" "}
+              {new Date(freshness.last_updated_at).toLocaleString()}.
+            </p>
+          ) : (
+            <p className="text-xs text-zinc-500">
+              No data fetched yet for this project.
+            </p>
+          )}
+          <GscRefreshForm brandSlug={slug} projectCode={code} />
+        </section>
+      ) : null}
     </div>
   );
 }

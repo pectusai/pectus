@@ -1,22 +1,45 @@
-/**
- * fetch.ts — GA4 Data API fetch for one project, one date range.
- *
- * Stub in v1. Real implementation lands in PR6.
- *
- * Auth via @pectus/google/service-account (shared credential set up by
- * `npx pectus connect google`). Uses the BetaAnalyticsData runReport endpoint.
- *
- * Returns an Ga4FetchResult matching ./schema.ts. The runner inserts the rows
- * into analytics_metrics and writes a row to app_runs for observability.
- */
+import type { Ga4FetchResultOutput, AnalyticsRowOutput } from "./schema";
+import { fetchGa4DailyMetrics } from "../../connectors/google/ga4";
+import type { ServiceAccountKey } from "../../connectors/google/service-account";
 
-import type { Ga4FetchResultOutput } from "./schema.js";
-
-export async function fetch(_args: {
+export async function fetchGa4({
+  projectId,
+  propertyId,
+  key,
+  since,
+  until,
+}: {
   projectId: string;
   propertyId: string;
+  key: ServiceAccountKey;
   since: string;
   until: string;
 }): Promise<Ga4FetchResultOutput> {
-  throw new Error("apps/ga4/fetch.ts is stubbed in v1. Implementation in PR6.");
+  const res = await fetchGa4DailyMetrics(key, propertyId, since, until);
+  if (!res.ok) {
+    throw new Error(res.error);
+  }
+
+  const rows: AnalyticsRowOutput[] = res.rows.map((r) => ({
+    project_id: projectId,
+    date: r.date,
+    metric_name: r.metric_name,
+    value: r.value,
+    dimensions: {
+      page_path: r.dimensions.page_path ?? null,
+      source: r.dimensions.source ?? null,
+      medium: r.dimensions.medium ?? null,
+      campaign: null,
+      country: null,
+    },
+  }));
+
+  return {
+    project_id: projectId,
+    property_id: propertyId,
+    range: { since, until },
+    rows,
+    fetched_at: new Date().toISOString(),
+    row_count: rows.length,
+  };
 }
