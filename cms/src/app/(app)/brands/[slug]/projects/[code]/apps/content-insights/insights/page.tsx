@@ -11,6 +11,7 @@ import { RunAnalysisButton } from "./RunAnalysisButton";
 import { RenewButton } from "./RenewButton";
 import { IdeaCard } from "./IdeaCard";
 import { DataSummary } from "./DataSummary";
+import { InfoDot } from "@/app/components/InfoDot";
 
 export const dynamic = "force-dynamic";
 
@@ -180,15 +181,30 @@ export default async function InsightsPage({
 
         <dl className="pectus-insights-counters">
           <div className="pectus-insights-counter">
-            <dt>Keywords</dt>
+            <dt>
+              Keywords{" "}
+              <InfoDot
+                text="Add keywords at Project settings → Keywords (paste a list) or activate Search Console to pull real query data automatically. The more keywords Pectus sees, the sharper the gap analysis and the more relevant the suggested topics."
+              />
+            </dt>
             <dd>{counts.keywords.toLocaleString("en-US")}</dd>
           </div>
           <div className="pectus-insights-counter">
-            <dt>Articles</dt>
+            <dt>
+              Articles{" "}
+              <InfoDot
+                text="Add or import articles in Content Insights → Articles. Listing what you've already published lets the analysis avoid recommending duplicates and surface refresh candidates instead."
+              />
+            </dt>
             <dd>{counts.articles.toLocaleString("en-US")}</dd>
           </div>
           <div className="pectus-insights-counter">
-            <dt>ATP entries</dt>
+            <dt>
+              ATP entries{" "}
+              <InfoDot
+                text="ATP entries are 'people also ask' style questions exported from AnswerThePublic.com or similar tools, tied to your seed keywords. They give the analysis the exact phrasing real searchers use, so suggested titles match real intent. CMS import path is queued."
+              />
+            </dt>
             <dd>{counts.atp.toLocaleString("en-US")}</dd>
           </div>
         </dl>
