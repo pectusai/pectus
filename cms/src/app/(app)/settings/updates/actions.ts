@@ -44,6 +44,7 @@ export async function applyMigration(formData: FormData): Promise<ApplyResult> {
   }
 
   revalidatePath("/settings/updates");
+  revalidatePath("/", "layout");
   return { ok: true, message: `Applied ${m.filename}.` };
 }
 
@@ -74,6 +75,7 @@ export async function markMigrationApplied(
   }
 
   revalidatePath("/settings/updates");
+  revalidatePath("/", "layout");
   return { ok: true, message: `Marked ${filename} as applied.` };
 }
 
@@ -81,6 +83,7 @@ export async function applyAllPending(): Promise<ApplyAllResult> {
   await requireAdmin();
   const report = await runPendingMigrations();
   revalidatePath("/settings/updates");
+  revalidatePath("/", "layout");
   if (report.attempted === 0 && report.remaining.length === 0) {
     return {
       ok: true,
