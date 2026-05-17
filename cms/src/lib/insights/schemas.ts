@@ -157,7 +157,7 @@ export const AnalysisStage1 = z.object({
     .array(
       z.object({
         cluster_name: z.string(),
-        keywords: z.array(z.string()).max(10),
+        keywords: z.array(z.string()),
         intent: z
           .enum([
             "informational",
@@ -172,7 +172,7 @@ export const AnalysisStage1 = z.object({
     .max(6)
     .optional()
     .describe(
-      "Up to 6 keyword clusters for content planning. Each cluster lists at most 10 representative keywords. Omit when there isn't enough keyword data to form meaningful clusters.",
+      "Up to 6 keyword clusters for content planning. Each cluster lists the representative keywords that define it. Omit when there isn't enough keyword data to form meaningful clusters.",
     ),
   suggested_new_categories: z
     .array(CategorySuggestion)
