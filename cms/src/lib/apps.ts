@@ -66,6 +66,17 @@ export const APP_SIDEBAR_MANIFESTS: Record<string, AppSidebarManifest> = {
       { label: "Settings", href: (b) => `${b}/apps/sources/settings` },
     ],
   },
+  "seed-keywords": {
+    label: "Seed keywords",
+    tooltip:
+      "Hand-typed seed keywords plus AnswerThePublic-style question imports. Used to bootstrap the analysis when live traffic is thin.",
+    items: [
+      {
+        label: "Settings",
+        href: (b) => `${b}/apps/seed-keywords/settings`,
+      },
+    ],
+  },
 };
 
 function parseFrontmatter(raw: string): Record<string, string> {

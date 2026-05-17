@@ -105,15 +105,17 @@ export async function gatherGa4(
     averageEngagementTime: 0,
     conversions: 0,
   });
+  // Keys here are the canonical metric_name values the GA4 connector
+  // writes into analytics_metrics (see METRIC_MAP in connectors/google/ga4.ts),
+  // NOT the GA4 API metric names. Mismatch here means metrics silently
+  // disappear into Stage 1.
   const dailyMetricFields: Record<string, keyof Ga4DailyRow> = {
     sessions: "sessions",
-    totalUsers: "totalUsers",
-    newUsers: "newUsers",
-    screenPageViews: "pageviews",
+    total_users: "totalUsers",
+    new_users: "newUsers",
     pageviews: "pageviews",
-    engagedSessions: "engagedSessions",
-    averageEngagementTime: "averageEngagementTime",
-    userEngagementDuration: "averageEngagementTime",
+    engaged_sessions: "engagedSessions",
+    avg_engagement_time_seconds: "averageEngagementTime",
     conversions: "conversions",
   };
   for (const r of rows) {
@@ -141,10 +143,7 @@ export async function gatherGa4(
     }
     const target = pageAgg.get(page)!;
     if (r.metric_name === "sessions") target.sessions += Number(r.value) || 0;
-    else if (
-      r.metric_name === "screenPageViews" ||
-      r.metric_name === "pageviews"
-    )
+    else if (r.metric_name === "pageviews")
       target.pageviews += Number(r.value) || 0;
     else if (r.metric_name === "conversions")
       target.conversions += Number(r.value) || 0;

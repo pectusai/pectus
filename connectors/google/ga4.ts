@@ -152,7 +152,7 @@ const METRIC_MAP: Record<string, Ga4DailyMetricRow["metric_name"]> = {
   totalUsers: "total_users",
   newUsers: "new_users",
   screenPageViews: "pageviews",
-  averageEngagementTime: "avg_engagement_time_seconds",
+  averageSessionDuration: "avg_engagement_time_seconds",
   conversions: "conversions",
   engagedSessions: "engaged_sessions",
 };
@@ -215,7 +215,7 @@ export async function fetchGa4DailyMetrics(
       "newUsers",
       "screenPageViews",
       "engagedSessions",
-      "averageEngagementTime",
+      "averageSessionDuration",
       "conversions",
     ];
     const overall = await runGa4Report(token, propertyId, {
