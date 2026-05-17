@@ -1,6 +1,6 @@
 ---
 name: google-ads
-description: Pull paid search performance from Google Ads into the ad_metrics table.
+description: Use this to pull your Google Ads spend and conversions into Pectus for blended performance reporting alongside organic.
 type: inbound
 stub: true
 version: 1.0.0

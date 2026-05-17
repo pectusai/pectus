@@ -1,6 +1,6 @@
 ---
 name: linkedin
-description: Pull paid social performance from the LinkedIn Marketing API into the ad_metrics table.
+description: Use this to pull your LinkedIn Ads spend and conversions into Pectus for blended performance reporting alongside organic.
 type: inbound
 stub: true
 version: 1.0.0

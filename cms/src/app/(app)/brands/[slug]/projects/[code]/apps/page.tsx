@@ -14,13 +14,15 @@ export default async function ProjectAppsPage({
     listActivatedAppsForProject(project.id),
   ]);
 
-  const plain = manifests.map((m) => ({
-    name: m.name,
-    type: m.type,
-    version: m.version,
-    description: m.description,
-    comingSoon: m.comingSoon,
-  }));
+  const plain = manifests
+    .filter((m) => !m.comingSoon)
+    .map((m) => ({
+      name: m.name,
+      type: m.type,
+      version: m.version,
+      description: m.description,
+      comingSoon: m.comingSoon,
+    }));
 
   return (
     <div className="space-y-6">
@@ -31,6 +33,11 @@ export default async function ProjectAppsPage({
           adds its surfaces to the sidebar. Apps work independently — turn one
           on without configuring another. Filter to see only inbound (data
           providers) or outbound (consumer apps with their own surfaces).
+          Coming-soon apps are listed in the{" "}
+          <a className="underline" href="/apps">
+            global apps directory
+          </a>{" "}
+          instead.
         </p>
       </header>
 

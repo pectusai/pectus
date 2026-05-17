@@ -9,18 +9,15 @@ type Manifest = {
   type: "inbound" | "outbound" | "unknown";
   version: string;
   description: string;
+  comingSoon: boolean;
 };
-
-type ActivationCount = { name: string; count: number };
 
 type Filter = "all" | "outbound" | "inbound" | "unknown";
 
 export function AppCatalog({
   manifests,
-  activations,
 }: {
   manifests: Manifest[];
-  activations: ActivationCount[];
 }) {
   const [filter, setFilter] = useState<Filter>("all");
 
@@ -29,12 +26,6 @@ export function AppCatalog({
     for (const m of manifests) c[m.type] += 1;
     return c;
   }, [manifests]);
-
-  const activationMap = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const a of activations) m.set(a.name, a.count);
-    return m;
-  }, [activations]);
 
   const visible = useMemo(() => {
     if (filter === "all") return manifests;
@@ -79,9 +70,9 @@ export function AppCatalog({
       </div>
 
       {filter === "all" ? (
-        <Grouped manifests={manifests} activations={activationMap} counts={counts} />
+        <Grouped manifests={manifests} counts={counts} />
       ) : (
-        <FlatList manifests={visible} activations={activationMap} />
+        <FlatList manifests={visible} />
       )}
     </div>
   );
@@ -89,11 +80,9 @@ export function AppCatalog({
 
 function Grouped({
   manifests,
-  activations,
   counts,
 }: {
   manifests: Manifest[];
-  activations: Map<string, number>;
   counts: { outbound: number; inbound: number; unknown: number };
 }) {
   const outbound = manifests.filter((m) => m.type === "outbound");
@@ -108,7 +97,6 @@ function Grouped({
           helper="Apps that publish or present data — content-insights today, future WordPress / Storyblok / ecom storefronts."
           count={counts.outbound}
           manifests={outbound}
-          activations={activations}
         />
       ) : null}
       {inbound.length > 0 ? (
@@ -117,7 +105,6 @@ function Grouped({
           helper="Apps that pull data into Pectus — Search Console, GA4, ad platforms, manual keyword lists."
           count={counts.inbound}
           manifests={inbound}
-          activations={activations}
         />
       ) : null}
       {other.length > 0 ? (
@@ -126,7 +113,6 @@ function Grouped({
           helper="Apps without a declared type in their APP.md frontmatter."
           count={counts.unknown}
           manifests={other}
-          activations={activations}
         />
       ) : null}
     </div>
@@ -138,13 +124,11 @@ function Section({
   helper,
   count,
   manifests,
-  activations,
 }: {
   title: string;
   helper: string;
   count: number;
   manifests: Manifest[];
-  activations: Map<string, number>;
 }) {
   return (
     <section>
@@ -159,17 +143,15 @@ function Section({
           {count}
         </span>
       </header>
-      <FlatList manifests={manifests} activations={activations} />
+      <FlatList manifests={manifests} />
     </section>
   );
 }
 
 function FlatList({
   manifests,
-  activations,
 }: {
   manifests: Manifest[];
-  activations: Map<string, number>;
 }) {
   if (manifests.length === 0) {
     return (
@@ -181,31 +163,27 @@ function FlatList({
   return (
     <ul className="grid gap-3 sm:grid-cols-2">
       {manifests.map((m) => {
-        const projectCount = activations.get(m.name) ?? 0;
+        const soon = m.comingSoon;
         return (
           <li
             key={m.name}
-            className="flex flex-col rounded-lg border border-zinc-200 bg-white p-4"
+            className={
+              "flex flex-col rounded-lg border bg-white p-4 " +
+              (soon ? "border-dashed border-zinc-300" : "border-zinc-200")
+            }
           >
             <div className="flex items-baseline justify-between gap-2">
               <h3 className="font-mono text-sm font-semibold text-zinc-900">
                 {m.name}
               </h3>
-              <span
-                className={
-                  "rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-widest " +
-                  (projectCount > 0
-                    ? "bg-emerald-50 text-emerald-700"
-                    : "bg-zinc-100 text-zinc-600")
-                }
-                title={
-                  projectCount > 0
-                    ? `Active in ${projectCount} project${projectCount === 1 ? "" : "s"}.`
-                    : "Installed but not active in any project yet."
-                }
-              >
-                {projectCount > 0 ? `Active · ${projectCount}` : "Installed"}
-              </span>
+              {soon ? (
+                <span
+                  className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-widest text-amber-800"
+                  title="Announced but not yet built. You'll be able to activate it once the fetch pipeline ships."
+                >
+                  Coming soon
+                </span>
+              ) : null}
             </div>
             <div className="mt-1 flex items-center gap-1.5">
               <span className="text-[11px] uppercase tracking-widest text-zinc-500">
@@ -222,9 +200,20 @@ function FlatList({
               />
               <span className="text-[11px] text-zinc-400">v{m.version}</span>
             </div>
-            <p className="mt-2 flex-1 text-sm text-zinc-600">
+            <p className="mt-2 flex-1 text-[12px] leading-snug text-zinc-600">
               {m.description || "No description in APP.md frontmatter."}
             </p>
+            {!soon ? (
+              <div className="mt-3">
+                <Link
+                  href="/brands"
+                  className="inline-flex items-center rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-zinc-900 no-underline hover:border-zinc-400"
+                  title="Activate this app on a project to start using it."
+                >
+                  Install from project →
+                </Link>
+              </div>
+            ) : null}
           </li>
         );
       })}

@@ -1,6 +1,6 @@
 ---
 name: sources
-description: Scrape data from web pages and sitemaps to enrich Pectus with first-party context.
+description: Use this to import your site's pages or a sitemap so the analysis knows what content already exists.
 type: inbound
 version: 0.1.0
 comingSoon: true

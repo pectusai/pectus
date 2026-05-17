@@ -2,7 +2,7 @@
 name: seed-keywords
 type: inbound
 data_acquisition: manual
-description: 5-10 user-typed seed keywords used as a starting signal when a project has no live traffic yet (or as a supplementary signal alongside live data)
+description: Use this to seed Pectus with 5-10 keywords by hand so the analysis has something to work with before live traffic exists.
 version: 0.1.0
 ---
 

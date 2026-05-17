@@ -1,6 +1,6 @@
 ---
 name: meta
-description: Pull paid social performance from the Meta Marketing API into the ad_metrics table.
+description: Use this to pull your Meta (Facebook + Instagram) Ads spend and conversions into Pectus for blended performance reporting.
 type: inbound
 stub: true
 version: 1.0.0

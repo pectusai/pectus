@@ -1,6 +1,6 @@
 ---
 name: gsc
-description: Pull organic search performance from Google Search Console into the keywords table and gsc_daily time-series.
+description: Use this to pull your Search Console data into Pectus so the analysis knows what keywords you rank for and where to push.
 type: inbound
 version: 1.0.0
 needs:

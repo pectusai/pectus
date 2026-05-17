@@ -1,7 +1,7 @@
 ---
 name: content-insights
 type: outbound
-description: The bundled smart CMS. Insights pipeline (GA4 + Search Console + keyword snapshot → Opus interpretation → ranked ideas), AI article authoring with image generation (Google Imagen + Gemini, fal.ai Flux Pro, Replicate Flux/Recraft), plus pages, sources, reviews. Publishes to a static Astro site keyed off articles + pages.
+description: Use this to write articles and pages with AI, run the weekly Insights analysis, and publish a static site from your library.
 version: 0.4.13
 needs:
   project: [mount_slug]

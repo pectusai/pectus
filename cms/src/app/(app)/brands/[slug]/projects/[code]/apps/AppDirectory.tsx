@@ -290,7 +290,7 @@ function AppCard({
         />
         <span className="text-[11px] text-zinc-400">v{manifest.version}</span>
       </div>
-      <p className="mt-2 flex-1 text-sm text-zinc-600">
+      <p className="mt-2 flex-1 text-[12px] leading-snug text-zinc-600">
         {manifest.description || "No description in APP.md frontmatter."}
       </p>
       {soon ? (

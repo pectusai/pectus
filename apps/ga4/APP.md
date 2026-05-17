@@ -1,6 +1,6 @@
 ---
 name: ga4
-description: Pull web analytics from Google Analytics 4 into the analytics_metrics table.
+description: Use this to pull your Google Analytics 4 traffic into Pectus so the analysis knows which pages already work.
 type: inbound
 version: 1.0.0
 needs:
