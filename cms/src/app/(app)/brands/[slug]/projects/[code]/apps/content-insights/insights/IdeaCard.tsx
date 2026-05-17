@@ -47,56 +47,34 @@ export function IdeaCard({
   };
 
   return (
-    <article className="relative rounded-xl border border-zinc-200 bg-white p-5 transition hover:border-pink-600">
+    <article className="group relative rounded-lg border border-zinc-200 bg-white p-3.5 transition hover:border-pink-600">
       {isNew ? (
         <span
-          className="absolute top-3 right-4 rounded px-2 py-0.5 text-[10px] font-bold tracking-widest text-white"
+          className="absolute top-2.5 right-3 rounded px-1.5 py-0.5 text-[9px] font-bold tracking-widest text-white"
           style={{ background: "linear-gradient(90deg, #db2777, #f97316)" }}
         >
           NEW
         </span>
       ) : null}
 
-      <Link href={draftHref} className="block no-underline">
-        <h3
-          className="m-0 mb-1.5 text-[17px] font-bold leading-tight tracking-tight pr-16 hover:underline"
-          style={{ color: "#db2777" }}
-        >
-          {idea.title}
-        </h3>
-      </Link>
+      <div className="flex items-start justify-between gap-3 pr-12">
+        <Link href={draftHref} className="block min-w-0 flex-1 no-underline">
+          <h3
+            className="m-0 truncate text-[14.5px] font-bold leading-tight tracking-tight hover:underline"
+            style={{ color: "#db2777" }}
+            title={idea.title}
+          >
+            {idea.title}
+          </h3>
+          <p className="mt-0.5 line-clamp-1 text-[12.5px] leading-snug text-zinc-700">
+            {idea.angle}
+          </p>
+        </Link>
 
-      <p className="m-0 text-sm leading-snug text-zinc-700">{idea.angle}</p>
-
-      <div className="mt-3 flex flex-wrap gap-1.5">
-        <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
-          {idea.primary_keyword}
-        </span>
-        <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-[11px] font-semibold capitalize text-blue-800">
-          {idea.content_type.replace(/_/g, " ")}
-        </span>
-      </div>
-
-      <p className="mt-3 border-t border-zinc-100 pt-3 text-[13px] leading-snug text-zinc-600">
-        {idea.rationale}
-      </p>
-
-      <div className="mt-3 flex items-center justify-between gap-3">
-        <span className="text-xs text-zinc-500">
-          For{" "}
-          <strong className="font-semibold text-zinc-900">
-            {idea.target_persona}
-          </strong>{" "}
-          · ~
-          <strong className="font-semibold text-zinc-900">
-            {idea.projected_monthly_traffic.toLocaleString("en-US")}/mo
-          </strong>{" "}
-          if it ranks top 5
-        </span>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1.5">
           <Link
             href={draftHref}
-            className="inline-flex items-center rounded-lg bg-zinc-900 px-3.5 py-1.5 text-[13px] font-semibold text-white no-underline hover:bg-black"
+            className="inline-flex items-center rounded-md bg-zinc-900 px-2.5 py-1 text-[12px] font-semibold text-white no-underline hover:bg-black"
           >
             Draft →
           </Link>
@@ -105,11 +83,38 @@ export function IdeaCard({
             onClick={onDismiss}
             aria-label="Dismiss this idea"
             title="Dismiss this idea"
-            className="grid h-7 w-7 place-items-center rounded-full text-sm text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900"
+            className="grid h-6 w-6 place-items-center rounded-full text-xs text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900"
           >
             ✕
           </button>
         </div>
+      </div>
+
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+        <span className="rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-amber-800">
+          {idea.primary_keyword}
+        </span>
+        <span className="rounded-full bg-blue-100 px-2 py-0.5 font-semibold capitalize text-blue-800">
+          {idea.content_type.replace(/_/g, " ")}
+        </span>
+        <span className="text-zinc-500">
+          For{" "}
+          <strong className="font-semibold text-zinc-900">
+            {idea.target_persona}
+          </strong>{" "}
+          · ~
+          <strong className="font-semibold text-zinc-900">
+            {idea.projected_monthly_traffic.toLocaleString("en-US")}/mo
+          </strong>
+        </span>
+        <details className="ml-auto">
+          <summary className="cursor-pointer text-zinc-500 hover:text-zinc-900">
+            Why
+          </summary>
+          <p className="mt-2 max-w-full text-[12px] leading-snug text-zinc-600">
+            {idea.rationale}
+          </p>
+        </details>
       </div>
     </article>
   );

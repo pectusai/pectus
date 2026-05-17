@@ -12,6 +12,8 @@ import { RecommendButton } from "./RecommendButton";
 import { RenewButton } from "./RenewButton";
 import { IdeaCard } from "./IdeaCard";
 import { InterpretationPanel } from "./InterpretationPanel";
+import { SummaryBox } from "./SummaryBox";
+import { SectionNav } from "./SectionNav";
 import { InfoDot } from "@/app/components/InfoDot";
 
 export const dynamic = "force-dynamic";
@@ -270,13 +272,25 @@ export default async function InsightsPage({
         </section>
       ) : (
         <>
-          <InterpretationPanel
-            interpretation={interpretationRow.interpretation}
+          <SectionNav
+            sections={[
+              { id: "summary", label: "Summary" },
+              {
+                id: "ideas",
+                label: hasIdeas ? "Ideas" : "Recommend",
+                count: hasIdeas ? String(cards.length) : undefined,
+              },
+              { id: "analysis", label: "Analysis" },
+            ]}
+          />
+
+          <SummaryBox
+            summary={interpretationRow.interpretation.summary}
             interpretedAt={interpretationRow.interpreted_at}
           />
 
-          <section className="mt-10">
-            <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+          <section id="ideas" className="mt-10 scroll-mt-24">
+            <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-pink-600">
                   {hasIdeas ? "This week's ideas" : "Step two: act on it"}
@@ -329,7 +343,7 @@ export default async function InsightsPage({
             </div>
 
             {hasIdeas ? (
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2">
                 {cards.map((c) => (
                   <IdeaCard
                     key={`${c.generationId}:${c.postIndex}`}
@@ -344,6 +358,10 @@ export default async function InsightsPage({
               </div>
             ) : null}
           </section>
+
+          <InterpretationPanel
+            interpretation={interpretationRow.interpretation}
+          />
 
           {latestTrafficTable && latestTrafficTable.length > 0 ? (
             <section className="mt-12">

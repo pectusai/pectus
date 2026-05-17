@@ -9,18 +9,9 @@ const INTENT_TONE: Record<string, string> = {
 
 export function InterpretationPanel({
   interpretation,
-  interpretedAt,
 }: {
   interpretation: AnalysisStage1;
-  interpretedAt: string;
 }) {
-  const interpretedLabel = new Date(interpretedAt).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
   const movers = interpretation.weekly_query_movers ?? [];
   const risers = movers.filter((m) => m.direction === "up");
   const decliners = movers.filter((m) => m.direction === "down");
@@ -33,25 +24,19 @@ export function InterpretationPanel({
   const suggestedNegatives = interpretation.suggested_negatives ?? [];
 
   return (
-    <section className="mt-8 border-t border-zinc-200 pt-8">
-      <header className="mb-3 flex flex-wrap items-baseline gap-3">
+    <section id="analysis" className="mt-10 scroll-mt-24 border-t border-zinc-200 pt-8">
+      <header className="mb-3">
         <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-pink-600">
-          Analysis
+          Drill into the data
         </span>
-        <span className="text-xs text-zinc-500">
-          Interpreted {interpretedLabel}
-        </span>
+        <h2 className="mt-1.5 text-2xl font-bold tracking-tight text-zinc-900">
+          The tables behind the analysis.
+        </h2>
+        <p className="mt-1 max-w-2xl text-sm text-zinc-500">
+          Every section the model called out, with the underlying rows. Skim or
+          deep-read.
+        </p>
       </header>
-      <h2 className="text-2xl font-bold tracking-tight text-zinc-900">
-        What the data is saying.
-      </h2>
-      <div className="mt-4 max-w-3xl space-y-3 text-[15px] leading-relaxed text-zinc-700">
-        {interpretation.summary
-          .split(/\n\s*\n/)
-          .map((para, i) => (
-            <p key={i}>{para}</p>
-          ))}
-      </div>
 
       {interpretation.traffic_source_mix ? (
         <SubSection
