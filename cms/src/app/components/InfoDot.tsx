@@ -27,8 +27,9 @@ export function InfoDot({ text }: { text: string }) {
 
   return (
     <span ref={wrapRef} className="relative inline-flex align-baseline">
-      <button
-        type="button"
+      <span
+        role="button"
+        tabIndex={0}
         aria-label={text}
         aria-describedby={open ? id : undefined}
         aria-expanded={open}
@@ -37,11 +38,18 @@ export function InfoDot({ text }: { text: string }) {
           e.preventDefault();
           setOpen((v) => !v);
         }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.stopPropagation();
+            e.preventDefault();
+            setOpen((v) => !v);
+          }
+        }}
         onMouseEnter={() => setOpen(true)}
-        className="inline-flex h-3.5 w-3.5 cursor-help items-center justify-center rounded-full border border-zinc-300 bg-white text-[9px] font-bold leading-none text-zinc-500 hover:border-zinc-500 hover:text-zinc-900"
+        className="inline-flex h-3.5 w-3.5 cursor-help select-none items-center justify-center rounded-full border border-zinc-300 bg-white text-[9px] font-bold leading-none text-zinc-500 hover:border-zinc-500 hover:text-zinc-900"
       >
         ?
-      </button>
+      </span>
       {open ? (
         <span
           id={id}
