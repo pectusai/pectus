@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getProjectByCode } from "@/lib/project";
 import { listAppManifests, listActivatedAppsForProject } from "@/lib/apps";
+import { WelcomeBanner } from "./WelcomeBanner";
 
 export default async function ProjectHomePage({
   params,
@@ -18,6 +19,8 @@ export default async function ProjectHomePage({
 
   return (
     <div className="space-y-6">
+      <WelcomeBanner />
+
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">
           {project.name}
