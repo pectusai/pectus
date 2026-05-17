@@ -38,13 +38,17 @@ export function SummaryBox({
 
       <div className="border-t border-pink-100 bg-white/60 px-6 py-5">
         <div
-          className="max-w-none gap-10 text-[14px] leading-[1.65] text-zinc-800"
-          style={{ columnCount: 2, columnGap: "2.5rem" }}
+          className="max-w-none text-[14px] leading-[1.65] text-zinc-800"
+          style={{
+            columnCount: 2,
+            columnGap: "2.5rem",
+            columnFill: "balance",
+          }}
         >
           {paragraphs.map((para, i) => (
             <p
               key={i}
-              className="mb-3 break-inside-avoid first:mt-0 first:text-[14.5px] first:font-medium first:text-zinc-900"
+              className="mb-3 first:mt-0 first:text-[14.5px] first:font-medium first:text-zinc-900"
             >
               {para}
             </p>
