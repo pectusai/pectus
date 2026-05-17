@@ -253,7 +253,7 @@ export function InterpretationPanel({
                   {c.why_now}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-1.5">
-                  {c.example_keywords.map((kw, j) => (
+                  {(c.example_keywords ?? []).map((kw, j) => (
                     <KeywordPill key={j} label={kw} muted />
                   ))}
                 </div>

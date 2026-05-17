@@ -67,7 +67,7 @@ const OldPostRisingRow = z.object({
 const CategorySuggestion = z.object({
   name: z.string(),
   why_now: z.string(),
-  example_keywords: z.array(z.string()),
+  example_keywords: z.array(z.string()).optional(),
 });
 
 const TopPerformingPageRow = z.object({

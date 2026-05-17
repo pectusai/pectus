@@ -372,7 +372,9 @@ Produce the action-plan half of this week's analysis:
 1. EXACTLY 5 prioritised post suggestions with concrete titles, angle, primary + supporting keywords, target persona, content type, projected monthly traffic if ranked top 5, and a sharp rationale that references the Stage 1 findings by name. Lean on top_performing_pages, weekly_query_movers, and rising_keywords when ranking — those are the highest-signal sections.${overlapHint}
 2. Suggested articles ranked by traffic potential if published and ranked in the top 5. Use impressions × a realistic CTR for positions 1-5 when reasoning.
 
-Be specific. Each post suggestion should connect explicitly to a cluster, rising keyword, top performing page, or content gap from Stage 1. If the data is thin, say so in the rationale.`;
+**HARD CONSTRAINT: do not suggest topics the reader has already written.** The EXISTING ARTICLES section above is everything they've already published. If your suggestion's working title or primary keyword closely matches any existing article title, drop it and pick a different angle. The reader's job is to fill gaps, not duplicate work.
+
+Be specific. Each post suggestion should connect explicitly to a cluster, rising keyword, top performing page, or content gap from Stage 1. If the data is thin, say so in the rationale — but still return 5 suggestions. Always return 5. Never zero.`;
 }
 
 export type ActionResult<T = unknown> =
@@ -764,11 +766,22 @@ export async function runAnalyzeOnly(
       .eq("id", interpretationId);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
+    // Fail-soft: save a minimal interpretation row so Recommend can still run
+    // and the user always gets to 5 post suggestions. The error message goes
+    // on the row so the user can see Stage 1 had trouble; the synthesized
+    // summary makes the SummaryBox render gracefully.
+    const fallback: Stage1Type = {
+      summary:
+        `Stage 1 had trouble reading the data this run (${msg}). You can still click Recommend to generate post ideas from your keywords, articles, and any GA4 / GSC data Pectus has on hand. Click Re-analyze to try the interpretation again.`,
+    };
     await supabase
       .from("data_interpretations")
-      .update({ status: "failed", error_message: msg })
+      .update({
+        status: "done",
+        interpretation: fallback,
+        error_message: msg,
+      })
       .eq("id", interpretationId);
-    return { ok: false, error: `Stage 1 failed: ${msg}` };
   }
 
   revalidatePath(
