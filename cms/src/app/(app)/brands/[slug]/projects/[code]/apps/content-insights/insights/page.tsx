@@ -319,26 +319,17 @@ export default async function InsightsPage({
                   </p>
                 ) : null}
               </div>
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-col items-end gap-1.5">
                 {hasIdeas ? (
-                  <>
-                    <RenewButton projectId={project.id} />
-                    <AnalyzeButton
-                      projectId={project.id}
-                      label="↻ Re-analyze"
-                      variant="secondary"
-                    />
-                  </>
+                  <RenewButton projectId={project.id} />
                 ) : (
-                  <>
-                    <RecommendButton projectId={project.id} />
-                    <AnalyzeButton
-                      projectId={project.id}
-                      label="↻ Re-analyze"
-                      variant="secondary"
-                    />
-                  </>
+                  <RecommendButton projectId={project.id} />
                 )}
+                <AnalyzeButton
+                  projectId={project.id}
+                  label="↻ Re-analyze the data"
+                  variant="link"
+                />
               </div>
             </div>
 

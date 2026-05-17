@@ -20,7 +20,7 @@ export function AnalyzeButton({
 }: {
   projectId: string;
   label?: string;
-  variant?: "primary" | "secondary";
+  variant?: "primary" | "secondary" | "link";
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -46,6 +46,31 @@ export function AnalyzeButton({
   };
 
   const isBusy = running || isPending;
+
+  if (variant === "link") {
+    return (
+      <span className="pectus-insights-run inline-flex items-baseline gap-2">
+        <button
+          type="button"
+          onClick={onClick}
+          disabled={isBusy}
+          className="text-[12px] font-medium text-zinc-500 underline decoration-dotted underline-offset-4 hover:text-zinc-900 disabled:opacity-50"
+        >
+          {label ?? "↻ Re-analyze"}
+        </button>
+        {error ? (
+          <span className="text-[11px] text-red-700">{error}</span>
+        ) : null}
+        <RunAnalysisModal
+          open={isBusy}
+          title="Reading this week's data"
+          stages={STAGES}
+          approxSeconds={45}
+        />
+      </span>
+    );
+  }
+
   const className =
     variant === "primary"
       ? "pectus-insights-button-primary"
