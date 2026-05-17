@@ -296,20 +296,22 @@ ANSWER-THE-PUBLIC ENTRIES (verbatim audience questions, by seed keyword)
 ${ctx.atpLines.length ? ctx.atpLines.join("\n\n") : "(no ATP entries)"}
 
 YOUR JOB
-Produce the data-interpretation half of this week's analysis. You are NOT producing post suggestions yet — that's a separate downstream call. Focus exclusively on what the data says:
+Produce the data-interpretation half of this week's analysis. You are NOT producing post suggestions yet — that's a separate downstream call. Focus exclusively on what the data says.
 
-1. Summary: 3-5 sentences framing the week. What changed in search and on-site? Where is the biggest opportunity? Which ICP to target? If data is stale or thin, say so.
-2. Traffic source mix: short prose on where GA4 traffic is coming from this period and where the brand should lean. Omit if GA4 data is absent.
-3. Weekly query movers: queries with notable week-over-week impression shifts (from the GSC LAST 14 DAYS section). Mix risers and decliners. Each row includes the impressions and position delta plus a one-sentence interpretation. Omit if no daily GSC data.
-4. Top performing pages: pages from GA4 already pulling traffic / converting. Defend and expand. Omit if no GA4 page data.
-5. Declining pages: pages from GA4 where traffic is slipping (or low-converters worth retiring). Omit if no GA4 page data.
-6. Rising keywords: keywords with growing impressions but poor rank (avg position > 10) or zero clicks. The sweet spot.
-7. Old posts gaining traffic: existing articles where data suggests rising relevance. Tie this to the GSC movers and GA4 top pages above when possible.
-8. Keyword clusters: group keywords into topical clusters with dominant intent and a pillar-page recommendation.
-9. Suggested new categories: topics not yet covered as site categories but emerging in the data. Spot the next "AI" before it's obvious.
-10. Suggested negatives: keywords to deprioritise because they pull the wrong audience, wrong intent, or pollute data.
+**Only \`summary\` is required.** Every other field is optional. Omit any section where the supplied data has nothing to put there — empty arrays or invented content are both worse than a missing field. The summary is where you explain what's actually there and what's missing.
 
-Be specific. Reference the actual keywords, pages, and queries shown above. If data is thin, say so inside the rationale rather than inventing.`;
+1. Summary (required): 3-5 sentences framing the week. What changed in search and on-site? Where is the biggest opportunity? Which ICP to target? If data is stale, thin, or entirely absent, say so plainly here — that IS the analysis when there's nothing else to read.
+2. Traffic source mix (optional): short prose on where GA4 traffic is coming from this period and where the brand should lean. Omit if GA4 data is absent.
+3. Weekly query movers (optional): queries with notable week-over-week impression shifts (from the GSC LAST 14 DAYS section). Mix risers and decliners. Each row includes the impressions and position delta plus a one-sentence interpretation. Omit if no daily GSC data.
+4. Top performing pages (optional): pages from GA4 already pulling traffic / converting. Defend and expand. Omit if no GA4 page data.
+5. Declining pages (optional): pages from GA4 where traffic is slipping (or low-converters worth retiring). Omit if no GA4 page data.
+6. Rising keywords (optional): keywords with growing impressions but poor rank (avg position > 10) or zero clicks. The sweet spot. Omit if no keywords have usable signal.
+7. Old posts gaining traffic (optional): existing articles where data suggests rising relevance. Tie this to the GSC movers and GA4 top pages above when possible. Omit if no articles or no movement.
+8. Keyword clusters (optional): group keywords into topical clusters with dominant intent and a pillar-page recommendation. Omit if there isn't enough keyword data to form meaningful clusters.
+9. Suggested new categories (optional): topics not yet covered as site categories but emerging in the data. Spot the next "AI" before it's obvious. Omit if no signal points to one.
+10. Suggested negatives (optional): keywords to deprioritise because they pull the wrong audience, wrong intent, or pollute data. Omit if nothing suspicious is in the data.
+
+Be specific. Reference the actual keywords, pages, and queries shown above. Never fabricate.`;
 }
 
 function buildStage2Prompt(

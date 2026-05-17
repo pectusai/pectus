@@ -26,6 +26,11 @@ export function InterpretationPanel({
   const decliners = movers.filter((m) => m.direction === "down");
   const topPages = interpretation.top_performing_pages ?? [];
   const decliningPages = interpretation.declining_pages ?? [];
+  const risingKeywords = interpretation.rising_keywords ?? [];
+  const oldPostsRising = interpretation.old_posts_rising ?? [];
+  const keywordClusters = interpretation.keyword_clusters ?? [];
+  const newCategories = interpretation.suggested_new_categories ?? [];
+  const suggestedNegatives = interpretation.suggested_negatives ?? [];
 
   return (
     <section className="mt-8 border-t border-zinc-200 pt-8">
@@ -141,7 +146,7 @@ export function InterpretationPanel({
         </SubSection>
       ) : null}
 
-      {interpretation.rising_keywords.length > 0 ? (
+      {risingKeywords.length > 0 ? (
         <SubSection
           eyebrow="Rising"
           title="Keywords on the way up. Nobody's ranking for them yet."
@@ -158,7 +163,7 @@ export function InterpretationPanel({
               </tr>
             }
           >
-            {interpretation.rising_keywords.map((k, i) => (
+            {risingKeywords.map((k, i) => (
               <tr key={i} className="border-t border-zinc-100">
                 <Td>
                   <KeywordPill label={k.keyword} />
@@ -181,7 +186,7 @@ export function InterpretationPanel({
         </SubSection>
       ) : null}
 
-      {interpretation.old_posts_rising.length > 0 ? (
+      {oldPostsRising.length > 0 ? (
         <SubSection
           eyebrow="Earning momentum"
           title="Old posts quietly gaining traffic."
@@ -196,7 +201,7 @@ export function InterpretationPanel({
               </tr>
             }
           >
-            {interpretation.old_posts_rising.map((p, i) => (
+            {oldPostsRising.map((p, i) => (
               <tr key={i} className="border-t border-zinc-100">
                 <Td className="font-medium text-zinc-900">{p.slug_or_title}</Td>
                 <Td className="text-pink-700">{p.traffic_change}</Td>
@@ -207,13 +212,13 @@ export function InterpretationPanel({
         </SubSection>
       ) : null}
 
-      {interpretation.keyword_clusters.length > 0 ? (
+      {keywordClusters.length > 0 ? (
         <SubSection
           eyebrow="Clusters"
           title="Topics that could become pillar pages."
         >
           <div className="grid gap-3 md:grid-cols-2">
-            {interpretation.keyword_clusters.map((c, i) => (
+            {keywordClusters.map((c, i) => (
               <article
                 key={i}
                 className="rounded-xl border border-zinc-200 bg-white p-5"
@@ -245,13 +250,13 @@ export function InterpretationPanel({
         </SubSection>
       ) : null}
 
-      {interpretation.suggested_new_categories.length > 0 ? (
+      {newCategories.length > 0 ? (
         <SubSection
           eyebrow="On the horizon"
           title="Categories you don't have a home for yet."
         >
           <div className="space-y-3">
-            {interpretation.suggested_new_categories.map((c, i) => (
+            {newCategories.map((c, i) => (
               <article
                 key={i}
                 className="rounded-xl border border-zinc-200 bg-white p-5"
@@ -273,7 +278,7 @@ export function InterpretationPanel({
         </SubSection>
       ) : null}
 
-      {interpretation.suggested_negatives.length > 0 ? (
+      {suggestedNegatives.length > 0 ? (
         <SubSection
           eyebrow="Skip these"
           title="Keywords that look good but aren't worth the effort."
@@ -286,7 +291,7 @@ export function InterpretationPanel({
               </tr>
             }
           >
-            {interpretation.suggested_negatives.map((n, i) => (
+            {suggestedNegatives.map((n, i) => (
               <tr key={i} className="border-t border-zinc-100">
                 <Td>
                   <KeywordPill label={n.keyword} />

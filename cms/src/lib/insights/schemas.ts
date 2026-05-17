@@ -142,14 +142,16 @@ export const AnalysisStage1 = z.object({
   rising_keywords: z
     .array(KeywordRow)
     .max(12)
+    .optional()
     .describe(
-      "Up to 12 keywords with rising impressions but poor ranking or no clicks — the sweet spot to act on now. Pick the highest-leverage ones, don't pad.",
+      "Up to 12 keywords with rising impressions but poor ranking or no clicks — the sweet spot to act on now. Pick the highest-leverage ones, don't pad. Omit when there are no keywords with usable signal.",
     ),
   old_posts_rising: z
     .array(OldPostRisingRow)
     .max(8)
+    .optional()
     .describe(
-      "Up to 8 already-published posts that are gaining traffic in the last 30 days. Prime candidates for a refresh or expansion.",
+      "Up to 8 already-published posts that are gaining traffic in the last 30 days. Prime candidates for a refresh or expansion. Omit when no articles exist or none show movement.",
     ),
   keyword_clusters: z
     .array(
@@ -168,14 +170,16 @@ export const AnalysisStage1 = z.object({
       }),
     )
     .max(6)
+    .optional()
     .describe(
-      "Up to 6 keyword clusters for content planning. Each cluster lists at most 10 representative keywords.",
+      "Up to 6 keyword clusters for content planning. Each cluster lists at most 10 representative keywords. Omit when there isn't enough keyword data to form meaningful clusters.",
     ),
   suggested_new_categories: z
     .array(CategorySuggestion)
     .max(4)
+    .optional()
     .describe(
-      "Up to 4 emerging topics not yet covered as site categories. Think 'AI' a year before it was obvious.",
+      "Up to 4 emerging topics not yet covered as site categories. Think 'AI' a year before it was obvious. Omit when no signal points to an emerging topic.",
     ),
   suggested_negatives: z
     .array(
@@ -185,8 +189,9 @@ export const AnalysisStage1 = z.object({
       }),
     )
     .max(10)
+    .optional()
     .describe(
-      "Up to 10 keywords to actively avoid: wrong intent, wrong audience, or noise polluting the data.",
+      "Up to 10 keywords to actively avoid: wrong intent, wrong audience, or noise polluting the data. Omit when nothing suspicious is in the data.",
     ),
 });
 
