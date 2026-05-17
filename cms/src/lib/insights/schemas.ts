@@ -109,8 +109,9 @@ const WeeklyQueryMoverRow = z.object({
 export const AnalysisStage1 = z.object({
   summary: z
     .string()
+    .optional()
     .describe(
-      "Three to five sentences framing the week: what changed in search, where the biggest opportunity is, which ICP to target.",
+      "Three to five sentences framing the week: what changed in search, where the biggest opportunity is, which ICP to target. Always emit this — it's the headline analysis. Omit only if you have literally nothing to say.",
     ),
   traffic_source_mix: z
     .string()

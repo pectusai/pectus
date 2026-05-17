@@ -45,6 +45,27 @@ function isoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+function ensureSummary(stage1: Stage1Type): Stage1Type {
+  if (stage1.summary && stage1.summary.trim().length > 0) return stage1;
+  const sections: string[] = [];
+  if (stage1.rising_keywords?.length)
+    sections.push(`${stage1.rising_keywords.length} rising keyword${stage1.rising_keywords.length === 1 ? "" : "s"}`);
+  if (stage1.weekly_query_movers?.length)
+    sections.push(`${stage1.weekly_query_movers.length} weekly query mover${stage1.weekly_query_movers.length === 1 ? "" : "s"}`);
+  if (stage1.top_performing_pages?.length)
+    sections.push(`${stage1.top_performing_pages.length} top-performing page${stage1.top_performing_pages.length === 1 ? "" : "s"}`);
+  if (stage1.keyword_clusters?.length)
+    sections.push(`${stage1.keyword_clusters.length} keyword cluster${stage1.keyword_clusters.length === 1 ? "" : "s"}`);
+  const sectionsNote = sections.length
+    ? `The drill-down sections below have content: ${sections.join(", ")}.`
+    : "All sections came back empty too, which usually means the data sources aren't connected or have no rows in this window.";
+  return {
+    ...stage1,
+    summary:
+      `Stage 1 didn't return a summary on this run — the model emitted other sections but skipped the headline. ${sectionsNote} Click Re-analyze to try again; the rest of the interpretation is below.`,
+  };
+}
+
 async function gatherSnapshotInputs(
   supabase: Supabase,
   projectId: string,
@@ -298,7 +319,7 @@ ${ctx.atpLines.length ? ctx.atpLines.join("\n\n") : "(no ATP entries)"}
 YOUR JOB
 Produce the data-interpretation half of this week's analysis. You are NOT producing post suggestions yet — that's a separate downstream call. Focus exclusively on what the data says.
 
-**Only \`summary\` is required.** Every other field is optional. Omit any section where the supplied data has nothing to put there — empty arrays or invented content are both worse than a missing field. The summary is where you explain what's actually there and what's missing.
+**Always emit \`summary\` — it is the load-bearing field.** Every other field is optional and may be omitted when the supplied data has nothing to put there (empty arrays or invented content are both worse than a missing field). The summary is where you frame the week and call out gaps; if data is absent, the summary explains the absence rather than being itself absent.
 
 1. Summary (required): 3-5 sentences framing the week. What changed in search and on-site? Where is the biggest opportunity? Which ICP to target? If data is stale, thin, or entirely absent, say so plainly here — that IS the analysis when there's nothing else to read.
 2. Traffic source mix (optional): short prose on where GA4 traffic is coming from this period and where the brand should lean. Omit if GA4 data is absent.
@@ -732,11 +753,12 @@ export async function runAnalyzeOnly(
       toolName: "emit_interpretation",
       toolDescription: "Emit the data interpretation in the schema shape.",
     });
+    const interpretation = ensureSummary(result.data);
     await supabase
       .from("data_interpretations")
       .update({
         status: "done",
-        interpretation: result.data,
+        interpretation,
         duration_ms: result.durationMs,
       })
       .eq("id", interpretationId);

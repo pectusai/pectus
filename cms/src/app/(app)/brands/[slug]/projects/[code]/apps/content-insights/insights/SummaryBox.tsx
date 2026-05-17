@@ -2,10 +2,13 @@ export function SummaryBox({
   summary,
   interpretedAt,
 }: {
-  summary: string;
+  summary?: string;
   interpretedAt: string;
 }) {
-  const paragraphs = summary.split(/\n\s*\n/).filter((p) => p.trim().length > 0);
+  const text = summary?.trim() ?? "";
+  const paragraphs = text.length > 0
+    ? text.split(/\n\s*\n/).filter((p) => p.trim().length > 0)
+    : ["The model didn't return a summary on this run. Click Re-analyze to retry, or scroll down to see whichever drill-down sections did populate."];
   const interpretedLabel = new Date(interpretedAt).toLocaleString("en-US", {
     month: "short",
     day: "numeric",
