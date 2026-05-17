@@ -13,7 +13,7 @@ export default async function BrandSettingsPage({
   const brand = await getBrandBySlug(slug);
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-10">
+    <div className="mx-auto max-w-3xl">
       <div className="mb-8">
         <h1 className="text-2xl font-semibold tracking-tight">
           Brand — {brand.name ?? brand.slug}

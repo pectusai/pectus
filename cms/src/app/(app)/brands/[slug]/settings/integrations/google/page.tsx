@@ -37,7 +37,7 @@ export default async function GoogleIntegrationPage({
   const connected = Boolean(integration?.service_account_json);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-6 py-10">
+    <div className="mx-auto max-w-3xl space-y-6">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">
           Google integration
