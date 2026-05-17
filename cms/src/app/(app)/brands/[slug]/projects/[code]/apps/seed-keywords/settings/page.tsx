@@ -56,9 +56,15 @@ export default async function SeedKeywordsSettingsPage({
         </header>
         <p className="text-sm text-zinc-700">
           Type 5–10 keywords that describe what you want to be found for. Used
-          as a starting signal when GA4 / GSC are quiet or new. Editing surface
-          ships in a follow-up — for now, paste rows via the keywords page or
-          the CLI.
+          as a starting signal when GA4 / GSC are quiet or new.
+        </p>
+        <p>
+          <a
+            href={`/brands/${slug}/projects/${code}/keywords`}
+            className="inline-flex items-center rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-900 hover:border-zinc-400"
+          >
+            Manage seed keywords in Project settings →
+          </a>
         </p>
       </section>
 
