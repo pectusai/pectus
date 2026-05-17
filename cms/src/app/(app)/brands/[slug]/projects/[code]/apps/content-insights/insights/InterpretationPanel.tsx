@@ -7,7 +7,7 @@ const INTENT_TONE: Record<string, string> = {
   navigational: "bg-zinc-100 text-zinc-700",
 };
 
-export function DataSummary({
+export function InterpretationPanel({
   interpretation,
   interpretedAt,
 }: {
@@ -21,11 +21,17 @@ export function DataSummary({
     minute: "2-digit",
   });
 
+  const movers = interpretation.weekly_query_movers ?? [];
+  const risers = movers.filter((m) => m.direction === "up");
+  const decliners = movers.filter((m) => m.direction === "down");
+  const topPages = interpretation.top_performing_pages ?? [];
+  const decliningPages = interpretation.declining_pages ?? [];
+
   return (
-    <section className="mt-12 border-t border-zinc-200 pt-12">
+    <section className="mt-8 border-t border-zinc-200 pt-8">
       <header className="mb-3 flex flex-wrap items-baseline gap-3">
         <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-pink-600">
-          Data summary
+          Analysis
         </span>
         <span className="text-xs text-zinc-500">
           Interpreted {interpretedLabel}
@@ -41,6 +47,99 @@ export function DataSummary({
             <p key={i}>{para}</p>
           ))}
       </div>
+
+      {interpretation.traffic_source_mix ? (
+        <SubSection
+          eyebrow="Traffic mix"
+          title="Where the visitors actually come from."
+        >
+          <div className="max-w-3xl rounded-xl border border-zinc-200 bg-white p-5 text-[14px] leading-relaxed text-zinc-700">
+            {interpretation.traffic_source_mix}
+          </div>
+        </SubSection>
+      ) : null}
+
+      {topPages.length > 0 ? (
+        <SubSection
+          eyebrow="Top performers"
+          title="Pages already pulling traffic and converting."
+          subtitle="From GA4 in the last 30 days. Defend and expand."
+        >
+          <Table
+            head={
+              <tr>
+                <Th>Page</Th>
+                <Th align="right">Sessions</Th>
+                <Th align="right">Conversions</Th>
+                <Th align="right">CR</Th>
+                <Th>Why it works</Th>
+              </tr>
+            }
+          >
+            {topPages.map((p, i) => (
+              <tr key={i} className="border-t border-zinc-100">
+                <Td className="font-medium text-zinc-900">{p.page_path}</Td>
+                <Td align="right" tabular>
+                  {p.sessions != null ? p.sessions.toLocaleString("en-US") : "—"}
+                </Td>
+                <Td align="right" tabular>
+                  {p.conversions != null
+                    ? p.conversions.toLocaleString("en-US")
+                    : "—"}
+                </Td>
+                <Td align="right" tabular>
+                  {p.conversion_rate != null
+                    ? `${(p.conversion_rate * 100).toFixed(2)}%`
+                    : "—"}
+                </Td>
+                <Td className="text-zinc-600">{p.why_it_works}</Td>
+              </tr>
+            ))}
+          </Table>
+        </SubSection>
+      ) : null}
+
+      {decliningPages.length > 0 ? (
+        <SubSection
+          eyebrow="Slipping"
+          title="Pages losing traffic. Refresh candidates."
+        >
+          <Table
+            head={
+              <tr>
+                <Th>Page</Th>
+                <Th>Why declining</Th>
+                <Th>What to do</Th>
+              </tr>
+            }
+          >
+            {decliningPages.map((p, i) => (
+              <tr key={i} className="border-t border-zinc-100">
+                <Td className="font-medium text-zinc-900">{p.page_path}</Td>
+                <Td className="text-zinc-600">{p.why_declining}</Td>
+                <Td className="text-zinc-600">{p.suggested_action}</Td>
+              </tr>
+            ))}
+          </Table>
+        </SubSection>
+      ) : null}
+
+      {movers.length > 0 ? (
+        <SubSection
+          eyebrow="Movers"
+          title="Queries that shifted this week vs last."
+          subtitle="From Search Console daily data. Watch the risers and patch the decliners."
+        >
+          {risers.length > 0 ? (
+            <MoversTable label="Rising" rows={risers} />
+          ) : null}
+          {decliners.length > 0 ? (
+            <div className={risers.length > 0 ? "mt-4" : ""}>
+              <MoversTable label="Declining" rows={decliners} />
+            </div>
+          ) : null}
+        </SubSection>
+      ) : null}
 
       {interpretation.rising_keywords.length > 0 ? (
         <SubSection
@@ -65,7 +164,9 @@ export function DataSummary({
                   <KeywordPill label={k.keyword} />
                 </Td>
                 <Td align="right" tabular>
-                  {k.impressions != null ? k.impressions.toLocaleString("en-US") : "—"}
+                  {k.impressions != null
+                    ? k.impressions.toLocaleString("en-US")
+                    : "—"}
                 </Td>
                 <Td align="right" tabular>
                   {k.clicks != null ? k.clicks.toLocaleString("en-US") : "—"}
@@ -197,6 +298,54 @@ export function DataSummary({
         </SubSection>
       ) : null}
     </section>
+  );
+}
+
+function MoversTable({
+  label,
+  rows,
+}: {
+  label: string;
+  rows: NonNullable<AnalysisStage1["weekly_query_movers"]>;
+}) {
+  return (
+    <div>
+      <h4 className="mb-2 text-[11px] font-bold uppercase tracking-widest text-zinc-500">
+        {label}
+      </h4>
+      <Table
+        head={
+          <tr>
+            <Th>Query</Th>
+            <Th align="right">Δ impressions</Th>
+            <Th align="right">Δ position</Th>
+            <Th>What it means</Th>
+          </tr>
+        }
+      >
+        {rows.map((m, i) => (
+          <tr key={i} className="border-t border-zinc-100">
+            <Td>
+              <KeywordPill label={m.query} />
+            </Td>
+            <Td
+              align="right"
+              tabular
+              className={m.direction === "up" ? "text-emerald-700" : "text-rose-700"}
+            >
+              {m.impressions_delta > 0 ? "+" : ""}
+              {m.impressions_delta.toLocaleString("en-US")}
+            </Td>
+            <Td align="right" tabular>
+              {m.position_delta != null
+                ? `${m.position_delta > 0 ? "+" : ""}${m.position_delta.toFixed(1)}`
+                : "—"}
+            </Td>
+            <Td className="text-zinc-600">{m.interpretation}</Td>
+          </tr>
+        ))}
+      </Table>
+    </div>
   );
 }
 

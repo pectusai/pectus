@@ -7,10 +7,11 @@ import type {
   AnalysisStage2,
   PostSuggestion,
 } from "@/lib/insights/schemas";
-import { RunAnalysisButton } from "./RunAnalysisButton";
+import { AnalyzeButton } from "./AnalyzeButton";
+import { RecommendButton } from "./RecommendButton";
 import { RenewButton } from "./RenewButton";
 import { IdeaCard } from "./IdeaCard";
-import { DataSummary } from "./DataSummary";
+import { InterpretationPanel } from "./InterpretationPanel";
 import { InfoDot } from "@/app/components/InfoDot";
 
 export const dynamic = "force-dynamic";
@@ -53,7 +54,11 @@ type CardRecord = {
 function buildCards(
   generations: GenerationRow[],
   dismissals: DismissalRow[],
-): { cards: CardRecord[]; latestTrafficTable: AnalysisStage2["suggested_articles_by_traffic"] | null; latestGeneratedAt: string | null } {
+): {
+  cards: CardRecord[];
+  latestTrafficTable: AnalysisStage2["suggested_articles_by_traffic"] | null;
+  latestGeneratedAt: string | null;
+} {
   if (generations.length === 0) {
     return { cards: [], latestTrafficTable: null, latestGeneratedAt: null };
   }
@@ -138,8 +143,9 @@ export default async function InsightsPage({
     | null;
 
   let cards: CardRecord[] = [];
-  let latestTrafficTable: AnalysisStage2["suggested_articles_by_traffic"] | null =
-    null;
+  let latestTrafficTable:
+    | AnalysisStage2["suggested_articles_by_traffic"]
+    | null = null;
   let latestGeneratedAt: string | null = null;
 
   if (interpretationRow) {
@@ -165,6 +171,7 @@ export default async function InsightsPage({
 
   const hasDataSource = ga4Active || gscActive;
   const hasKeywords = counts.keywords > 0;
+  const hasIdeas = cards.length > 0;
 
   const weekOf = formatWeekOf(isoWeekStart(new Date()));
 
@@ -183,27 +190,21 @@ export default async function InsightsPage({
           <div className="pectus-insights-counter">
             <dt>
               Keywords{" "}
-              <InfoDot
-                text="Add keywords at Project settings → Keywords (paste a list) or activate Search Console to pull real query data automatically. The more keywords Pectus sees, the sharper the gap analysis and the more relevant the suggested topics."
-              />
+              <InfoDot text="Add keywords at Project settings → Keywords (paste a list) or activate Search Console to pull real query data automatically. The more keywords Pectus sees, the sharper the gap analysis and the more relevant the suggested topics." />
             </dt>
             <dd>{counts.keywords.toLocaleString("en-US")}</dd>
           </div>
           <div className="pectus-insights-counter">
             <dt>
               Articles{" "}
-              <InfoDot
-                text="Add or import articles in Content Insights → Articles. Listing what you've already published lets the analysis avoid recommending duplicates and surface refresh candidates instead."
-              />
+              <InfoDot text="Add or import articles in Content Insights → Articles. Listing what you've already published lets the analysis avoid recommending duplicates and surface refresh candidates instead." />
             </dt>
             <dd>{counts.articles.toLocaleString("en-US")}</dd>
           </div>
           <div className="pectus-insights-counter">
             <dt>
               ATP entries{" "}
-              <InfoDot
-                text="ATP entries are 'people also ask' style questions exported from AnswerThePublic.com or similar tools, tied to your seed keywords. They give the analysis the exact phrasing real searchers use, so suggested titles match real intent. CMS import path is queued."
-              />
+              <InfoDot text="ATP entries are 'people also ask' style questions exported from AnswerThePublic.com or similar tools, tied to your seed keywords. They give the analysis the exact phrasing real searchers use, so suggested titles match real intent. CMS import path is queued." />
             </dt>
             <dd>{counts.atp.toLocaleString("en-US")}</dd>
           </div>
@@ -219,9 +220,18 @@ export default async function InsightsPage({
               to write next. Activate Google Search Console or GA4 to unlock
               the weekly analysis. Both are free.
               {hasKeywords ? (
-                <> Your {counts.keywords} keyword{counts.keywords === 1 ? "" : "s"} are saved and will be used once a data source is live.</>
+                <>
+                  {" "}
+                  Your {counts.keywords} keyword
+                  {counts.keywords === 1 ? "" : "s"} are saved and will be used
+                  once a data source is live.
+                </>
               ) : (
-                <> While accounts verify, you can also seed your keyword list under Project settings → Keywords.</>
+                <>
+                  {" "}
+                  While accounts verify, you can also seed your keyword list
+                  under Project settings → Keywords.
+                </>
               )}
             </p>
             <div className="pectus-insights-hero-actions">
@@ -243,35 +253,40 @@ export default async function InsightsPage({
       ) : !interpretationRow ? (
         <section className="pectus-insights-section">
           <div className="pectus-insights-empty-card">
-            <h2>Ready when you are.</h2>
+            <h2>Step one: read the data.</h2>
             <p>
-              Click run, and Pectus snapshots your data, asks Claude Opus to
-              read it, then asks Opus to produce five concrete article ideas
-              you can draft from in one click.
+              Click Analyze and Pectus refreshes your GA4 + Search Console
+              data, then asks Claude Opus to read it. You&apos;ll see the
+              findings here before being told what to write.
             </p>
             <p className="pectus-insights-hero-meta">
-              Takes 30 to 60 seconds. Costs roughly $0.30 in Claude tokens.
+              Takes 30 to 60 seconds. Costs roughly $0.20 in Claude tokens.
             </p>
-            <RunAnalysisButton
+            <AnalyzeButton
               projectId={project.id}
-              label="↻ Run first analysis"
+              label="↻ Analyze now"
             />
           </div>
         </section>
       ) : (
         <>
+          <InterpretationPanel
+            interpretation={interpretationRow.interpretation}
+            interpretedAt={interpretationRow.interpreted_at}
+          />
+
           <section className="mt-10">
             <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-pink-600">
-                  This week&apos;s ideas
+                  {hasIdeas ? "This week's ideas" : "Step two: act on it"}
                 </span>
                 <h2 className="mt-1.5 text-2xl font-bold tracking-tight text-zinc-900">
-                  {cards.length === 0
-                    ? "All ideas dismissed."
-                    : `${cards.length} idea${cards.length === 1 ? "" : "s"} in the queue.`}
+                  {hasIdeas
+                    ? `${cards.length} idea${cards.length === 1 ? "" : "s"} in the queue.`
+                    : "Turn this analysis into five ranked post ideas."}
                 </h2>
-                {latestGeneratedAt ? (
+                {hasIdeas && latestGeneratedAt ? (
                   <p className="mt-1 text-xs text-zinc-500">
                     Last generated{" "}
                     {new Date(latestGeneratedAt).toLocaleString("en-US", {
@@ -282,19 +297,40 @@ export default async function InsightsPage({
                     })}
                   </p>
                 ) : null}
+                {!hasIdeas ? (
+                  <p className="mt-1 max-w-xl text-sm text-zinc-500">
+                    Recommend reads the analysis above and asks Opus for five
+                    concrete posts to write next — projected traffic, target
+                    persona, and angle each. ~$0.10 in tokens.
+                  </p>
+                ) : null}
               </div>
-              <RenewButton projectId={project.id} />
+              <div className="flex flex-wrap items-center gap-3">
+                {hasIdeas ? (
+                  <>
+                    <RenewButton projectId={project.id} />
+                    <AnalyzeButton
+                      projectId={project.id}
+                      label="↻ Re-analyze"
+                      variant="secondary"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <RecommendButton projectId={project.id} />
+                    <AnalyzeButton
+                      projectId={project.id}
+                      label="↻ Re-analyze"
+                      variant="secondary"
+                    />
+                  </>
+                )}
+              </div>
             </div>
 
-            <div className="flex flex-col gap-3">
-              {cards.length === 0 ? (
-                <div className="rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-600">
-                  Nothing in the queue. Click Renew to generate five fresh
-                  angles from the same interpretation, or update your data and
-                  run a full analysis.
-                </div>
-              ) : (
-                cards.map((c) => (
+            {hasIdeas ? (
+              <div className="flex flex-col gap-3">
+                {cards.map((c) => (
                   <IdeaCard
                     key={`${c.generationId}:${c.postIndex}`}
                     idea={c.post}
@@ -304,9 +340,9 @@ export default async function InsightsPage({
                     base={base}
                     projectId={project.id}
                   />
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            ) : null}
           </section>
 
           {latestTrafficTable && latestTrafficTable.length > 0 ? (
@@ -353,23 +389,20 @@ export default async function InsightsPage({
                           </span>
                         </td>
                         <td className="px-3 py-2.5 text-right align-top tabular-nums font-semibold text-zinc-900">
-                          {row.projected_monthly_traffic.toLocaleString("en-US")}
+                          {row.projected_monthly_traffic.toLocaleString(
+                            "en-US",
+                          )}
                         </td>
                         <td className="px-3 py-2.5 align-top text-zinc-600">
                           {row.reasoning}
                         </td>
                       </tr>
-                  ))}
+                    ))}
                   </tbody>
                 </table>
               </div>
             </section>
           ) : null}
-
-          <DataSummary
-            interpretation={interpretationRow.interpretation}
-            interpretedAt={interpretationRow.interpreted_at}
-          />
         </>
       )}
     </div>

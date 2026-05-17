@@ -2,26 +2,24 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { runFullAnalysis } from "@/lib/insights/actions";
+import { runRecommendOnly } from "@/lib/insights/actions";
 import { RunAnalysisModal } from "./RunAnalysisModal";
 
 const STAGES = [
-  "Counting your keywords, articles, and audience questions",
-  "Asking Opus 4.7 to read this week's data",
-  "Looking for clusters, rising keywords, and content gaps",
-  "Picking what to write next",
-  "Ranking by traffic potential",
+  "Reading this week's interpretation",
+  "Asking Opus 4.7 for five ranked post ideas",
+  "Projecting traffic per idea",
   "Final pass",
 ];
 
-export function RunAnalysisButton({
+export function RecommendButton({
   projectId,
-  variant = "primary",
   label,
+  variant = "primary",
 }: {
   projectId: string;
-  variant?: "primary" | "secondary";
   label?: string;
+  variant?: "primary" | "secondary";
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -32,7 +30,7 @@ export function RunAnalysisButton({
     setRunning(true);
     setError(null);
     try {
-      const res = await runFullAnalysis(projectId);
+      const res = await runRecommendOnly(projectId);
       if (!res.ok) {
         setError(res.error);
         setRunning(false);
@@ -60,14 +58,14 @@ export function RunAnalysisButton({
         disabled={isBusy}
         className={className}
       >
-        {label ?? "↻ Run analysis"}
+        {label ?? "→ Recommend posts"}
       </button>
       {error ? <p className="pectus-insights-run-error">{error}</p> : null}
       <RunAnalysisModal
         open={isBusy}
-        title="Reading this week's data"
+        title="Recommending posts from this analysis"
         stages={STAGES}
-        approxSeconds={60}
+        approxSeconds={30}
       />
     </div>
   );

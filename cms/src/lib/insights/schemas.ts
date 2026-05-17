@@ -70,11 +70,74 @@ const CategorySuggestion = z.object({
   example_keywords: z.array(z.string()),
 });
 
+const TopPerformingPageRow = z.object({
+  page_path: z.string(),
+  sessions: z.number().int().nullable(),
+  conversions: z.number().nullable(),
+  conversion_rate: z.number().nullable().describe("Conversions divided by sessions (0-1)."),
+  why_it_works: z
+    .string()
+    .describe("One sentence: what makes this page pull traffic and convert. Defend / expand candidate."),
+});
+
+const DecliningPageRow = z.object({
+  page_path: z.string(),
+  why_declining: z
+    .string()
+    .describe("One sentence: what the data suggests is causing the drop."),
+  suggested_action: z
+    .string()
+    .describe("Refresh, internal-link, retire, consolidate, etc."),
+});
+
+const WeeklyQueryMoverRow = z.object({
+  query: z.string(),
+  direction: z.enum(["up", "down"]),
+  impressions_delta: z
+    .number()
+    .int()
+    .describe("Signed delta in impressions, this 7 days vs prior 7 days."),
+  position_delta: z
+    .number()
+    .nullable()
+    .describe("Signed delta in average position (negative means moved up)."),
+  interpretation: z
+    .string()
+    .describe("One sentence: what this movement means for content strategy."),
+});
+
 export const AnalysisStage1 = z.object({
   summary: z
     .string()
     .describe(
       "Three to five sentences framing the week: what changed in search, where the biggest opportunity is, which ICP to target.",
+    ),
+  traffic_source_mix: z
+    .string()
+    .optional()
+    .describe(
+      "Short prose summary of where GA4 traffic comes from this period and which mix the brand should lean into. Omit if GA4 data is absent.",
+    ),
+  weekly_query_movers: z
+    .array(WeeklyQueryMoverRow)
+    .max(16)
+    .optional()
+    .describe(
+      "Up to 16 queries with notable week-over-week impression shifts. Mix of risers and decliners. Omit if no GSC daily data.",
+    ),
+  top_performing_pages: z
+    .array(TopPerformingPageRow)
+    .max(10)
+    .optional()
+    .describe(
+      "Up to 10 pages already pulling traffic / converting. Defend and expand candidates. Omit if no GA4 page data.",
+    ),
+  declining_pages: z
+    .array(DecliningPageRow)
+    .max(8)
+    .optional()
+    .describe(
+      "Up to 8 pages where traffic is slipping. Refresh candidates. Omit if no GA4 page data.",
     ),
   rising_keywords: z
     .array(KeywordRow)
